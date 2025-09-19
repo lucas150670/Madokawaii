@@ -29,7 +29,7 @@ namespace Madokawaii::Platform::Audio {
         }
     }
 
-    void PlayMusicStream(Music m) { ::PlayMusicStream(AsRL(m)); }
+    void PlayMusicStream(Music m) { AsRL(m).looping = m.looping; ::PlayMusicStream(AsRL(m)); }
 
     void UpdateMusicStream(Music m) { ::UpdateMusicStream(AsRL(m)); }
 
