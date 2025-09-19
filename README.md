@@ -1,25 +1,14 @@
-<div style="display: flex;
-      align-items: center;
-      justify-content: center;
-      background-color: #222;
-      padding: 50px;">
-<img src="img.jpg" style="width: 80px; height: auto; margin-right: 20px;" alt="madoka">
-    <div style="
-      font-size: 48px;
-      font-family: 'Courier New', monospace;
-      color: #fff;
-      text-align: center;
-      background-color: #222;
-      padding: 50px;
-      text-shadow:
-        0 0 5px #ff69b4,
-        0 0 10px #ff69b4,
-        0 0 20px #ff1493,
-        0 0 40px #ff1493;
-    ">Madokawaii</div>
-</div>
+<p align="center">
+  <img src="img.jpg" width="100" alt="madoka">
+</p>
 
-山有木兮木有枝，心悦君兮君不知。
+<h1 align="center">
+  Madokawaii
+</h1>
+
+<p align="center">
+  山有木兮木有枝，心悦君兮君不知。
+</p>
 
 Madokawaii is an early-stage rhythm game simulator inspired by *Phigros*. 
 
