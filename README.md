@@ -1,6 +1,6 @@
-<p align="center" style="display:flex; align-items:center; justify-content:center; gap:12px;">
-  <img src="img.jpg" width="80" alt="madoka">
-  <span style="font-size: 2rem; font-weight: 700;">Madokawaii</span>
+<p align="center">
+  <img src="img.jpg" width="80" alt="madoka"><br/>
+  <b>Madokawaii</b>
 </p>
 
 
