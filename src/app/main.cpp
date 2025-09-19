@@ -4,12 +4,13 @@
 #include <cfloat>
 #include <format>
 #include <string>
-#include <tuple>
 #include <vector>
 #include <cmath>
 
+#include "Madokawaii/app/app_config.h"
 #include "Madokawaii/app/def.h"
 #include "Madokawaii/app/chart.h"
+#include "Madokawaii/app/line_operation.h"
 #include "Madokawaii/platform/audio.h"
 #include "Madokawaii/platform/log.h"
 #include "Madokawaii/platform/core.h"
@@ -20,7 +21,10 @@ int main() {
     constexpr int screenHeight = 1080;
 
     Madokawaii::Platform::Audio::InitAudioDevice();
-    
+
+    auto& danli = Madokawaii::AppConfig::ConfigManager::Instance();
+    const auto& musicPath = danli.GetMusicPath(), chartPath = danli.GetChartPath();
+
     // load music
     clock_t begin = clock();
     if (!Madokawaii::Platform::Core::FileExists(musicPath.c_str())) {
@@ -53,18 +57,15 @@ int main() {
 
     Madokawaii::Platform::Core::InitWindow(screenWidth, screenHeight, "Madokawaii");
 
-    auto glVersion = Madokawaii::Platform::Graphics::GetImplementationInfo(),
-         glRenderer = Madokawaii::Platform::Graphics::GetImplementer();
-
     music.looping = false;
-    auto musicLength = GetMusicTimeLength(music);
+    auto musicLength = Madokawaii::Platform::Audio::GetMusicTimeLength(music);
     Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "MAIN: Music Length: %f", musicLength);
-    PlayMusicStream(music);
+    Madokawaii::Platform::Audio::PlayMusicStream(music);
 
     while (!Madokawaii::Platform::Core::WindowShouldClose()) {
         Madokawaii::Platform::Audio::UpdateMusicStream(music);
         Madokawaii::Platform::Graphics::BeginDrawing();
-        Madokawaii::Platform::Graphics::ClearBackground(Madokawaii::Platform::Graphics::BLACK);
+        Madokawaii::Platform::Graphics::ClearBackground(Madokawaii::Platform::Graphics::M_BLACK);
 
         auto thisFrameTime = Madokawaii::Platform::Audio::GetMusicTimePlayed(music);
         if (!Madokawaii::Platform::Audio::IsMusicStreamPlaying(music)) {
@@ -76,69 +77,17 @@ int main() {
 
         // update judgeline & render
         for (auto &judgeline: mainChart.judgelines) {
-            // for debug breakpoint use
-            if (judgeline.id == 1) {
-                judgeline.id = 1;
-            }
-            auto calcEventRealTime = [&judgeline](const double beatTime) {
-                return Madokawaii::Defs::Chart::CalcRealTime(judgeline.bpm, static_cast<int>(beatTime));
-            };
-            
-            for (; !(calcEventRealTime(judgeline.info.disappearEventPointer->endTime) > thisFrameTime); ++judgeline.info.disappearEventPointer) {
-                judgeline.info.opacity = judgeline.info.disappearEventPointer->end;
-            }
-            for (; !(calcEventRealTime(judgeline.info.moveEventPointer->endTime) > thisFrameTime); ++judgeline.info.moveEventPointer) {
-                judgeline.info.posX = judgeline.info.moveEventPointer->end;
-                judgeline.info.posY = judgeline.info.moveEventPointer->end2;
-            }
-            for (; !(calcEventRealTime(judgeline.info.rotateEventPointer->endTime) > thisFrameTime); ++judgeline.info.rotateEventPointer) {
-                judgeline.info.rotateAngle = judgeline.info.rotateEventPointer->end;
-            }
-            for (; !(calcEventRealTime(judgeline.info.speedEventPointer->endTime) > thisFrameTime); ++judgeline.info.speedEventPointer) {
-                judgeline.info.positionY = judgeline.info.speedEventPointer->floorPosition;
-            }
-            
-            judgeline.info.opacity = Madokawaii::Defs::Chart::CalcEventProgress1Param(*judgeline.info.disappearEventPointer, 
-                                                                                      Madokawaii::Defs::Chart::CalcBeatTime(judgeline.bpm, thisFrameTime));
-            auto point = Madokawaii::Defs::Chart::CalcEventProgress2Params(*judgeline.info.moveEventPointer, 
-                                                                          Madokawaii::Defs::Chart::CalcBeatTime(judgeline.bpm, thisFrameTime));
-            judgeline.info.posX = std::get<0>(point);
-            judgeline.info.posY = std::get<1>(point);
-            judgeline.info.rotateAngle = Madokawaii::Defs::Chart::CalcEventProgress1Param(*judgeline.info.rotateEventPointer, 
-                                                                                          Madokawaii::Defs::Chart::CalcBeatTime(judgeline.bpm, thisFrameTime), 
-                                                                                          [](double angle) {
-                while (angle < 0) angle += 360;
-                while (angle > 360) angle -= 360;
-                return angle;
-            });
+
+            UpdateJudgeline(judgeline, thisFrameTime, screenWidth, screenHeight, noteRenderList);
 
             // line render
-            auto c = Madokawaii::Platform::Graphics::RAYWHITE;
-            c.a = static_cast<unsigned char>(judgeline.info.opacity * 255);
-            auto screenX = static_cast<float>(judgeline.info.posX * screenWidth),
-                    screenY = static_cast<float>((1 - judgeline.info.posY) * screenHeight),
-                aspectRatio = screenWidth * 1.0f / screenHeight;
-            if (fabs(judgeline.info.rotateAngle) < 1e-6 || fabs(judgeline.info.rotateAngle - 180.0f) < 1e-6) {
-                DrawLineEx(Madokawaii::Platform::Graphics::Vector2{screenX - 5000, screenY}, Madokawaii::Platform::Graphics::Vector2{screenX + 5000, screenY}, 10.0f, c);
-            } else if (fabs(judgeline.info.rotateAngle - 90.0f) < 1e-6 || fabs(judgeline.info.rotateAngle - 270.0f) < 1e-6) {
-                DrawLineEx(Madokawaii::Platform::Graphics::Vector2{screenX, screenY - 5000}, Madokawaii::Platform::Graphics::Vector2{screenX, screenY + 5000}, 10.0f, c);
-            } else {
-                float k, kx0, y0;
-                k = static_cast<float>(tan(judgeline.info.rotateAngle / 180.0 * M_PI) * aspectRatio);
-                kx0 = static_cast<float>(k * judgeline.info.posX),
-                y0 = static_cast<float>(judgeline.info.posY);
-                Madokawaii::Platform::Graphics::Vector2 p1{}, p2{};
-                p1 = {-10 * screenWidth, screenHeight - (-10 * k - kx0 + y0) * screenHeight};
-                p2 = {10 * screenWidth, screenHeight - (10 * k - kx0 + y0) * screenHeight};
-                DrawLineEx(p1, p2, 10.0f, c);
-            }
-            
-            // 画线ID
-            auto idStr = std::format("{}", judgeline.id);
-            Madokawaii::Platform::Graphics::DrawText(idStr.c_str(), static_cast<int>(screenX), static_cast<int>(screenY), 30, Madokawaii::Platform::Graphics::RED);
-            
+            RenderJudgeline(judgeline, screenWidth, screenHeight);
+
             // note update
-            judgeline.info.positionY = judgeline.info.speedEventPointer->floorPosition + (thisFrameTime - calcEventRealTime(judgeline.info.speedEventPointer->startTime)) * judgeline.info.speedEventPointer->value;
+            judgeline.info.positionY = judgeline.info.speedEventPointer->floorPosition + (thisFrameTime -
+                Madokawaii::Defs::Chart::CalcRealTime(
+                    judgeline.bpm, static_cast<int>(judgeline.info.speedEventPointer->startTime)))
+            * judgeline.info.speedEventPointer->value;
             
             auto processNote = [&, thisFrameTime](Madokawaii::Defs::chart::judgeline::note& note) {
                 if (note.realTime < thisFrameTime) {
@@ -201,14 +150,8 @@ int main() {
         for (auto notePtr: noteRenderList) {
             // TODO: 实现note渲染
         }
-        
-        auto dbgStr = std::format("OpenGL Renderer: {}", glRenderer);
-        DrawText(dbgStr.c_str(), 190, 170, 20, Madokawaii::Platform::Graphics::LIGHTGRAY);
-        dbgStr = std::format("OpenGL Version: {}", glVersion);
-        DrawText(dbgStr.c_str(), 190, 200, 20, Madokawaii::Platform::Graphics::LIGHTGRAY);
-        dbgStr = std::format("FPS: {}, FrameTime: {}s", Madokawaii::Platform::Graphics::GetFPS(), Madokawaii::Platform::Graphics::GetFrameTime());
-        DrawText(dbgStr.c_str(), 190, 230, 20, Madokawaii::Platform::Graphics::LIGHTGRAY);
 
+        RenderDebugInfo();
         Madokawaii::Platform::Graphics::EndDrawing();
     }
 

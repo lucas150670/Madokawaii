@@ -20,7 +20,7 @@ namespace Madokawaii::Platform::Audio {
     void StopMusicStream(Music);
     void PauseMusicStream(Music);
     void ResumeMusicStream(Music);
-    void IsMusicStreamPlaying(Music);
+    bool IsMusicStreamPlaying(Music);
     float GetMusicTimeLength(Music);
     float GetMusicTimePlayed(Music);
 }

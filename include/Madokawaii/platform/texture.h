@@ -19,7 +19,7 @@ namespace Madokawaii::Platform::Graphics::Texture {
     Texture2D LoadTexture(const char *fileName);
     Texture2D LoadTextureFromImage(Image Image);
     void UnloadTexture(Texture2D texture);
-    void DrawTextureEx(Texture2D texture, Vector2, float rotation, float scale, Color tint);
+    void DrawTextureEx(Texture2D texture, Vector2, float rotation, float scale, Color_ tint);
 
 }
 

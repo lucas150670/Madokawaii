@@ -1,14 +1,19 @@
-<p align="center">
-  <img src="img.jpg" width="100" alt="madoka">
+<p align="center" style="display:flex; align-items:center; justify-content:center; gap:12px;">
+  <img src="img.jpg" width="80" alt="madoka">
+  <span style="font-size: 2rem; font-weight: 700;">Madokawaii</span>
 </p>
 
-<h1 align="center">
-  Madokawaii
-</h1>
 
 <p align="center">
   山有木兮木有枝，心悦君兮君不知。
 </p>
+
+![GitHub top language](https://img.shields.io/github/languages/top/lucas150670/Madokawaii)
+![GitHub commit activity](https://img.shields.io/github/commit-activity/w/lucas150670/Madokawaii)
+![GitHub License](https://img.shields.io/github/license/lucas150670/Madokawaii)
+![GitHub Issues or Pull Requests](https://img.shields.io/github/issues/lucas150670/Madokawaii)
+![GitHub Issues or Pull Requests](https://img.shields.io/github/issues-pr/lucas150670/Madokawaii)
+[![State-of-the-art Shitcode](https://img.shields.io/static/v1?label=State-of-the-art&message=Shitcode&color=7B5804)](https://github.com/trekhleb/state-of-the-art-shitcode)
 
 Madokawaii is an early-stage rhythm game simulator inspired by *Phigros*. 
 
@@ -84,4 +89,4 @@ limitations under the License.
 
 ## 📬 CONTACT
 - maintainer: lucas150670
-- mail：lucas150670@petalmail.com
+- mail: lucas150670@petalmail.com

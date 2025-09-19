@@ -10,12 +10,36 @@
 #include <string>
 
 namespace Madokawaii::AppConfig {
+
     struct GlobalConfig {
-        std::string chartPath = "assets/charts/chart.json",
-                // illustrationPath = "assets/charts/Stasis/Illustration.png",
-                musicPath = "assets/charts/music.wav";
-                // schemaFilePath = "assets/charts/chart.v3.schema.json",
-                          };
-}
+        std::string chartPath{"assets/charts/chart.json"};
+        std::string musicPath{"assets/charts/music.wav"};
+    };
+
+    class ConfigManager {
+    public:
+        ConfigManager(const ConfigManager&) = delete;
+        ConfigManager& operator=(const ConfigManager&) = delete;
+
+        static ConfigManager& Instance();
+        [[nodiscard]] const GlobalConfig& Get() const;
+        void Set(const GlobalConfig& cfg);
+
+        [[nodiscard]] const std::string& GetChartPath() const;
+        [[nodiscard]] const std::string& GetMusicPath() const;
+
+        void SetChartPath(const std::string& path);
+        void SetMusicPath(const std::string& path);
+
+        bool LoadDefaults();
+        static bool LoadFromFile(const std::string& filePath);
+        [[nodiscard]] static bool SaveToFile(const std::string& filePath) ;
+
+    private:
+        ConfigManager();
+        GlobalConfig config_;
+    };
+
+} // namespace Madokawaii::AppConfig
 
 #endif //MADOKAWAII_APP_CONFIG_H
