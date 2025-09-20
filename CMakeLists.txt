@@ -12,7 +12,7 @@ if(NOT DEFINED implementer)
     set(implementer "RAYLIB")
 endif()
 
-message(STATUS "implementer: ${PLATFORM_BACKEND}")
+message(STATUS "implementer: ${implementer}")
 
 set(SRC_APP
         src/app/main.cpp
@@ -30,7 +30,7 @@ set(SRC_IMP_RAYLIB
         src/platform/raylib/raylib_fonts.cpp
         src/platform/raylib/raylib_texture.cpp)
 
-# set(SRC_PLATFORM_DIRECT2D
+# set(SRC_IMP_DIRECT2D
 #        # TODO: direct2d implement
 # )
 
@@ -46,7 +46,7 @@ if(implementer STREQUAL "RAYLIB")
 #             ${SRC_IMP_DIRECT2D})
 #     target_link_libraries(Madokawaii PRIVATE RapidJSON rapidjson yaml)
 else()
-    message(FATAL_ERROR "unknown implementer: ${PLATFORM_BACKEND}. check CMakeLists.txt")
+    message(FATAL_ERROR "unknown implementer: ${implementer}. check CMakeLists.txt")
 endif()
 
 target_include_directories(Madokawaii PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
