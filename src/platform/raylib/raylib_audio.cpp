@@ -16,7 +16,7 @@ namespace Madokawaii::Platform::Audio {
     Music LoadMusicStream(const char* path) {
         Music m{};
         auto rl = ::LoadMusicStream(path);
-        m.looping = false;
+        m.looping = true;
         m.implementationDefined = new ::Music(rl);
         return m;
     }
@@ -25,7 +25,7 @@ namespace Madokawaii::Platform::Audio {
         if (m.implementationDefined) {
             auto rl = AsRL(m);
             ::UnloadMusicStream(rl);
-            delete &rl;
+            // clear up did by raylib. no need delete
         }
     }
 

@@ -10,6 +10,7 @@
 
 ![GitHub top language](https://img.shields.io/github/languages/top/lucas150670/Madokawaii)
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/w/lucas150670/Madokawaii)
+![Discord](https://img.shields.io/discord/1198993790678089749)
 ![GitHub License](https://img.shields.io/github/license/lucas150670/Madokawaii)
 ![GitHub Issues or Pull Requests](https://img.shields.io/github/issues/lucas150670/Madokawaii)
 ![GitHub Issues or Pull Requests](https://img.shields.io/github/issues-pr/lucas150670/Madokawaii)
@@ -49,10 +50,17 @@ make
 ## 📂 STRUCTURE
 ```
 Madokawaii/
-├── src/               # source
-├── include/           # header file
-├── README.md          # readme
-└── CMakeLists.txt     # cmake config
+├── include/            # header file
+    └── Madokawaii/
+        ├── app/        # app logic
+        └── platform/   # platform interfaces
+├── src/                # source
+    ├── app             # app logic
+    └── platform        # platfor-specific code
+       ├── raylib       # default implementaion based on raylib
+       └── (other potential platforms)
+├── README.md           # readme
+└── CMakeLists.txt      # cmake config
 ```
 
 ---
@@ -85,11 +93,15 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-Disclaimer: This project contains visual, narrative, or thematic elements inspired by *Puella Magi Madoka Magica*. All original characters, artwork, storylines, and intellectual property related to *Madoka Magica* are © Magica Quartet / Aniplex, Madoka Partners, MBS. This work is a non-commercial, fan-created project intended for artistic and educational purposes only. No copyright infringement is intended. If requested by the rights holders, referenced content will be removed or modified accordingly.
-
+This project contains visual, narrative, or thematic elements 
+inspired by *Puella Magi Madoka Magica*. All original characters, artwork, storylines, 
+and intellectual property related to *Madoka Magica* are © Magica Quartet / Aniplex, 
+Madoka Partners, MBS. 
 
 ---
 
 ## 📬 CONTACT
 - maintainer: lucas150670
 - mail: lucas150670@petalmail.com
+- discord server: https://discord.gg/bNCCKrZdK4
+- QQ group: email for detailed info

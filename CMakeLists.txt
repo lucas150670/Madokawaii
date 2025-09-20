@@ -15,11 +15,9 @@ add_executable(Madokawaii
         src/platform/raylib/raylib_graphics.cpp
         src/platform/raylib/raylib_entry.cpp
         src/platform/raylib/raylib_core.cpp
-        include/Madokawaii/app/chart.h
         src/app/app_config.cpp
         src/app/line_update.cpp
         src/app/line_renderer.cpp
-        include/Madokawaii/app/line_operation.h
         src/platform/raylib/raylib_log.cpp
         src/platform/raylib/raylib_audio.cpp
         src/platform/raylib/raylib_fonts.cpp

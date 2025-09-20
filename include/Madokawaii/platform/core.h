@@ -34,7 +34,7 @@ namespace Madokawaii::Platform::Core {
 }
 
 extern "C" {
-void AppInit(void *appstate);
+int AppInit(void *& appstate);
 
 /**
  * @brief App Iterate Callback
@@ -43,7 +43,7 @@ void AppInit(void *appstate);
  */
 int AppIterate(void *appstate);
 
-void AppExit(void *appstate);
+int AppExit(void *appstate);
 }
 
 #endif //MADOKAWAII_PLATFORM_COMMON_H

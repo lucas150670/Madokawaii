@@ -3,11 +3,6 @@
 //
 
 // rapidjson call only allowed in chart.cpp
-//
-// Created by madoka on 25-9-11.
-//
-
-// rapidjson call only allowed in chart.cpp
 #include "Madokawaii/app/def.h"
 #include "Madokawaii/app/chart.h"
 #include "Madokawaii/platform/core.h"

@@ -2,9 +2,6 @@
 // Created by madoka on 25-9-11.
 //
 
-//
-// Created by madoka on 25-9-11.
-//
 #include <raylib.h>
 #include "Madokawaii/platform/core.h"
 
@@ -30,11 +27,4 @@ namespace Madokawaii::Platform::Core {
     bool WindowShouldClose() { return ::WindowShouldClose(); }
 
     void CloseWindow() { ::CloseWindow(); }
-}
-
-// Harmony/XComponent入口保留，按需实现
-extern "C" {
-    void AppInit(void *) {}
-    int AppIterate(void *) { return 0; }
-    void AppExit(void *) {}
 }

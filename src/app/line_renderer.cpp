@@ -39,9 +39,9 @@ void RenderDebugInfo() {
     static auto glVersion = Madokawaii::Platform::Graphics::GetImplementationInfo(),
          glRenderer = Madokawaii::Platform::Graphics::GetImplementer();
 
-    auto dbgStr = std::format("OpenGL Renderer: {}", glRenderer);
+    auto dbgStr = std::format("Implementer: {}", glRenderer);
     Madokawaii::Platform::Graphics::DrawText(dbgStr.c_str(), 190, 170, 20, Madokawaii::Platform::Graphics::M_LIGHTGRAY);
-    dbgStr = std::format("OpenGL Version: {}", glVersion);
+    dbgStr = std::format("Implementation Version: {}", glVersion);
     Madokawaii::Platform::Graphics::DrawText(dbgStr.c_str(), 190, 200, 20, Madokawaii::Platform::Graphics::M_LIGHTGRAY);
     dbgStr = std::format("FPS: {}, FrameTime: {}s", Madokawaii::Platform::Graphics::GetFPS(), Madokawaii::Platform::Graphics::GetFrameTime());
     Madokawaii::Platform::Graphics::DrawText(dbgStr.c_str(), 190, 230, 20, Madokawaii::Platform::Graphics::M_LIGHTGRAY);
