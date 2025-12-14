@@ -5,16 +5,26 @@
 // Created by madoka on 25-9-16.
 //
 #include <raylib.h>
+#include <rlgl.h>
 #include <glad/glad.h>
 #include "Madokawaii/platform/graphics.h"
+
+
+extern char gVendor[256];
+extern char gRenderer[256];
+extern char gVersion[256];
 
 namespace Madokawaii::Platform::Graphics {
 
     static ::Color RL(Color_ c) { return {c.r, c.g, c.b, c.a}; }
 
-    std::string GetImplementer() { return reinterpret_cast<const char*>(glGetString(GL_RENDERER)); }
+    std::string GetImplementer() {
+        return gRenderer;
+    }
 
-    std::string GetImplementationInfo() { return reinterpret_cast<const char*>(glGetString(GL_VERSION)); }
+    std::string GetImplementationInfo(){
+        return gVersion;
+    }
 
     float GetFPS() { return static_cast<float>(::GetFPS()); }
 

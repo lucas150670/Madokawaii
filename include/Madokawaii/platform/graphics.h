@@ -4,6 +4,7 @@
 
 #ifndef MADOKAWAII_GRAPHICS_H
 #define MADOKAWAII_GRAPHICS_H
+#pragma warning (disable: 4576)
 
 #include <string>
 

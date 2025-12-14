@@ -36,6 +36,7 @@ set(SRC_IMP_RAYLIB
 
 if(implementer STREQUAL "RAYLIB")
     find_package(raylib CONFIG REQUIRED)
+    find_package(glad CONFIG REQUIRED)
     add_executable(Madokawaii
             ${SRC_APP}
             ${SRC_IMP_RAYLIB})

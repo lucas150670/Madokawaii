@@ -10,6 +10,11 @@
 #include <string>
 #include <vector>
 
+#ifdef M_PI
+#undef M_PI
+#endif
+#define M_PI 3.14159265358979323846
+
 
 namespace Madokawaii::Defs {
     enum NoteType {
@@ -35,7 +40,7 @@ namespace Madokawaii::Defs {
         int judgelineCount{};
 
         // int numOfNotes;
-        typedef struct {
+        struct judgeline {
             int id{};
             // int numOfNotes;
             // int numOfNotesAbove;
@@ -77,7 +82,7 @@ namespace Madokawaii::Defs {
 
             std::vector<note> notesAbove, notesBelow;
             std::vector<event_base> judgelineDisappearedEvents, judgelineMoveEvents, judgelineRotateEvents;
-        } judgeline;
+        };
 
         std::vector<judgeline> judgelines;
         // debug info
