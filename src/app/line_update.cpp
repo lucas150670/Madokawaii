@@ -53,7 +53,7 @@ void UpdateJudgeline(Madokawaii::App::chart::judgeline& judgeline, double thisFr
 		else
 			note.positionY = note.floorPosition - judgeline.info.positionY;
 		note.rotateAngle = judgeline.info.rotateAngle;
-		if (fabs(note.rotateAngle - 360.0) < 1e-6 || fabs(note.rotateAngle - 180.0) < 1e-6)
+		if (fabs(note.rotateAngle - 360.0) < 1e-6)
 			note.rotateAngle = 0.0f;
 		auto note_rotate_angle_rad =  note.rotateAngle * M_PI / 180.0;
 
