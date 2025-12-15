@@ -78,7 +78,7 @@ void RenderNote(const Madokawaii::App::chart::judgeline::note& note)
     Madokawaii::Platform::Graphics::Vector2 pos{}, texture_dimension{};
     Madokawaii::Platform::Graphics::Texture::MeasureTexture2D(texture, &texture_dimension);
     Madokawaii::Platform::Graphics::Color_ tint{255, 255, 255, 255};
-    const auto rotateAngle = static_cast<float>(note.rotateAngle), rotateAngleRad = rotateAngle * static_cast<float>(M_PI) / 180.f;
+    const auto rotateAngle = static_cast<float>(360 - note.rotateAngle), rotateAngleRad = rotateAngle * static_cast<float>(M_PI) / 180.f;
     float xOffset = texture_dimension.x / 2.f * 0.2f, yOffset = texture_dimension.y / 2.f * 0.2f;
     pos.x = static_cast<float>(note.coordinateX - cos(rotateAngleRad) * xOffset + sin(rotateAngleRad) * yOffset);
     pos.y = static_cast<float>(note.coordinateY - cos(rotateAngleRad) * yOffset - sin(rotateAngleRad) * xOffset);

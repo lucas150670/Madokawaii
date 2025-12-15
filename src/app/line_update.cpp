@@ -52,7 +52,9 @@ void UpdateJudgeline(Madokawaii::App::chart::judgeline& judgeline, double thisFr
 			note.positionY = note.speed * (note.floorPosition - judgeline.info.positionY);
 		else
 			note.positionY = note.floorPosition - judgeline.info.positionY;
-		note.rotateAngle = 360 - judgeline.info.rotateAngle;
+		note.rotateAngle = judgeline.info.rotateAngle;
+		if (fabs(note.rotateAngle - 360.0) < 1e-6 || fabs(note.rotateAngle - 180.0) < 1e-6)
+			note.rotateAngle = 0.0f;
 		auto note_rotate_angle_rad =  note.rotateAngle * M_PI / 180.0;
 
 		switch (note.state) {
@@ -78,7 +80,7 @@ void UpdateJudgeline(Madokawaii::App::chart::judgeline& judgeline, double thisFr
 			}
 
 			const double diffX = cos(note_rotate_angle_rad) * posX - sin(note_rotate_angle_rad) * distance * screenHeight * 0.6;
-			const double diffY = cos(note_rotate_angle_rad) * distance * screenHeight * 0.6 - sin(note_rotate_angle_rad) * posX;
+			const double diffY = cos(note_rotate_angle_rad) * distance * screenHeight * 0.6 + sin(note_rotate_angle_rad) * posX;
 
 			note.coordinateX = judgelineScreenX + diffX;
 			const double centralY = judgelineScreenY + diffY;
@@ -91,9 +93,10 @@ void UpdateJudgeline(Madokawaii::App::chart::judgeline& judgeline, double thisFr
 				note.state = Madokawaii::App::NoteState::invisible;
 			}
 			if (note.state == Madokawaii::App::NoteState::appeared) {
-				Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO,
-					"NOTE: Note appeared at rotate angle %f (realTime %f), position (%f, %f)",
-					note.rotateAngle, note.realTime, note.coordinateX, note.coordinateY);
+				if (fabs(note.rotateAngle) > 1e-6)
+					Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO,
+						"NOTE: Note appeared at rotate angle %f (realTime %f), position (%f, %f)",
+						note.rotateAngle, note.realTime, note.coordinateX, note.coordinateY);
 				noteRenderList.push_back(&note);
 			}
 			else
