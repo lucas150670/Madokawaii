@@ -5,8 +5,6 @@
 // Created by madoka on 25-9-16.
 //
 #include <raylib.h>
-#include <rlgl.h>
-#include <glad/glad.h>
 #include "Madokawaii/platform/graphics.h"
 
 

@@ -62,6 +62,11 @@ namespace Madokawaii::Platform::Graphics::Texture {
         ::DrawTextureEx(rl, {pos.x, pos.y}, rotation, scale, RL(tint));
     }
 
+    void DrawTextureRec(Texture2D texture, Rectangle source, Vector2 position, Color_ tint) {
+        auto& rl = *static_cast<::Texture2D*>(texture.implementationDefinedData);
+        ::DrawTextureRec(rl, source, {position.x, position.y}, RL(tint));
+    }
+
     void MeasureTexture2D(Texture2D texture, Vector2* dimension)
     {
         auto& rl = *static_cast<::Texture2D*>(texture.implementationDefinedData);

@@ -2,7 +2,6 @@
 // Created by madoka on 2025/9/19.
 //
 
-#include <cmath>
 #include "Madokawaii/app/chart.h"
 #include "Madokawaii/app/line_operation.h"
 #include <Madokawaii/platform/log.h>
@@ -49,8 +48,12 @@ void UpdateJudgeline(Madokawaii::App::chart::judgeline& judgeline, double thisFr
 		if (note.realTime < thisFrameTime) {
 			note.state = Madokawaii::App::NoteState::finished;
 		}
-		note.positionY = note.speed * (note.floorPosition - judgeline.info.positionY);
-		note.rotateAngle = judgeline.info.rotateAngle / 180.0 * M_PI;
+		if (note.type != Madokawaii::App::NoteType::hold)
+			note.positionY = note.speed * (note.floorPosition - judgeline.info.positionY);
+		else
+			note.positionY = note.floorPosition - judgeline.info.positionY;
+		note.rotateAngle = 360 - judgeline.info.rotateAngle;
+		auto note_rotate_angle_rad =  note.rotateAngle * M_PI / 180.0;
 
 		switch (note.state) {
 		case Madokawaii::App::NoteState::finished:
@@ -74,8 +77,8 @@ void UpdateJudgeline(Madokawaii::App::chart::judgeline& judgeline, double thisFr
 				distance = -distance;
 			}
 
-			const double diffX = cos(note.rotateAngle) * posX - sin(note.rotateAngle) * distance * screenHeight * 0.6;
-			const double diffY = cos(note.rotateAngle) * distance * screenHeight * 0.6 + sin(note.rotateAngle) * posX;
+			const double diffX = cos(note_rotate_angle_rad) * posX - sin(note_rotate_angle_rad) * distance * screenHeight * 0.6;
+			const double diffY = cos(note_rotate_angle_rad) * distance * screenHeight * 0.6 - sin(note_rotate_angle_rad) * posX;
 
 			note.coordinateX = judgelineScreenX + diffX;
 			const double centralY = judgelineScreenY + diffY;
@@ -89,8 +92,8 @@ void UpdateJudgeline(Madokawaii::App::chart::judgeline& judgeline, double thisFr
 			}
 			if (note.state == Madokawaii::App::NoteState::appeared) {
 				Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO,
-					"NOTE: Note appeared at time %f (realTime %f), position (%f, %f)",
-					note.time, note.realTime, note.coordinateX, note.coordinateY);
+					"NOTE: Note appeared at rotate angle %f (realTime %f), position (%f, %f)",
+					note.rotateAngle, note.realTime, note.coordinateX, note.coordinateY);
 				noteRenderList.push_back(&note);
 			}
 			else

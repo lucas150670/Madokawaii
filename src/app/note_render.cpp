@@ -4,6 +4,7 @@
 
 #include "Madokawaii/app/note_operation.h"
 #include "Madokawaii/platform/graphics.h"
+#include "Madokawaii/platform/log.h"
 #include "Madokawaii/platform/texture.h"
 
 using ResTexture2D =
@@ -55,27 +56,31 @@ void InitializeNoteRenderer(const Madokawaii::App::ResPack::ResPack& respack_raw
 void RenderNote(const Madokawaii::App::chart::judgeline::note& note)
 {
     ResTexture2D texture;
+    if  (note.type == Madokawaii::App::NoteType::hold) {
+        // hold单独处理
+
+        return;
+    }
     switch (note.type)
     {
     case Madokawaii::App::NoteType::tap:
         texture = note.isMultipleNote ? respack_decompressed.imageClickMH : respack_decompressed.imageClick;
         break;
-    case Madokawaii::App::NoteType::hold:
-        texture = note.isMultipleNote ? respack_decompressed.imageHoldMH : respack_decompressed.imageHold;
+    case Madokawaii::App::NoteType::drag:
+        texture = note.isMultipleNote ? respack_decompressed.imageDragMH : respack_decompressed.imageDrag;
         break;
     case Madokawaii::App::NoteType::flick:
         texture = note.isMultipleNote ? respack_decompressed.imageFlickMH : respack_decompressed.imageFlick;
-        break;
-    case Madokawaii::App::NoteType::drag:
-        texture = note.isMultipleNote ? respack_decompressed.imageDragMH : respack_decompressed.imageDrag;
         break;
     default:
         return;
     }
     Madokawaii::Platform::Graphics::Vector2 pos{}, texture_dimension{};
     Madokawaii::Platform::Graphics::Texture::MeasureTexture2D(texture, &texture_dimension);
-    pos.x = static_cast<float>(note.coordinateX - texture_dimension.x / 2.f * 0.2);
-    pos.y = static_cast<float>(note.coordinateY - texture_dimension.y / 2.f * 0.2);
     Madokawaii::Platform::Graphics::Color_ tint{255, 255, 255, 255};
-    Madokawaii::Platform::Graphics::Texture::DrawTextureEx(texture, pos, note.rotateAngle, 0.2f, tint);
+    const auto rotateAngle = static_cast<float>(note.rotateAngle), rotateAngleRad = rotateAngle * static_cast<float>(M_PI) / 180.f;
+    float xOffset = texture_dimension.x / 2.f * 0.2f, yOffset = texture_dimension.y / 2.f * 0.2f;
+    pos.x = static_cast<float>(note.coordinateX - cos(rotateAngleRad) * xOffset + sin(rotateAngleRad) * yOffset);
+    pos.y = static_cast<float>(note.coordinateY - cos(rotateAngleRad) * yOffset - sin(rotateAngleRad) * xOffset);
+    Madokawaii::Platform::Graphics::Texture::DrawTextureEx(texture, pos, rotateAngle, 0.2f, tint);
 }

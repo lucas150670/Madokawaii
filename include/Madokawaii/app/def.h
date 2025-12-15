@@ -19,9 +19,9 @@
 namespace Madokawaii::App {
     enum NoteType {
         tap = 1,
-        drag = 4,
-        flick = 3,
-        hold = 2
+        drag = 2,
+        flick = 4,
+        hold = 3
     };
 
     enum NoteState {
