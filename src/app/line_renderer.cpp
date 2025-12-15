@@ -9,7 +9,7 @@
 #include "Madokawaii/app/line_operation.h"
 #include "Madokawaii/platform/graphics.h"
 
-void RenderJudgeline(const Madokawaii::Defs::chart::judgeline& judgeline, int screenWidth, int screenHeight) {
+void RenderJudgeline(const Madokawaii::App::chart::judgeline& judgeline, int screenWidth, int screenHeight) {
     auto c = Madokawaii::Platform::Graphics::M_RAYWHITE;
     c.a = static_cast<unsigned char>(judgeline.info.opacity * 255);
     auto screenX = static_cast<float>(judgeline.info.posX * screenWidth),

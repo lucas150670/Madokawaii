@@ -27,4 +27,9 @@ namespace Madokawaii::Platform::Core {
     bool WindowShouldClose() { return ::WindowShouldClose(); }
 
     void CloseWindow() { ::CloseWindow(); }
+
+    int GetFileLength(const char* fileName)
+    {
+        return ::GetFileLength(fileName);
+    }
 }

@@ -21,6 +21,15 @@ namespace Madokawaii::Platform::Audio {
         return m;
     }
 
+    Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data, int dataSize)
+    {
+        Music m{};
+        auto rl = ::LoadMusicStreamFromMemory(fileType, data, dataSize);
+        m.looping = true;
+        m.implementationDefined = new ::Music(rl);
+        return m;
+    }
+
     void UnloadMusicStream(Music m) {
         if (m.implementationDefined) {
             auto rl = AsRL(m);

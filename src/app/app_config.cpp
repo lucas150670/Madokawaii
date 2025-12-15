@@ -30,12 +30,22 @@ namespace Madokawaii::AppConfig {
         return config_.musicPath;
     }
 
+    const std::string& ConfigManager::GetResPackPath() const
+    {
+        return config_.resPackPath;
+    }
+
     void ConfigManager::SetChartPath(const std::string& path) {
         config_.chartPath = path;
     }
 
     void ConfigManager::SetMusicPath(const std::string& path) {
         config_.musicPath = path;
+    }
+
+    void ConfigManager::SetResPackPath(const std::string& path)
+    {
+        config_.resPackPath = path;
     }
 
     bool ConfigManager::LoadDefaults() {

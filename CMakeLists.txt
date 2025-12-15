@@ -4,6 +4,8 @@ project(Madokawaii)
 # configured with vcpkg
 find_package(RapidJSON CONFIG REQUIRED)
 find_package(yaml CONFIG REQUIRED)
+find_package(libzip CONFIG REQUIRED)
+find_package(libzippp CONFIG REQUIRED)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_EXE_LINKER_FLAGS "-static")
@@ -19,7 +21,8 @@ set(SRC_APP
         src/app/chart.cpp
         src/app/app_config.cpp
         src/app/line_update.cpp
-        src/app/line_renderer.cpp)
+        src/app/line_renderer.cpp
+        src/app/res_pack.cpp)
 
 set(SRC_IMP_RAYLIB
         src/platform/raylib/raylib_graphics.cpp
@@ -28,7 +31,9 @@ set(SRC_IMP_RAYLIB
         src/platform/raylib/raylib_log.cpp
         src/platform/raylib/raylib_audio.cpp
         src/platform/raylib/raylib_fonts.cpp
-        src/platform/raylib/raylib_texture.cpp)
+        src/platform/raylib/raylib_texture.cpp
+        include/Madokawaii/app/note_operation.h
+        src/app/note_render.cpp)
 
 # set(SRC_IMP_DIRECT2D
 #        # TODO: direct2d implement
@@ -36,11 +41,10 @@ set(SRC_IMP_RAYLIB
 
 if(implementer STREQUAL "RAYLIB")
     find_package(raylib CONFIG REQUIRED)
-    find_package(glad CONFIG REQUIRED)
     add_executable(Madokawaii
             ${SRC_APP}
             ${SRC_IMP_RAYLIB})
-    target_link_libraries(Madokawaii PRIVATE raylib RapidJSON rapidjson yaml)
+    target_link_libraries(Madokawaii PRIVATE raylib RapidJSON rapidjson yaml libzip::zip libzippp::libzippp)
 # elseif(implementer STREQUAL "DIRECT2D")
 #     add_executable(Madokawaii
 #             ${SRC_APP}

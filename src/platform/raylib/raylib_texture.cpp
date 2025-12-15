@@ -7,6 +7,7 @@
 //
 #include <raylib.h>
 #include "Madokawaii/platform/texture.h"
+#include <cassert>
 
 
 namespace Madokawaii::Platform::Graphics::Texture {
@@ -27,6 +28,13 @@ namespace Madokawaii::Platform::Graphics::Texture {
         }
     }
 
+    Image LoadImageFromMemory(const char* fileType, const unsigned char* fileData, int dataSize)
+    {
+        Image img{};
+        img.implementationDefinedData = new ::Image(::LoadImageFromMemory(fileType, fileData, dataSize));
+        return img;
+    }
+
     Texture2D LoadTexture(const char *fileName) {
         Texture2D t{};
         t.implementationDefinedData = new ::Texture2D(::LoadTexture(fileName));
@@ -36,6 +44,7 @@ namespace Madokawaii::Platform::Graphics::Texture {
     Texture2D LoadTextureFromImage(Image image) {
         Texture2D t{};
         auto& rlImg = *static_cast<::Image*>(image.implementationDefinedData);
+        assert(rlImg.data);
         t.implementationDefinedData = new ::Texture2D(::LoadTextureFromImage(rlImg));
         return t;
     }
@@ -48,8 +57,15 @@ namespace Madokawaii::Platform::Graphics::Texture {
         }
     }
 
-    void DrawTextureEx(Texture2D texture, Madokawaii::Platform::Graphics::Vector2 pos, float rotation, float scale, Madokawaii::Platform::Graphics::Color_ tint) {
+    void DrawTextureEx(Texture2D texture, Vector2 pos, float rotation, float scale, Color_ tint) {
         auto& rl = *static_cast<::Texture2D*>(texture.implementationDefinedData);
         ::DrawTextureEx(rl, {pos.x, pos.y}, rotation, scale, RL(tint));
+    }
+
+    void MeasureTexture2D(Texture2D texture, Vector2* dimension)
+    {
+        auto& rl = *static_cast<::Texture2D*>(texture.implementationDefinedData);
+        dimension->x = static_cast<float>(rl.width);
+        dimension->y = static_cast<float>(rl.height);
     }
 }

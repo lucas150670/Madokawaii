@@ -15,7 +15,7 @@
 #include <cfloat>
 #include <tuple>
 
-namespace Madokawaii::Defs::Chart {
+namespace Madokawaii::App::Chart {
 
     const std::string chartSchemaV3String =
         R"({"type":"object","properties":{"formatVersion":{"type":"integer"},"offset":{"type":"number"},"judgeLineList":{"type":"array","items":{"type":"object","properties":{"bpm":{"type":"number"},"speedEvents":{"type":"array","items":{"type":"object","properties":{"startTime":{"type":"number"},"endTime":{"type":"number"},"value":{"type":"number"}},"required":["startTime","endTime","value"]}},"judgeLineDisappearEvents":{"type":"array","items":{"type":"object","properties":{"startTime":{"type":"number"},"endTime":{"type":"number"},"start":{"type":"number"},"end":{"type":"number"}},"required":["startTime","endTime","start","end"]}},"judgeLineMoveEvents":{"type":"array","items":{"type":"object","properties":{"startTime":{"type":"number"},"endTime":{"type":"number"},"start":{"type":"number"},"end":{"type":"number"},"start2":{"type":"number"},"end2":{"type":"number"}},"required":["startTime","endTime","start","end","start2","end2"]}},"judgeLineRotateEvents":{"type":"array","items":{"type":"object","properties":{"startTime":{"type":"number"},"endTime":{"type":"number"},"start":{"type":"number"},"end":{"type":"number"}},"required":["startTime","endTime","start","end"]}},"notesAbove":{"type":"array","items":{"type":"object","properties":{"type":{"type":"integer"},"time":{"type":"integer"},"positionX":{"type":"number"},"holdTime":{"type":"number"},"speed":{"type":"number"},"floorPosition":{"type":"number"}},"required":["type","time","positionX","holdTime","speed","floorPosition"]}},"notesBelow":{"type":"array","items":{"type":"object","properties":{"type":{"type":"integer"},"time":{"type":"integer"},"positionX":{"type":"number"},"holdTime":{"type":"number"},"speed":{"type":"number"},"floorPosition":{"type":"number"}},"required":["type","time","positionX","holdTime","speed","floorPosition"]}}},"required":["bpm","speedEvents","judgeLineDisappearEvents","judgeLineMoveEvents","judgeLineRotateEvents","notesAbove","notesBelow"]}}},"required":["formatVersion","offset","judgeLineList"]})";
@@ -165,7 +165,8 @@ namespace Madokawaii::Defs::Chart {
                     .speed = notesAbove["speed"].GetDouble(),
                     .floorPosition = notesAbove["floorPosition"].GetDouble(),
                     .realTime = (++mainChart.numOfNotes, CalcRealTime(thisjudgeline.bpm, notesAbove["time"].GetInt())),
-                    .isNoteBelow = false
+                    .isNoteBelow = false,
+                    .state = NoteState::invisible
                 });
             }
 
@@ -179,7 +180,8 @@ namespace Madokawaii::Defs::Chart {
                     .speed = notesBelow["speed"].GetDouble(),
                     .floorPosition = notesBelow["floorPosition"].GetDouble(),
                     .realTime = (++mainChart.numOfNotes, CalcRealTime(thisjudgeline.bpm, notesBelow["time"].GetInt())),
-                    .isNoteBelow = true
+                    .isNoteBelow = true,
+                    .state = NoteState::invisible
                 });
             }
 

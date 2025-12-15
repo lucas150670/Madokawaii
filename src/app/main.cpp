@@ -1,16 +1,16 @@
 
 #include <algorithm>
 #include <ctime>
-#include <cfloat>
 #include <format>
 #include <string>
 #include <vector>
-#include <cmath>
 
 #include "Madokawaii/app/app_config.h"
 #include "Madokawaii/app/def.h"
 #include "Madokawaii/app/chart.h"
 #include "Madokawaii/app/line_operation.h"
+#include "Madokawaii/app/note_operation.h"
+#include "Madokawaii/app/res_pack.h"
 #include "Madokawaii/platform/audio.h"
 #include "Madokawaii/platform/log.h"
 #include "Madokawaii/platform/core.h"
@@ -20,8 +20,9 @@ struct AppContext {
     int screenWidth{1920};
     int screenHeight{1080};
     Madokawaii::Platform::Audio::Music music{};
-    Madokawaii::Defs::chart mainChart{};
+    Madokawaii::App::chart mainChart{};
     bool initialized{false};
+    std::shared_ptr<Madokawaii::App::ResPack::ResPack> global_respack;
 };
 
 extern "C" {
@@ -34,6 +35,7 @@ int AppInit(void*& appstate) {
     auto& danli = Madokawaii::AppConfig::ConfigManager::Instance();
     const auto& musicPath = danli.GetMusicPath();
     const auto& chartPath = danli.GetChartPath();
+    const auto& resPackPath = danli.GetResPackPath();
 
     clock_t begin = clock();
     if (!Madokawaii::Platform::Core::FileExists(musicPath.c_str())) {
@@ -44,11 +46,21 @@ int AppInit(void*& appstate) {
     ctx.music = Madokawaii::Platform::Audio::LoadMusicStream(musicPath.c_str());
     Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "MAIN: Music stream loaded");
 
-    ctx.mainChart = Madokawaii::Defs::Chart::LoadChartFromFile(chartPath.c_str());
-    if (!Madokawaii::Defs::Chart::IsValidChart(ctx.mainChart)) {
+    ctx.mainChart = Madokawaii::App::Chart::LoadChartFromFile(chartPath.c_str());
+    if (!Madokawaii::App::Chart::IsValidChart(ctx.mainChart)) {
         Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_ERROR, "MAIN: Failed to load chart!");
         return false;
     }
+
+    int dataSize = 0;
+    auto respack_mem_stream = Madokawaii::Platform::Core::LoadFileData(resPackPath.c_str(), &dataSize);
+    if (!respack_mem_stream)
+    {
+        Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_ERROR, "MAIN: Failed to load respack file into memory!");
+        return false;
+    }
+    ctx.global_respack = Madokawaii::App::ResPack::LoadResPackFromMemoryStream(respack_mem_stream, dataSize);
+	Madokawaii::Platform::Core::UnloadFileData(respack_mem_stream);
 
     clock_t end = clock();
     Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "MAIN: Chart Initialization Successful!");
@@ -61,10 +73,11 @@ int AppInit(void*& appstate) {
     Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "    > RotateEvents Count:     %d", ctx.mainChart.rotateEventCount);
     Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "MAIN: Elapsed time: %lf s", (end - begin) * 1.0 / CLOCKS_PER_SEC);
 
-    Madokawaii::Defs::Chart::InitializeJudgelines(ctx.mainChart);
+    Madokawaii::App::Chart::InitializeJudgelines(ctx.mainChart);
 
     Madokawaii::Platform::Core::InitWindow(ctx.screenWidth, ctx.screenHeight, "Madokawaii");
 
+    InitializeNoteRenderer(*ctx.global_respack);
     ctx.music.looping = false;
     auto musicLength = Madokawaii::Platform::Audio::GetMusicTimeLength(ctx.music);
     Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "MAIN: Music Length: %f", musicLength);
@@ -90,7 +103,7 @@ int AppIterate(void * appstate) {
         return false;
     }
 
-    auto noteRenderList = std::vector<Madokawaii::Defs::chart::judgeline::note *>();
+    auto noteRenderList = std::vector<Madokawaii::App::chart::judgeline::note *>();
 
     for (auto &judgeline: ctx.mainChart.judgelines) {
         UpdateJudgeline(judgeline, thisFrameTime, ctx.screenWidth, ctx.screenHeight, noteRenderList);
@@ -110,6 +123,7 @@ int AppIterate(void * appstate) {
 
     for (auto notePtr: noteRenderList) {
         // TODO: 实现note渲染
+        RenderNote(*notePtr);
     }
 
     RenderDebugInfo();

@@ -13,7 +13,7 @@
 #include "Madokawaii/app/def.h"
 #include <functional>
 
-namespace Madokawaii::Defs::Chart {
+namespace Madokawaii::App::Chart {
     enum class ChartType {
         Official_FV3,
         Official_FV1,

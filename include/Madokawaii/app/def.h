@@ -16,7 +16,7 @@
 #define M_PI 3.14159265358979323846
 
 
-namespace Madokawaii::Defs {
+namespace Madokawaii::App {
     enum NoteType {
         tap = 1,
         drag = 4,

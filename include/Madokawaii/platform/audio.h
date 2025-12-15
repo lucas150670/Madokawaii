@@ -14,6 +14,7 @@ namespace Madokawaii::Platform::Audio {
         void *implementationDefined;
     };
     Music LoadMusicStream(const char*);
+    Music LoadMusicStreamFromMemory(const char*, const unsigned char*, int);
     void UnloadMusicStream(Music);
     void PlayMusicStream(Music);
     void UpdateMusicStream(Music);

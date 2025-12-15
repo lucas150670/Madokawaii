@@ -16,10 +16,12 @@ namespace Madokawaii::Platform::Graphics::Texture {
     };
     Image LoadImage(const char *fileName);
     void UnLoadImage(Image Image);
+    Image LoadImageFromMemory(const char *fileType, const unsigned char*fileData, int dataSize);
     Texture2D LoadTexture(const char *fileName);
     Texture2D LoadTextureFromImage(Image Image);
     void UnloadTexture(Texture2D texture);
     void DrawTextureEx(Texture2D texture, Vector2, float rotation, float scale, Color_ tint);
+    void MeasureTexture2D(Texture2D texture, Vector2* dimension);
 
 }
 
