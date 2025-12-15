@@ -23,6 +23,7 @@ namespace Madokawaii::Platform::Graphics::Texture {
     void UnloadTexture(Texture2D texture);
     void DrawTextureEx(Texture2D texture, Vector2, float rotation, float scale, Color_ tint);
     void DrawTextureRec(Texture2D texture, Shape::Rectangle source, Vector2 position, Color_ tint);     //绘制由Rectangle 定义的Texture的一部分
+    void DrawTexturePro(Texture2D texture, Shape::Rectangle source, Shape::Rectangle, Vector2 position, float rotation, Color tint);
     void MeasureTexture2D(Texture2D texture, Vector2* dimension);
 
 }

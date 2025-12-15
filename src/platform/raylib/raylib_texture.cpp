@@ -62,10 +62,20 @@ namespace Madokawaii::Platform::Graphics::Texture {
         ::DrawTextureEx(rl, {pos.x, pos.y}, rotation, scale, RL(tint));
     }
 
-    void DrawTextureRec(Texture2D texture, Rectangle source, Vector2 position, Color_ tint) {
+    void DrawTextureRec(Texture2D texture, Shape::Rectangle source, Vector2 position, Color_ tint) {
         auto& rl = *static_cast<::Texture2D*>(texture.implementationDefinedData);
-        ::DrawTextureRec(rl, source, {position.x, position.y}, RL(tint));
+        auto rlRectangle = ::Rectangle{source.x, source.y, source.width, source.height};
+        ::DrawTextureRec(rl, rlRectangle, {position.x, position.y}, RL(tint));
     }
+
+    void DrawTexturePro(Texture2D texture, Shape::Rectangle source, Shape::Rectangle dest, Vector2 origin, float rotation,
+        Color tint) {
+        auto& rl = *static_cast<::Texture2D*>(texture.implementationDefinedData);
+        auto rlSource = ::Rectangle{source.x, source.y, source.width, source.height};
+        auto rlDest = ::Rectangle{dest.x, dest.y, dest.width, dest.height};
+        ::DrawTexturePro(rl, rlSource, rlDest, {origin.x, origin.y}, rotation, RL(tint));
+    }
+
 
     void MeasureTexture2D(Texture2D texture, Vector2* dimension)
     {

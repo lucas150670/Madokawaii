@@ -20,6 +20,7 @@ struct ResPackDecompressed
     ResTexture2D imageHoldMH;
     ResTexture2D imageFlickMH;
     ResTexture2D imageDragMH;
+    float holdAtlasHead{}, holdAtlasTail{}, holdAtlasMHHead{}, holdAtlasMHTail{};
 };
 
 ResPackDecompressed respack_decompressed{};
@@ -51,6 +52,10 @@ void InitializeNoteRenderer(const Madokawaii::App::ResPack::ResPack& respack_raw
     respack_decompressed.imageHoldMH = loadTextureFromResData(respack_raw.imageHoldMH);
     respack_decompressed.imageFlickMH = loadTextureFromResData(respack_raw.imageFlickMH);
     respack_decompressed.imageDragMH = loadTextureFromResData(respack_raw.imageDragMH);
+    respack_decompressed.holdAtlasHead = respack_raw.holdAtlasHead;
+    respack_decompressed.holdAtlasTail = respack_raw.holdAtlasTail;
+    respack_decompressed.holdAtlasMHHead = respack_raw.holdAtlasMHHead;
+    respack_decompressed.holdAtlasMHTail = respack_raw.holdAtlasMHTail;
 }
 
 void RenderNote(const Madokawaii::App::chart::judgeline::note& note)
@@ -58,7 +63,32 @@ void RenderNote(const Madokawaii::App::chart::judgeline::note& note)
     ResTexture2D texture;
     if  (note.type == Madokawaii::App::NoteType::hold) {
         // hold单独处理
+        texture = note.isMultipleNote ? respack_decompressed.imageHoldMH : respack_decompressed.imageHold;
+        auto holdAtlasHead = note.isMultipleNote ? respack_decompressed.holdAtlasMHHead : respack_decompressed.holdAtlasHead;
+        Madokawaii::Platform::Graphics::Vector2 pos{}, texture_dimension{};
+        Madokawaii::Platform::Graphics::Texture::MeasureTexture2D(texture, &texture_dimension);
+        // 先画hold头
+        Madokawaii::Platform::Graphics::Color_ tint{255, 255, 255, 255};
+        float xOffset = texture_dimension.x / 2.f * 0.2f, yOffset = holdAtlasHead / 2.f * 0.2f;
 
+        const auto rotateAngle = static_cast<float>(360 - note.rotateAngle), rotateAngleRad = rotateAngle * static_cast<float>(M_PI) / 180.f;
+        pos.x = static_cast<float>(note.coordinateX - cos(rotateAngleRad) * xOffset + sin(rotateAngleRad) * yOffset);
+        pos.y = static_cast<float>(note.coordinateY - cos(rotateAngleRad) * yOffset - sin(rotateAngleRad) * xOffset);
+        Madokawaii::Platform::Shape::Rectangle rec{};
+        rec.width = texture_dimension.x;
+        rec.height = holdAtlasHead;
+        Madokawaii::Platform::Shape::Rectangle dest{};
+        dest.x = static_cast<float>(note.coordinateX);
+        dest.y = static_cast<float>(note.coordinateY);
+        dest.width = texture_dimension.x * 0.2f;
+        dest.height = holdAtlasHead * 0.2f;
+
+        // 设置纹理中心
+        Madokawaii::Platform::Graphics::Vector2 origin{};
+        origin.x = dest.width / 2.f;
+        origin.y = dest.height / 2.f;
+        Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "NOTE: Render hold head at (%f, %f)", dest.x, dest.y);
+        Madokawaii::Platform::Graphics::Texture::DrawTexturePro(texture, rec, dest, origin, rotateAngle, tint);
         return;
     }
     switch (note.type)
