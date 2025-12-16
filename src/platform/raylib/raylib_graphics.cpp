@@ -6,7 +6,7 @@
 //
 #include <raylib.h>
 #include "Madokawaii/platform/graphics.h"
-
+#include <rlgl.h>
 
 extern char gVendor[256];
 extern char gRenderer[256];
@@ -40,6 +40,19 @@ namespace Madokawaii::Platform::Graphics {
 
     void DrawLineEx(Vector2 start, Vector2 end, float thick, Color_ color) {
         ::DrawLineEx({start.x, start.y}, {end.x, end.y}, thick, RL(color));
+    }
+
+    void SetTransform(float x, float y, float rotate, float scaleX, float scaleY)
+    {
+        rlPushMatrix();
+        rlTranslatef(x, y, 0);
+        rlRotatef(rotate, 0, 0, 1);
+        rlScalef(scaleX, scaleY, 1);
+    }
+
+    void PopTransform()
+    {
+        rlPopMatrix();
     }
 }
 

@@ -53,6 +53,8 @@ void UpdateJudgeline(Madokawaii::App::chart::judgeline& judgeline, double thisFr
 		else
 			note.positionY = note.floorPosition - judgeline.info.positionY;
 		note.rotateAngle = judgeline.info.rotateAngle;
+		// realholdtime = speed * (holdTime -> real)
+		note.realHoldTime = Madokawaii::App::Chart::CalcRealTime(judgeline.bpm, static_cast<int>(note.holdTime)) * note.speed;
 		if (fabs(note.rotateAngle - 360.0) < 1e-6)
 			note.rotateAngle = 0.0f;
 		auto note_rotate_angle_rad =  note.rotateAngle * M_PI / 180.0;
@@ -93,10 +95,11 @@ void UpdateJudgeline(Madokawaii::App::chart::judgeline& judgeline, double thisFr
 				note.state = Madokawaii::App::NoteState::invisible;
 			}
 			if (note.state == Madokawaii::App::NoteState::appeared) {
+				/*
 				if (fabs(note.rotateAngle) > 1e-6)
 					Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO,
 						"NOTE: Note appeared at rotate angle %f (realTime %f), position (%f, %f)",
-						note.rotateAngle, note.realTime, note.coordinateX, note.coordinateY);
+						note.rotateAngle, note.realTime, note.coordinateX, note.coordinateY);*/
 				noteRenderList.push_back(&note);
 			}
 			else

@@ -178,3 +178,5 @@ CMakeUserPresets.json
 src/platform/harmonyos
 subproject/
 
+/.vs
+/CMakeSettings.json

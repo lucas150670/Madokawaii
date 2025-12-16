@@ -25,6 +25,8 @@ namespace Madokawaii::Platform::Graphics {
     void ClearBackground(Color);
     void DrawText(const char*, int, int, int, Color);
     void DrawLineEx(Vector2, Vector2, float, Color);
+    void SetTransform(float x, float y, float rotate, float scaleX, float scaleY);
+    void PopTransform();
 
 
     constexpr auto M_LIGHTGRAY = (Color){200, 200, 200, 255}; //浅灰色

@@ -112,14 +112,15 @@ int AppIterate(void * appstate) {
     }
 
     for (auto notePtrIter = noteRenderList.begin(); notePtrIter != noteRenderList.end(); ++notePtrIter) {
-        for (auto notePtrIter1 = notePtrIter; notePtrIter1 != noteRenderList.end(); ++notePtrIter1) {
-            if (fabs((*notePtrIter)->realTime - (*notePtrIter)->realTime) < 1e-6) {
+        for (auto notePtrIter1 = notePtrIter + 1; notePtrIter1 != noteRenderList.end(); ++notePtrIter1) {
+            if (fabs((*notePtrIter)->realTime - (*notePtrIter1)->realTime) < 1e-6) {
                 (*notePtrIter1)->isMultipleNote = (*notePtrIter)->isMultipleNote = true;
-            } else if ((*notePtrIter)->realTime < (*notePtrIter)->realTime) {
+            } else if ((*notePtrIter1)->realTime > (*notePtrIter)->realTime) {
                 break;
             }
         }
     }
+
 
     for (auto notePtr: noteRenderList) {
         // TODO: 实现note渲染

@@ -61,7 +61,7 @@ namespace Madokawaii::App {
                 int type, time;
                 double positionX, holdTime, speed, floorPosition;
                 // real-time calculated values
-                double realTime, positionY, coordinateX, coordinateY;
+                double realTime, positionY, coordinateX, coordinateY, realHoldTime;
                 double rotateAngle;
                 bool isNoteBelow, isMultipleNote;
                 int state;
