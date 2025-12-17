@@ -77,7 +77,7 @@ int AppInit(void*& appstate) {
 
     Madokawaii::Platform::Core::InitWindow(ctx.screenWidth, ctx.screenHeight, "Madokawaii");
 
-    InitializeNoteRenderer(*ctx.global_respack);
+    InitializeNoteRenderer(*ctx.global_respack, ctx.screenWidth, ctx.screenHeight);
     ctx.music.looping = false;
     auto musicLength = Madokawaii::Platform::Audio::GetMusicTimeLength(ctx.music);
     Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "MAIN: Music Length: %f", musicLength);
@@ -127,6 +127,7 @@ int AppIterate(void * appstate) {
         RenderNote(*notePtr);
     }
 
+    RenderHoldCallback(thisFrameTime);
     RenderDebugInfo();
     Madokawaii::Platform::Graphics::EndDrawing();
 

@@ -23,10 +23,15 @@ struct ResPackDecompressed
     float holdAtlasHead{}, holdAtlasTail{}, holdAtlasMHHead{}, holdAtlasMHTail{};
 };
 
+std::vector<Madokawaii::App::chart::judgeline::note> holds_to_render{};
+float screenWidth{}, screenHeight{};
+
 ResPackDecompressed respack_decompressed{};
 
-void InitializeNoteRenderer(const Madokawaii::App::ResPack::ResPack& respack_raw)
+void InitializeNoteRenderer(const Madokawaii::App::ResPack::ResPack& respack_raw, float screenWidthIn, float screenHeightIn)
 {
+    screenWidth = screenWidthIn;
+    screenHeight = screenHeightIn;
     // decompress respack images into textures
     using namespace Madokawaii::Platform::Graphics::Texture;
 
@@ -60,7 +65,7 @@ void InitializeNoteRenderer(const Madokawaii::App::ResPack::ResPack& respack_raw
 
 void RenderHoldNote(const Madokawaii::App::chart::judgeline::note& note)
 {
-    auto noteHoldLength = note.speed * note.realHoldTime * 100;
+    auto noteHoldLength = note.speed * note.realHoldTime * screenHeight * 1.2;
     auto texture = note.isMultipleNote ? respack_decompressed.imageHoldMH : respack_decompressed.imageHold;
     auto holdAtlasHead = note.isMultipleNote ? respack_decompressed.holdAtlasMHHead : respack_decompressed.holdAtlasHead;
     auto holdAtlasTail = note.isMultipleNote ? respack_decompressed.holdAtlasMHTail : respack_decompressed.holdAtlasTail;
@@ -73,8 +78,8 @@ void RenderHoldNote(const Madokawaii::App::chart::judgeline::note& note)
     constexpr float scale = 0.2f;
 
     float holdBodyTextureHeight = texture_dimension.y - holdAtlasHead - holdAtlasTail;
-    float headHeight = holdAtlasHead * scale;
-    float tailHeight = holdAtlasTail * scale;
+    [[maybe_unused]] float headHeight = holdAtlasHead * scale;
+    [[maybe_unused]] float tailHeight = holdAtlasTail * scale;
     float bodyHeight = static_cast<float>(noteHoldLength) * scale;
 
     float directionSign = note.isNoteBelow ? 1.f : -1.f;
@@ -105,8 +110,8 @@ void RenderHoldNote(const Madokawaii::App::chart::judgeline::note& note)
         destBody.height = bodyHeight / scale;
 
         float bodyStartY = note.isNoteBelow
-            ? (holdAtlasHead / 2.f)
-            : (-holdAtlasHead / 2.f - destBody.height);
+            ? holdAtlasHead / 2.f
+            : -holdAtlasHead / 2.f - destBody.height;
 
         destBody.x = -destBody.width / 2.f;
         destBody.y = bodyStartY;
@@ -123,8 +128,8 @@ void RenderHoldNote(const Madokawaii::App::chart::judgeline::note& note)
         srcTail.height = holdAtlasTail;
 
         float tailOffsetY = note.isNoteBelow
-            ? (holdAtlasHead / 2.f + destBody.height)
-            : (-holdAtlasHead / 2.f - destBody.height - holdAtlasTail);
+            ? holdAtlasHead / 2.f + destBody.height
+            : -holdAtlasHead / 2.f - destBody.height - holdAtlasTail;
 
         Madokawaii::Platform::Graphics::Texture::DrawTextureRec(
             texture, srcTail,
@@ -165,4 +170,21 @@ void RenderNote(const Madokawaii::App::chart::judgeline::note& note)
     pos.x = static_cast<float>(note.coordinateX - cos(rotateAngleRad) * xOffset + sin(rotateAngleRad) * yOffset);
     pos.y = static_cast<float>(note.coordinateY - cos(rotateAngleRad) * yOffset - sin(rotateAngleRad) * xOffset);
     Madokawaii::Platform::Graphics::Texture::DrawTextureEx(texture, pos, rotateAngle, 0.2f, tint);
+}
+
+void AddHoldNoteClickingRender(const Madokawaii::App::chart::judgeline::note &note) {
+    holds_to_render.push_back(note);
+}
+
+void RenderHoldCallback(float thisFrameTime) {
+    for (auto &hold : holds_to_render) {
+		if (hold.realHoldTime + hold.realTime < thisFrameTime) {
+		    hold.state = Madokawaii::App::NoteState::finished;
+            continue;
+		}
+        hold.state = Madokawaii::App::NoteState::holding;
+        Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "NOTE: Rendering Holding Note, this frame time = %f, hold time = %f, real hold time = %f", thisFrameTime, hold.realTime, hold.realHoldTime);
+        RenderHoldNote(hold);
+    }
+    std::erase_if(holds_to_render, [](const auto& note) { return note.state == Madokawaii::App::NoteState::finished; });
 }

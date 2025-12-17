@@ -6,6 +6,8 @@
 #include "Madokawaii/app/line_operation.h"
 #include <Madokawaii/platform/log.h>
 
+#include "Madokawaii/app/note_operation.h"
+
 void UpdateJudgeline(Madokawaii::App::chart::judgeline& judgeline, double thisFrameTime, int screenWidth, int screenHeight, std::vector<Madokawaii::App::chart::judgeline::note*>& noteRenderList) {
 	auto calcEventRealTime = [&judgeline](const double beatTime) {
 		return Madokawaii::App::Chart::CalcRealTime(judgeline.bpm, static_cast<int>(beatTime));
@@ -46,7 +48,12 @@ void UpdateJudgeline(Madokawaii::App::chart::judgeline& judgeline, double thisFr
 
 	auto processNote = [&, thisFrameTime](Madokawaii::App::chart::judgeline::note& note) {
 		if (note.realTime < thisFrameTime) {
-			note.state = Madokawaii::App::NoteState::finished;
+			if (note.type == Madokawaii::App::NoteType::hold) {
+				AddHoldNoteClickingRender(note);
+				note.state = Madokawaii::App::NoteState::holding;
+			}
+			else
+				note.state = Madokawaii::App::NoteState::finished;
 		}
 		if (note.type != Madokawaii::App::NoteType::hold)
 			note.positionY = note.speed * (note.floorPosition - judgeline.info.positionY);
@@ -60,15 +67,15 @@ void UpdateJudgeline(Madokawaii::App::chart::judgeline& judgeline, double thisFr
 		auto note_rotate_angle_rad =  note.rotateAngle * M_PI / 180.0;
 
 		switch (note.state) {
-		case Madokawaii::App::NoteState::finished:
 		case Madokawaii::App::NoteState::holding:
+		case Madokawaii::App::NoteState::finished:
 			if (note.isNoteBelow) {
 				++judgeline.info.notesBelowIndex;
-				Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "INFO: noteBelowIndex = %d holding/disappear, incrasing index", judgeline.info.notesBelowIndex - 1);
+				// Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "INFO: noteBelowIndex = %d holding/disappear, incrasing index", judgeline.info.notesBelowIndex - 1);
 			}
 			else {
 				++judgeline.info.notesAboveIndex;
-				Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "INFO: noteAboveIndex = %d holding/disappear, incrasing index", judgeline.info.notesAboveIndex - 1);
+				// Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "INFO: noteAboveIndex = %d holding/disappear, incrasing index", judgeline.info.notesAboveIndex - 1);
 			}
 			break;
 		case Madokawaii::App::NoteState::invisible:
@@ -99,7 +106,7 @@ void UpdateJudgeline(Madokawaii::App::chart::judgeline& judgeline, double thisFr
 				if (fabs(note.rotateAngle) > 1e-6)
 					Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO,
 						"NOTE: Note appeared at rotate angle %f (realTime %f), position (%f, %f)",
-						note.rotateAngle, note.realTime, note.coordinateX, note.coordinateY);*/
+				note.rotateAngle, note.realTime, note.coordinateX, note.coordinateY);*/
 				noteRenderList.push_back(&note);
 			}
 			else
