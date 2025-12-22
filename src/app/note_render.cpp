@@ -65,7 +65,7 @@ void InitializeNoteRenderer(const Madokawaii::App::ResPack::ResPack& respack_raw
 
 void RenderHoldNote(const Madokawaii::App::chart::judgeline::note& note)
 {
-    auto noteHoldLength = note.speed * note.realHoldTime * screenHeight * 1.2;
+    auto noteHoldLength = note.speed * note.realHoldTime * screenHeight * 0.6;
     auto texture = note.isMultipleNote ? respack_decompressed.imageHoldMH : respack_decompressed.imageHold;
     auto holdAtlasHead = note.isMultipleNote ? respack_decompressed.holdAtlasMHHead : respack_decompressed.holdAtlasHead;
     auto holdAtlasTail = note.isMultipleNote ? respack_decompressed.holdAtlasMHTail : respack_decompressed.holdAtlasTail;
@@ -80,7 +80,7 @@ void RenderHoldNote(const Madokawaii::App::chart::judgeline::note& note)
     float holdBodyTextureHeight = texture_dimension.y - holdAtlasHead - holdAtlasTail;
     [[maybe_unused]] float headHeight = holdAtlasHead * scale;
     [[maybe_unused]] float tailHeight = holdAtlasTail * scale;
-    float bodyHeight = static_cast<float>(noteHoldLength) * scale;
+    float bodyHeight = static_cast<float>(noteHoldLength);
 
     float directionSign = note.isNoteBelow ? 1.f : -1.f;
 
@@ -182,9 +182,9 @@ void RenderHoldCallback(float thisFrameTime) {
 		    hold.state = Madokawaii::App::NoteState::finished;
             continue;
 		}
-        hold.state = Madokawaii::App::NoteState::holding;
-        Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "NOTE: Rendering Holding Note, this frame time = %f, hold time = %f, real hold time = %f", thisFrameTime, hold.realTime, hold.realHoldTime);
-        RenderHoldNote(hold);
+        // hold.state = Madokawaii::App::NoteState::holding;
+        // Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "NOTE: Rendering Holding Note, this frame time = %f, hold time = %f, real hold time = %f", thisFrameTime, hold.realTime, hold.realHoldTime);
+        // RenderHoldNote(hold);
     }
     std::erase_if(holds_to_render, [](const auto& note) { return note.state == Madokawaii::App::NoteState::finished; });
 }
