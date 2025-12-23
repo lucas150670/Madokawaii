@@ -10,6 +10,6 @@
 void InitializeNoteRenderer(const Madokawaii::App::ResPack::ResPack&, float, float);
 void RenderNote(const Madokawaii::App::chart::judgeline::note& note);
 void AddHoldNoteClickingRender(const Madokawaii::App::chart::judgeline::note& note);
-void RenderHoldCallback(float thisFrameTime);
+void RenderHoldCallback(float thisFrameTime, const Madokawaii::App::chart& thisChart);
 
 #endif //MADOKAWAII_NOTE_OPERATION_H

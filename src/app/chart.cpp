@@ -166,7 +166,8 @@ namespace Madokawaii::App::Chart {
                     .floorPosition = notesAbove["floorPosition"].GetDouble(),
                     .realTime = (++mainChart.numOfNotes, CalcRealTime(thisjudgeline.bpm, notesAbove["time"].GetInt())),
                     .isNoteBelow = false,
-                    .state = NoteState::invisible
+                    .state = NoteState::invisible,
+                    .parent_line_id = thisjudgeline.id
                 });
             }
 
@@ -181,7 +182,8 @@ namespace Madokawaii::App::Chart {
                     .floorPosition = notesBelow["floorPosition"].GetDouble(),
                     .realTime = (++mainChart.numOfNotes, CalcRealTime(thisjudgeline.bpm, notesBelow["time"].GetInt())),
                     .isNoteBelow = true,
-                    .state = NoteState::invisible
+                    .state = NoteState::invisible,
+                    .parent_line_id = thisjudgeline.id
                 });
             }
 

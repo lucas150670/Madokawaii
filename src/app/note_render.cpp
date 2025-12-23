@@ -67,8 +67,9 @@ void RenderHoldNote(const Madokawaii::App::chart::judgeline::note& note)
 {
     auto noteHoldLength = note.speed * note.realHoldTime * screenHeight * 0.6;
     auto texture = note.isMultipleNote ? respack_decompressed.imageHoldMH : respack_decompressed.imageHold;
-    auto holdAtlasHead = note.isMultipleNote ? respack_decompressed.holdAtlasMHHead : respack_decompressed.holdAtlasHead;
-    auto holdAtlasTail = note.isMultipleNote ? respack_decompressed.holdAtlasMHTail : respack_decompressed.holdAtlasTail;
+    // 在这里的逻辑里，head在尾部绘制，tail在头部绘制
+    auto holdAtlasTail = note.isMultipleNote ? respack_decompressed.holdAtlasMHHead : respack_decompressed.holdAtlasHead;
+    auto holdAtlasHead = note.isMultipleNote ? respack_decompressed.holdAtlasMHTail : respack_decompressed.holdAtlasTail;
 
     Madokawaii::Platform::Graphics::Vector2 texture_dimension{};
     Madokawaii::Platform::Graphics::Texture::MeasureTexture2D(texture, &texture_dimension);
@@ -78,14 +79,14 @@ void RenderHoldNote(const Madokawaii::App::chart::judgeline::note& note)
     constexpr float scale = 0.2f;
 
     float holdBodyTextureHeight = texture_dimension.y - holdAtlasHead - holdAtlasTail;
-    [[maybe_unused]] float headHeight = holdAtlasHead * scale;
-    [[maybe_unused]] float tailHeight = holdAtlasTail * scale;
-    float bodyHeight = static_cast<float>(noteHoldLength);
+    auto bodyHeight = static_cast<float>(noteHoldLength);
 
-    float directionSign = note.isNoteBelow ? 1.f : -1.f;
-
+    if (note.isNoteBelow)
     Madokawaii::Platform::Graphics::SetTransform(
-        note.coordinateX, note.coordinateY, rotateAngle, scale, scale);
+        note.coordinateX, note.coordinateY, rotateAngle + 180.0f, scale, scale);
+    else
+        Madokawaii::Platform::Graphics::SetTransform(
+            note.coordinateX, note.coordinateY,  rotateAngle, scale, scale);
 
     Madokawaii::Platform::Shape::Rectangle srcHead{};
     srcHead.x = 0;
@@ -109,9 +110,7 @@ void RenderHoldNote(const Madokawaii::App::chart::judgeline::note& note)
         destBody.width = texture_dimension.x;
         destBody.height = bodyHeight / scale;
 
-        float bodyStartY = note.isNoteBelow
-            ? holdAtlasHead / 2.f
-            : -holdAtlasHead / 2.f - destBody.height;
+        float bodyStartY = -holdAtlasHead / 2.f - destBody.height;
 
         destBody.x = -destBody.width / 2.f;
         destBody.y = bodyStartY;
@@ -127,9 +126,7 @@ void RenderHoldNote(const Madokawaii::App::chart::judgeline::note& note)
         srcTail.width = texture_dimension.x;
         srcTail.height = holdAtlasTail;
 
-        float tailOffsetY = note.isNoteBelow
-            ? holdAtlasHead / 2.f + destBody.height
-            : -holdAtlasHead / 2.f - destBody.height - holdAtlasTail;
+        float tailOffsetY = -holdAtlasHead / 2.f - destBody.height - holdAtlasTail;
 
         Madokawaii::Platform::Graphics::Texture::DrawTextureRec(
             texture, srcTail,
@@ -176,15 +173,34 @@ void AddHoldNoteClickingRender(const Madokawaii::App::chart::judgeline::note &no
     holds_to_render.push_back(note);
 }
 
-void RenderHoldCallback(float thisFrameTime) {
+void RenderHoldCallback(float thisFrameTime, const Madokawaii::App::chart& thisChart) {
     for (auto &hold : holds_to_render) {
 		if (hold.realHoldTime + hold.realTime < thisFrameTime) {
 		    hold.state = Madokawaii::App::NoteState::finished;
             continue;
 		}
-        // hold.state = Madokawaii::App::NoteState::holding;
+        hold.state = Madokawaii::App::NoteState::holding;
+        hold.realHoldTime -= (thisFrameTime - hold.realTime);
+        hold.realTime = thisFrameTime;
+
+        auto& judgeline = thisChart.judgelines[hold.parent_line_id];
+        hold.rotateAngle = judgeline.info.rotateAngle;
+        // realholdtime = speed * (holdTime -> real)
+        if (fabs(hold.rotateAngle - 360.0) < 1e-6)
+            hold.rotateAngle = 0.0f;
+        auto note_rotate_angle_rad =  hold.rotateAngle * M_PI / 180.0;
+        const double judgelineScreenX = judgeline.info.posX * screenWidth;
+        const double judgelineScreenY = judgeline.info.posY * screenHeight;
+        const double posX = hold.positionX * screenWidth * 0.05625;
+
+        const double diffX = cos(note_rotate_angle_rad) * posX;
+        const double diffY = sin(note_rotate_angle_rad) * posX;
+
+        hold.coordinateX = judgelineScreenX + diffX;
+        const double centralY = judgelineScreenY + diffY;
+        hold.coordinateY = screenHeight - centralY;
         // Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "NOTE: Rendering Holding Note, this frame time = %f, hold time = %f, real hold time = %f", thisFrameTime, hold.realTime, hold.realHoldTime);
-        // RenderHoldNote(hold);
+        RenderHoldNote(hold);
     }
     std::erase_if(holds_to_render, [](const auto& note) { return note.state == Madokawaii::App::NoteState::finished; });
 }

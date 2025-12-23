@@ -65,6 +65,7 @@ namespace Madokawaii::App {
                 double rotateAngle;
                 bool isNoteBelow, isMultipleNote;
                 int state;
+                int parent_line_id;
             } note;
 
             struct {

@@ -103,6 +103,7 @@ int AppIterate(void * appstate) {
         return false;
     }
 
+    RenderHoldCallback(thisFrameTime, ctx.mainChart);
     auto noteRenderList = std::vector<Madokawaii::App::chart::judgeline::note *>();
 
     for (auto &judgeline: ctx.mainChart.judgelines) {
@@ -127,7 +128,6 @@ int AppIterate(void * appstate) {
         RenderNote(*notePtr);
     }
 
-    RenderHoldCallback(thisFrameTime);
     RenderDebugInfo();
     Madokawaii::Platform::Graphics::EndDrawing();
 
