@@ -78,8 +78,7 @@ void UpdateJudgeline(Madokawaii::App::chart::judgeline& judgeline, double thisFr
 				// Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "INFO: noteAboveIndex = %d holding/disappear, incrasing index", judgeline.info.notesAboveIndex - 1);
 			}
 			break;
-		case Madokawaii::App::NoteState::invisible:
-		case Madokawaii::App::NoteState::appeared:
+		case Madokawaii::App::NoteState::invisible_or_appeared:
 		{
 			const double posX = note.positionX * screenWidth * 0.05625;
 
@@ -95,13 +94,8 @@ void UpdateJudgeline(Madokawaii::App::chart::judgeline& judgeline, double thisFr
 			const double centralY = judgelineScreenY + diffY;
 			note.coordinateY = screenHeight - centralY;
 
-			if (Madokawaii::App::Chart::IsNoteInScreen(note.coordinateX, note.coordinateY, screenWidth, screenHeight)) {
-				note.state = Madokawaii::App::NoteState::appeared;
-			}
-			else {
-				note.state = Madokawaii::App::NoteState::invisible;
-			}
-			if (note.state == Madokawaii::App::NoteState::appeared) {
+			// TODO: Implement Hold Note Collider Detection
+			if (note.type == Madokawaii::App::NoteType::hold || Madokawaii::App::Chart::IsNoteInScreen(note.coordinateX, note.coordinateY, screenWidth, screenHeight)) {
 				/*
 				if (fabs(note.rotateAngle) > 1e-6)
 					Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO,
@@ -112,7 +106,6 @@ void UpdateJudgeline(Madokawaii::App::chart::judgeline& judgeline, double thisFr
 			else
 				return true;
 		}
-		break;
 		default:
 			break;
 		}

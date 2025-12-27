@@ -13,7 +13,7 @@ namespace Madokawaii::AppConfig {
 
     struct GlobalConfig {
         std::string chartPath{"assets/charts/chart.json"};
-        std::string musicPath{"assets/charts/music.mp3"};
+        std::string musicPath{"assets/charts/music.wav"};
         std::string resPackPath{"assets/respacks/default.zip"};
     };
 

@@ -53,4 +53,6 @@ namespace Madokawaii::Platform::Audio {
     float GetMusicTimeLength(Music m) { return ::GetMusicTimeLength(AsRL(m)); }
 
     float GetMusicTimePlayed(Music m) { return ::GetMusicTimePlayed(AsRL(m)); }
+
+    void SetMusicPitch(Music m, float pitch) { ::SetMusicPitch(AsRL(m), pitch); }
 }

@@ -27,8 +27,7 @@ namespace Madokawaii::App {
     enum NoteState {
         finished, // 结束渲染
         holding, // hold判定中
-        appeared, // 出现在视距中
-        invisible // 不可见
+        invisible_or_appeared
     };
 
     /**
