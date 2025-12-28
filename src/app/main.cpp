@@ -9,6 +9,7 @@
 #include "Madokawaii/app/def.h"
 #include "Madokawaii/app/chart.h"
 #include "Madokawaii/app/line_operation.h"
+#include "Madokawaii/app/note_hit.h"
 #include "Madokawaii/app/note_operation.h"
 #include "Madokawaii/app/res_pack.h"
 #include "Madokawaii/platform/audio.h"
@@ -78,9 +79,10 @@ int AppInit(void*& appstate) {
     Madokawaii::Platform::Core::InitWindow(ctx.screenWidth, ctx.screenHeight, "Madokawaii");
 
     InitializeNoteRenderer(*ctx.global_respack, ctx.screenWidth, ctx.screenHeight);
+    InitializeNoteHitSfxManager(*ctx.global_respack);
     ctx.music.looping = false;
     auto musicLength = Madokawaii::Platform::Audio::GetMusicTimeLength(ctx.music);
-    Madokawaii::Platform::Audio::SetMusicPitch(ctx.music, 0.8f);
+    Madokawaii::Platform::Audio::SetMusicPitch(ctx.music, 1.0f);
     Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "MAIN: Music Length: %f", musicLength);
     Madokawaii::Platform::Audio::PlayMusicStream(ctx.music);
 
@@ -93,6 +95,7 @@ int AppIterate(void * appstate) {
     if (!ctx.initialized)
         return -1;
 
+    CleanupNoteHitSfxManager();
     Madokawaii::Platform::Audio::UpdateMusicStream(ctx.music);
     Madokawaii::Platform::Graphics::BeginDrawing();
     Madokawaii::Platform::Graphics::ClearBackground(Madokawaii::Platform::Graphics::M_BLACK);
@@ -131,6 +134,7 @@ int AppIterate(void * appstate) {
 
     RenderDebugInfo();
     Madokawaii::Platform::Graphics::EndDrawing();
+    UpdateNoteHitSfx();
 
     return !Madokawaii::Platform::Core::WindowShouldClose();
 }
@@ -139,6 +143,7 @@ int AppExit(void * appstate) {
     auto& ctx = *static_cast<AppContext*>(appstate);
     Madokawaii::Platform::Core::CloseWindow();
     UnloadNoteRenderer();
+    UnloadNoteHitSfxManager();
     if (Madokawaii::Platform::Audio::IsMusicStreamPlaying(ctx.music))
         Madokawaii::Platform::Audio::StopMusicStream(ctx.music);
     Madokawaii::Platform::Audio::UnloadMusicStream(ctx.music);

@@ -6,6 +6,7 @@
 #include "Madokawaii/app/line_operation.h"
 #include <Madokawaii/platform/log.h>
 
+#include "Madokawaii/app/note_hit.h"
 #include "Madokawaii/app/note_operation.h"
 
 void UpdateJudgeline(Madokawaii::App::chart::judgeline& judgeline, double thisFrameTime, int screenWidth, int screenHeight, std::vector<Madokawaii::App::chart::judgeline::note*>& noteRenderList) {
@@ -48,6 +49,7 @@ void UpdateJudgeline(Madokawaii::App::chart::judgeline& judgeline, double thisFr
 
 	auto processNote = [&, thisFrameTime](Madokawaii::App::chart::judgeline::note& note) {
 		if (note.realTime < thisFrameTime) {
+			RegisterNoteHitSfx(static_cast<Madokawaii::App::NoteType>(note.type));
 			if (note.type == Madokawaii::App::NoteType::hold) {
 				AddHoldNoteClickingRender(note);
 				note.state = Madokawaii::App::NoteState::holding;

@@ -39,10 +39,9 @@ namespace Madokawaii::Platform::Audio {
     void StopSound(Sound sound);                                    //停止播放音频
     void PauseSound(Sound sound);                                   //暂停音频
     void ResumeSound(Sound sound);                                  //恢复暂停的音频
-    void PlaySoundMulti(Sound sound);                               //播放音频(使用多通道缓冲池)
-    void StopSoundMulti();                                      //停止任何音频播放(使用多通道缓冲池)
-    int GetSoundsPlaying();                                     //获取多声道播放的音频数量
     bool IsSoundPlaying(Sound sound);                               //检查当前是否正在播放音频
+    bool IsSoundValid(Sound sound);
+    void SetSoundVolume(Sound sound, float);
 }
 
 #endif //MADOKAWAII_AUDIO_H

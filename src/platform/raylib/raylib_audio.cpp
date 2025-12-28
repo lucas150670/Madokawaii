@@ -4,6 +4,8 @@
 #include <raylib.h>
 #include <filesystem>
 #include <fstream>
+#include <random>
+
 #include "Madokawaii/platform/audio.h"
 #include "Madokawaii/platform/log.h"
 
@@ -71,7 +73,10 @@ namespace Madokawaii::Platform::Audio {
 
     Sound LoadSoundFromMemory(const char *fileType, const unsigned char *data, int dataSize)
     {
-        std::filesystem::path path = std::filesystem::temp_directory_path() / std::format("temp_sound.{}", fileType);
+        static std::random_device rd;
+        static std::default_random_engine e(rd());
+        static std::uniform_int_distribution<int> dist(0, 1000000);
+        std::filesystem::path path = std::filesystem::temp_directory_path() / std::format("temp_sound_{}{}", dist(e), fileType);
         {
             std::ofstream ofs(path, std::ios::binary);
             ofs.write(reinterpret_cast<const char*>(data), dataSize);
@@ -90,4 +95,12 @@ namespace Madokawaii::Platform::Audio {
             ::UnloadSound(rl);
         }
     }
+
+    void PlaySound(Sound sound) { ::PlaySound(AsRL(sound)); }
+    void StopSound(Sound sound) { ::StopSound(AsRL(sound)); }
+    void PauseSound(Sound sound) { ::PauseSound(AsRL(sound)); }
+    void ResumeSound(Sound sound) { ::ResumeSound(AsRL(sound)); }
+    bool IsSoundPlaying(Sound sound) { return ::IsSoundPlaying(AsRL(sound)); }
+    bool IsSoundValid(Sound sound) { return sound.implementationDefined != nullptr && ::IsSoundValid(AsRL(sound)); }
+    void SetSoundVolume(Sound sound, float volume) { ::SetSoundVolume(AsRL(sound), volume); }
 }
