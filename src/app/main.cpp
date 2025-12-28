@@ -80,6 +80,7 @@ int AppInit(void*& appstate) {
     InitializeNoteRenderer(*ctx.global_respack, ctx.screenWidth, ctx.screenHeight);
     ctx.music.looping = false;
     auto musicLength = Madokawaii::Platform::Audio::GetMusicTimeLength(ctx.music);
+    Madokawaii::Platform::Audio::SetMusicPitch(ctx.music, 0.8f);
     Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "MAIN: Music Length: %f", musicLength);
     Madokawaii::Platform::Audio::PlayMusicStream(ctx.music);
 
@@ -137,6 +138,7 @@ int AppIterate(void * appstate) {
 int AppExit(void * appstate) {
     auto& ctx = *static_cast<AppContext*>(appstate);
     Madokawaii::Platform::Core::CloseWindow();
+    UnloadNoteRenderer();
     if (Madokawaii::Platform::Audio::IsMusicStreamPlaying(ctx.music))
         Madokawaii::Platform::Audio::StopMusicStream(ctx.music);
     Madokawaii::Platform::Audio::UnloadMusicStream(ctx.music);

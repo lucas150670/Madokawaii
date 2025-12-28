@@ -2,12 +2,17 @@
 // Created by madoka on 2025/9/19.
 //
 #include <raylib.h>
+#include <filesystem>
+#include <fstream>
 #include "Madokawaii/platform/audio.h"
+#include "Madokawaii/platform/log.h"
 
 namespace Madokawaii::Platform::Audio {
 
     static ::Music& AsRL(Music& m) { return *static_cast<::Music*>(m.implementationDefined); }
     static const ::Music& AsRL(const Music& m) { return *static_cast<const ::Music*>(m.implementationDefined); }
+    static ::Sound& AsRL(Sound& s) { return *static_cast<::Sound*>(s.implementationDefined); }
+    static const ::Sound& AsRL(const Sound& s) { return *static_cast<const ::Sound*>(s.implementationDefined); }
 
     void InitAudioDevice() { ::InitAudioDevice(); }
 
@@ -55,4 +60,34 @@ namespace Madokawaii::Platform::Audio {
     float GetMusicTimePlayed(Music m) { return ::GetMusicTimePlayed(AsRL(m)); }
 
     void SetMusicPitch(Music m, float pitch) { ::SetMusicPitch(AsRL(m), pitch); }
+
+    Sound LoadSound(const char* fileName)
+    {
+        Sound s{};
+        auto rl = ::LoadSound(fileName);
+        s.implementationDefined = new ::Sound(rl);
+        return s;
+    }
+
+    Sound LoadSoundFromMemory(const char *fileType, const unsigned char *data, int dataSize)
+    {
+        std::filesystem::path path = std::filesystem::temp_directory_path() / std::format("temp_sound.{}", fileType);
+        {
+            std::ofstream ofs(path, std::ios::binary);
+            ofs.write(reinterpret_cast<const char*>(data), dataSize);
+        }
+        ::Sound snd = ::LoadSound(path.string().c_str());
+        Sound s{};
+        s.implementationDefined = new ::Sound(snd);
+        return s;
+    }
+
+    void UnloadSound(Sound s)
+    {
+        if (s.implementationDefined)
+        {
+            auto rl = AsRL(s);
+            ::UnloadSound(rl);
+        }
+    }
 }

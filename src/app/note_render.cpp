@@ -94,10 +94,16 @@ void RenderHoldNote(const Madokawaii::App::chart::judgeline::note& note)
     srcHead.width = texture_dimension.x;
     srcHead.height = holdAtlasHead;
 
-    Madokawaii::Platform::Graphics::Texture::DrawTextureRec(
-        texture, srcHead,
-        { -srcHead.width / 2.f, -srcHead.height / 2.f },
-        tint);
+    if (note.state != Madokawaii::App::NoteState::holding)
+    {
+        Madokawaii::Platform::Graphics::Texture::DrawTextureRec(
+            texture, srcHead,
+            { -srcHead.width / 2.f, -srcHead.height / 2.f },
+            tint);
+    } else
+    {
+        holdAtlasHead = 0;
+    }
 
     if (bodyHeight > 0) {
         Madokawaii::Platform::Shape::Rectangle srcBody{};
@@ -203,4 +209,18 @@ void RenderHoldCallback(float thisFrameTime, const Madokawaii::App::chart& thisC
         RenderHoldNote(hold);
     }
     std::erase_if(holds_to_render, [](const auto& note) { return note.state == Madokawaii::App::NoteState::finished; });
+}
+
+void UnloadNoteRenderer()
+{
+    auto unloadTexture = [](ResTexture2D& texture) { Madokawaii::Platform::Graphics::Texture::UnloadTexture(texture); };
+    unloadTexture(respack_decompressed.imageClick);
+    unloadTexture(respack_decompressed.imageHold);
+    unloadTexture(respack_decompressed.imageFlick);
+    unloadTexture(respack_decompressed.imageDrag);
+    unloadTexture(respack_decompressed.imageClickMH);
+    unloadTexture(respack_decompressed.imageHoldMH);
+    unloadTexture(respack_decompressed.imageFlickMH);
+    unloadTexture(respack_decompressed.imageDragMH);
+    respack_decompressed = {};
 }

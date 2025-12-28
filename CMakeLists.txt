@@ -23,7 +23,8 @@ set(SRC_APP
         src/app/line_update.cpp
         src/app/line_renderer.cpp
         src/app/res_pack.cpp
-        src/app/note_render.cpp)
+        src/app/note_render.cpp
+        src/app/hit_sound_fx.cpp)
 
 set(SRC_IMP_RAYLIB
         src/platform/raylib/raylib_graphics.cpp
@@ -32,7 +33,8 @@ set(SRC_IMP_RAYLIB
         src/platform/raylib/raylib_log.cpp
         src/platform/raylib/raylib_audio.cpp
         src/platform/raylib/raylib_fonts.cpp
-        src/platform/raylib/raylib_texture.cpp)
+        src/platform/raylib/raylib_texture.cpp
+)
 
 # set(SRC_IMP_DIRECT2D
 #        # TODO: direct2d implement
