@@ -18,8 +18,11 @@ Respack_HitFx_Decompressed hit_fx_decompressed{};
 struct HitFxInfo
 {
     float posX, posY;
+    float startTime;
     int spriteIndex;
+    // for particle effects
 };
+std::vector<HitFxInfo> hitFx_list;
 
 int InitializeNoteHitFxManager(Madokawaii::App::ResPack::ResPack & pack) {
     pack.hitFxCount = pack.hitFxHeight * pack.hitFxWidth;
@@ -54,4 +57,25 @@ int InitializeNoteHitFxManager(Madokawaii::App::ResPack::ResPack & pack) {
         }
     }
     return 0;
+}
+
+void RegisterNoteHitFx(float this_frame_time, int type, float position_X, float position_Y) {
+    HitFxInfo info{};
+    info.posX = position_X;
+    info.posY = position_Y;
+    info.startTime = this_frame_time;
+    info.spriteIndex = type;
+    hitFx_list.push_back(info);
+}
+
+void UpdateNoteHitFx(float this_frameTime) {
+    for (auto& hitFx: hitFx_list) {
+
+    }
+}
+
+void UnloadNoteHitFxManager() {
+    for (auto& sprite : hit_fx_decompressed.hitFxSprites) {
+        Madokawaii::Platform::Graphics::Texture::UnloadTexture(sprite);
+    }
 }

@@ -12,9 +12,9 @@ void CleanupNoteHitSfxManager();
 void UpdateNoteHitSfx();
 void UnloadNoteHitSfxManager();
 int InitializeNoteHitFxManager(Madokawaii::App::ResPack::ResPack&);
-void RegisterNoteHitFx(int type);
-void UpdateNoteHitFx();
+void RegisterNoteHitFx(float, int type, float position_X, float position_Y);
+void UpdateNoteHitFx(float);
 
-int InitializeNoteHitFx(const Madokawaii::App::ResPack::ResPack&);
+void UnloadNoteHitFxManager();
 
 #endif //MADOKAWAII_NOTE_HIT_H

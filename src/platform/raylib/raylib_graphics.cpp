@@ -22,7 +22,8 @@ namespace Madokawaii::Platform::Graphics {
     }
 
     std::string GetImplementationInfo(){
-        return std::format("raylib {}.{}.{}", RAYLIB_VERSION_MAJOR, RAYLIB_VERSION_MINOR, RAYLIB_VERSION_PATCH);
+        static std::string info = std::format("raylib {}.{}.{}", RAYLIB_VERSION_MAJOR, RAYLIB_VERSION_MINOR, RAYLIB_VERSION_PATCH);
+        return info;
     }
 
     float GetFPS() { return static_cast<float>(::GetFPS()); }

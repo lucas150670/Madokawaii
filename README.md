@@ -10,10 +10,8 @@
 
 ![GitHub top language](https://img.shields.io/github/languages/top/lucas150670/Madokawaii)
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/w/lucas150670/Madokawaii)
-![Discord](https://img.shields.io/discord/1198993790678089749)
+![Telegram](https://telegram-badge.vercel.app/api/telegram-badge?channelId=@MadokawaiiChat)
 ![GitHub License](https://img.shields.io/github/license/lucas150670/Madokawaii)
-![GitHub Issues or Pull Requests](https://img.shields.io/github/issues/lucas150670/Madokawaii)
-![GitHub Issues or Pull Requests](https://img.shields.io/github/issues-pr/lucas150670/Madokawaii)
 [![State-of-the-art Shitcode](https://img.shields.io/static/v1?label=State-of-the-art&message=Shitcode&color=7B5804)](https://github.com/trekhleb/state-of-the-art-shitcode)
 
 Madokawaii is an early-stage rhythm game simulator inspired by *Phigros*. 
@@ -103,5 +101,4 @@ Madoka Partners, MBS.
 ## 📬 CONTACT
 - maintainer: lucas150670
 - mail: lucas150670@petalmail.com
-- discord server: https://discord.gg/bNCCKrZdK4
-- QQ group: email for detailed info
+- telegram group: [@MadokawaiiChat](https://t.me/MadokawaiiChat)
