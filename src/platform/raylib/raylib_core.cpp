@@ -28,8 +28,22 @@ namespace Madokawaii::Platform::Core {
 
     void CloseWindow() { ::CloseWindow(); }
 
+    void ToggleFullscreen() {
+        SetWindowState(FLAG_WINDOW_UNDECORATED);
+        SetWindowSize(GetMonitorWidth(GetCurrentMonitor()), GetMonitorHeight(GetCurrentMonitor()));
+        SetWindowPosition(0, 0);
+    }
+
     int GetFileLength(const char* fileName)
     {
         return ::GetFileLength(fileName);
+    }
+
+    int GetScreenWidth() {
+        return ::GetScreenWidth();
+    }
+
+    int GetScreenHeight() {
+        return ::GetScreenHeight();
     }
 }

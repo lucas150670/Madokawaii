@@ -19,6 +19,7 @@ namespace Madokawaii::Platform::Graphics {
     std::string GetImplementationInfo();
     float GetFPS();
     float GetFrameTime();
+    void SetTargetFPS(int);
 
     void BeginDrawing();
     void EndDrawing();

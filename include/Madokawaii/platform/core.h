@@ -36,6 +36,12 @@ namespace Madokawaii::Platform::Core {
 
     int GetFileLength(const char *fileName);
 
+    int GetScreenWidth();
+
+    int GetScreenHeight();
+
+    void ToggleFullscreen();
+
     // Define a hash function for compile-time string hashing
     constexpr std::uint64_t prime = 0x100000001B3ull;
     constexpr std::uint64_t basis = 0xCBF29CE484222325ull;

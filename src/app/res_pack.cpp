@@ -28,14 +28,13 @@ namespace Madokawaii::App::ResPack
 
         libzippp::ZipArchive* zf = libzippp::ZipArchive::fromSource(src, libzippp::ZipArchive::OpenMode::ReadOnly);
         if (!zf) {
-            zip_source_free(src);
+            zip_source_free(src); 
             Platform::Log::TraceLog(Platform::Log::TraceLogLevel::LOG_ERROR, "ZipArchive::fromSource failed");
             abort();
         }
 
         if (!zf->open(libzippp::ZipArchive::ReadOnly)) {
             delete zf;
-            zip_source_free(src);
             Platform::Log::TraceLog(Platform::Log::TraceLogLevel::LOG_ERROR, "ZipArchive open failed");
             abort();
         }
@@ -44,7 +43,8 @@ namespace Madokawaii::App::ResPack
         using Platform::Core::hash_compile_time;
         auto* res_pack_ptr = new ResPack;
         ResPack& res_pack = *res_pack_ptr;
-        auto loadResource = [](const libzippp::ZipEntry& entry, ResPackData** outData) {
+        int loaded_entries = 0;
+        auto loadResource = [&loaded_entries](const libzippp::ZipEntry& entry, ResPackData** outData) {
             *outData = new ResPackData{
                 nullptr,
                 entry.getSize()
@@ -52,6 +52,8 @@ namespace Madokawaii::App::ResPack
             (*outData)->data = malloc(entry.getSize());
             assert((*outData)->data);
             memcpy((*outData)->data, entry.readAsBinary(), entry.getSize());
+            Platform::Log::TraceLog(Platform::Log::TraceLogLevel::LOG_INFO, "RESPACK: Loaded %s", entry.getName().c_str());
+            loaded_entries++;
         };
 
         for (const auto& entry : zf->getEntries()) {
@@ -96,7 +98,7 @@ namespace Madokawaii::App::ResPack
             case "ending.mp3"_hash:
                 loadResource(entry, &res_pack.musicEnding);
                 break;
-            case "hitFx.png"_hash:
+            case "hit_fx.png"_hash:
                 res_pack.hitFxCount = res_pack.hitFxWidth * res_pack.hitFxHeight;
                 loadResource(entry, &res_pack.imageHitFx);
                 break;
@@ -106,7 +108,7 @@ namespace Madokawaii::App::ResPack
         }
 
         delete zf;
-        zip_source_free(src);
+        // zip_source_free(src);
         auto ret_respack = std::shared_ptr<ResPack>(res_pack_ptr,
             [](const ResPack* res_pack_delete) noexcept
         {
@@ -134,6 +136,10 @@ namespace Madokawaii::App::ResPack
             freeResource(res_pack_delete->imageHitFx);
             delete res_pack_delete;
         });
+        if (loaded_entries != 13) {
+            Platform::Log::TraceLog(Platform::Log::TraceLogLevel::LOG_ERROR, "RESPACK: Failed to load all resources!");
+            return {};
+        }
         Platform::Log::TraceLog(Platform::Log::TraceLogLevel::LOG_INFO, "RESPACK: initialize successful!");
         return ret_respack;
     }

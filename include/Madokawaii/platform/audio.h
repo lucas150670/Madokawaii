@@ -26,6 +26,7 @@ namespace Madokawaii::Platform::Audio {
     float GetMusicTimePlayed(Music);
     // 调试用：设置音高，可以改变音频播放速率
     void SetMusicPitch(Music, float pitch);
+    void SetMusicVolume(Music m, float volume);
 
     struct Sound
     {

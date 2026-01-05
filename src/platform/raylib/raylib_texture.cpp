@@ -20,7 +20,7 @@ namespace Madokawaii::Platform::Graphics::Texture {
         return img;
     }
 
-    void UnLoadImage(Image image) {
+    void UnloadImage(Image image) {
         if (image.implementationDefinedData) {
             auto& rl = *static_cast<::Image*>(image.implementationDefinedData);
             ::UnloadImage(rl);
@@ -82,5 +82,22 @@ namespace Madokawaii::Platform::Graphics::Texture {
         auto& rl = *static_cast<::Texture2D*>(texture.implementationDefinedData);
         dimension->x = static_cast<float>(rl.width);
         dimension->y = static_cast<float>(rl.height);
+    }
+
+    void MeasureImage(Image image, Vector2 *dimension) {
+        auto& rl = *static_cast<::Image*>(image.implementationDefinedData);
+        dimension->x = static_cast<float>(rl.width);
+        dimension->y = static_cast<float>(rl.height);
+    }
+
+    Image ImageCopy(Image Image) {
+        const auto rl = static_cast<::Image*>(Image.implementationDefinedData);
+        const auto rlCopy = new ::Image(::ImageCopy(*rl));
+        return { .implementationDefinedData = rlCopy };
+    }
+
+    void ImageCrop(Image Image, Shape::Rectangle Crop) {
+        const auto rl = static_cast<::Image*>(Image.implementationDefinedData);
+        ::ImageCrop(rl, {Crop.x, Crop.y, Crop.width, Crop.height});
     }
 }

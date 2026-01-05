@@ -14,9 +14,9 @@ struct ResPack_Audio_Decompressed
     Madokawaii::Platform::Audio::Sound clickSound[20], flickSound[20], dragSound[20];
 };
 ResPack_Audio_Decompressed audio_sfx_decompressed{};
-std::map<Madokawaii::App::NoteType, int> sfx_play_map;
+std::map<int, int> sfx_play_map;
 
-int InitializeNoteHitSfxManager(const Madokawaii::App::ResPack::ResPack& respack)
+int InitializeNoteHitSfxManager(Madokawaii::App::ResPack::ResPack& respack)
 {
     auto loadSoundFromResPackData = [](const Madokawaii::App::ResPack::ResPackData* resData) -> Madokawaii::Platform::Audio::Sound {
         auto s = Madokawaii::Platform::Audio::LoadSoundFromMemory(".ogg", static_cast<const unsigned char*>(resData->data), static_cast<int>(resData->size));
@@ -43,7 +43,7 @@ void UnloadNoteHitSfxManager() {
     }
 }
 
-void RegisterNoteHitSfx(const Madokawaii::App::NoteType type) {
+void RegisterNoteHitSfx(int type) {
     if (!sfx_play_map.contains(type)) sfx_play_map[type] = 1;
     else sfx_play_map[type]++;
 }

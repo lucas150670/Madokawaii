@@ -44,7 +44,7 @@ void InitializeNoteRenderer(const Madokawaii::App::ResPack::ResPack& respack_raw
         // load texture from image
         Texture2D tex = LoadTextureFromImage(img);
         // unload image
-        UnLoadImage(img);
+        UnloadImage(img);
         return tex;
     };
 

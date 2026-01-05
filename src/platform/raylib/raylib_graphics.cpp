@@ -7,6 +7,7 @@
 #include <raylib.h>
 #include "Madokawaii/platform/graphics.h"
 #include <rlgl.h>
+#include <format>
 
 extern char gVendor[256];
 extern char gRenderer[256];
@@ -21,12 +22,14 @@ namespace Madokawaii::Platform::Graphics {
     }
 
     std::string GetImplementationInfo(){
-        return gVersion;
+        return std::format("raylib {}.{}.{}", RAYLIB_VERSION_MAJOR, RAYLIB_VERSION_MINOR, RAYLIB_VERSION_PATCH);
     }
 
     float GetFPS() { return static_cast<float>(::GetFPS()); }
 
     float GetFrameTime() { return ::GetFrameTime(); }
+
+    void SetTargetFPS(int target) { ::SetTargetFPS(target); }
 
     void BeginDrawing() { ::BeginDrawing(); }
 

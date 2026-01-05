@@ -24,7 +24,8 @@ set(SRC_APP
         src/app/line_renderer.cpp
         src/app/res_pack.cpp
         src/app/note_render.cpp
-        src/app/hit_sound_fx.cpp)
+        src/app/hit_sound_fx.cpp
+        src/app/hit_visual_fx.cpp)
 
 set(SRC_IMP_RAYLIB
         src/platform/raylib/raylib_graphics.cpp

@@ -63,6 +63,8 @@ namespace Madokawaii::Platform::Audio {
 
     void SetMusicPitch(Music m, float pitch) { ::SetMusicPitch(AsRL(m), pitch); }
 
+    void SetMusicVolume(Music m, float volume) { ::SetMusicVolume(AsRL(m), volume); }
+
     Sound LoadSound(const char* fileName)
     {
         Sound s{};

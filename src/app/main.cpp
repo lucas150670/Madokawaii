@@ -4,6 +4,7 @@
 #include <format>
 #include <string>
 #include <vector>
+#include <future>
 
 #include "Madokawaii/app/app_config.h"
 #include "Madokawaii/app/def.h"
@@ -22,11 +23,69 @@ struct AppContext {
     int screenHeight{1080};
     Madokawaii::Platform::Audio::Music music{};
     Madokawaii::App::chart mainChart{};
-    bool initialized{false};
+    bool sys_initialized{false}, game_initialized{false};
     std::shared_ptr<Madokawaii::App::ResPack::ResPack> global_respack;
+
+    std::future<int> gameInitFuture;
+    bool gameInitStarted{false};
+    bool asyncDataReady{false};
 };
 
 extern "C" {
+
+int GameInit_Async(void* appstate) {
+    auto& ctx = *static_cast<AppContext*>(appstate);
+
+    auto& danli = Madokawaii::AppConfig::ConfigManager::Instance();
+    const auto& musicPath = danli.GetMusicPath();
+    const auto& chartPath = danli.GetChartPath();
+
+    if (!Madokawaii::Platform::Core::FileExists(musicPath.c_str())) {
+        Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_ERROR, "MAIN: Music file does not exist!");
+        return -1;
+    }
+
+    const clock_t begin = clock();
+    ctx.mainChart = Madokawaii::App::Chart::LoadChartFromFile(chartPath.c_str());
+    if (!Madokawaii::App::Chart::IsValidChart(ctx.mainChart)) {
+        Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_ERROR, "MAIN: Failed to load chart!");
+        return -1;
+    }
+    const clock_t end = clock();
+
+    Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "MAIN: Chart Initialization Successful!");
+    Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "    > Format Version:         %d", ctx.mainChart.formatVersion);
+    Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "    > Number of notes:        %d", ctx.mainChart.numOfNotes);
+    Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "    > Number of judgelines:   %d", ctx.mainChart.judgelineCount);
+    Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "MAIN: Elapsed time: %lf s", (end - begin) * 1.0 / CLOCKS_PER_SEC);
+
+    Madokawaii::App::Chart::InitializeJudgelines(ctx.mainChart);
+
+    return 0;
+}
+
+int GameInit_Main_Thrd(void* appstate) {
+
+    auto& ctx = *static_cast<AppContext*>(appstate);
+    auto& danli = Madokawaii::AppConfig::ConfigManager::Instance();
+    const auto& musicPath = danli.GetMusicPath();
+
+    ctx.music = Madokawaii::Platform::Audio::LoadMusicStream(musicPath.c_str());
+    Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "MAIN: Music stream loaded");
+
+    InitializeNoteRenderer(*ctx.global_respack, ctx.screenWidth, ctx.screenHeight);
+    InitializeNoteHitSfxManager(*ctx.global_respack);
+    InitializeNoteHitFxManager(*ctx.global_respack);
+
+    ctx.music.looping = false;
+    auto musicLength = Madokawaii::Platform::Audio::GetMusicTimeLength(ctx.music);
+    Madokawaii::Platform::Audio::SetMusicPitch(ctx.music, 1.0f);
+    Madokawaii::Platform::Audio::SetMusicVolume(ctx.music, 0.5f);
+    Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "MAIN: Music Length: %f", musicLength);
+    Madokawaii::Platform::Audio::PlayMusicStream(ctx.music);
+
+    return 0;
+}
 
 int AppInit(void*& appstate) {
     appstate = new AppContext;
@@ -34,24 +93,7 @@ int AppInit(void*& appstate) {
     Madokawaii::Platform::Audio::InitAudioDevice();
 
     auto& danli = Madokawaii::AppConfig::ConfigManager::Instance();
-    const auto& musicPath = danli.GetMusicPath();
-    const auto& chartPath = danli.GetChartPath();
     const auto& resPackPath = danli.GetResPackPath();
-
-    clock_t begin = clock();
-    if (!Madokawaii::Platform::Core::FileExists(musicPath.c_str())) {
-        Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_ERROR, "MAIN: Music file does not exist!");
-        return false;
-    }
-
-    ctx.music = Madokawaii::Platform::Audio::LoadMusicStream(musicPath.c_str());
-    Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "MAIN: Music stream loaded");
-
-    ctx.mainChart = Madokawaii::App::Chart::LoadChartFromFile(chartPath.c_str());
-    if (!Madokawaii::App::Chart::IsValidChart(ctx.mainChart)) {
-        Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_ERROR, "MAIN: Failed to load chart!");
-        return false;
-    }
 
     int dataSize = 0;
     auto respack_mem_stream = Madokawaii::Platform::Core::LoadFileData(resPackPath.c_str(), &dataSize);
@@ -61,38 +103,26 @@ int AppInit(void*& appstate) {
         return false;
     }
     ctx.global_respack = Madokawaii::App::ResPack::LoadResPackFromMemoryStream(respack_mem_stream, dataSize);
-	Madokawaii::Platform::Core::UnloadFileData(respack_mem_stream);
-
-    clock_t end = clock();
-    Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "MAIN: Chart Initialization Successful!");
-    Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "    > Format Version:         %d", ctx.mainChart.formatVersion);
-    Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "    > Number of notes:        %d", ctx.mainChart.numOfNotes);
-    Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "    > Number of judgelines:   %d", ctx.mainChart.judgelineCount);
-    Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "    > SpeedEvents Count:      %d", ctx.mainChart.speedEventsCount);
-    Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "    > DisappearEvents Count:  %d", ctx.mainChart.disappearEventCount);
-    Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "    > MoveEvents Count:       %d", ctx.mainChart.moveEventCount);
-    Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "    > RotateEvents Count:     %d", ctx.mainChart.rotateEventCount);
-    Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "MAIN: Elapsed time: %lf s", (end - begin) * 1.0 / CLOCKS_PER_SEC);
-
-    Madokawaii::App::Chart::InitializeJudgelines(ctx.mainChart);
+    Madokawaii::Platform::Core::UnloadFileData(respack_mem_stream);
 
     Madokawaii::Platform::Core::InitWindow(ctx.screenWidth, ctx.screenHeight, "Madokawaii");
+    // Madokawaii::Platform::Core::ToggleFullscreen();
+    // ctx.screenWidth = Madokawaii::Platform::Core::GetScreenWidth();
+    // ctx.screenHeight = Madokawaii::Platform::Core::GetScreenHeight();
+    /* Enable vertical sync by uncommenting this line
+    Madokawaii::Platform::Graphics::SetTargetFPS(
+        Madokawaii::Platform::Core::GetMonitorRefreshRate(
+            Madokawaii::Platform::Core::GetCurrentMonitor()
+            )
+    );*/
 
-    InitializeNoteRenderer(*ctx.global_respack, ctx.screenWidth, ctx.screenHeight);
-    InitializeNoteHitSfxManager(*ctx.global_respack);
-    ctx.music.looping = false;
-    auto musicLength = Madokawaii::Platform::Audio::GetMusicTimeLength(ctx.music);
-    Madokawaii::Platform::Audio::SetMusicPitch(ctx.music, 1.0f);
-    Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "MAIN: Music Length: %f", musicLength);
-    Madokawaii::Platform::Audio::PlayMusicStream(ctx.music);
-
-    ctx.initialized = true;
-    return ctx.initialized;
+    ctx.sys_initialized = true;
+    return ctx.sys_initialized;
 }
 
-int AppIterate(void * appstate) {
+int AppIterate_Game(void * appstate) {
     auto& ctx = *static_cast<AppContext*>(appstate);
-    if (!ctx.initialized)
+    if (!ctx.sys_initialized)
         return -1;
 
     CleanupNoteHitSfxManager();
@@ -137,6 +167,67 @@ int AppIterate(void * appstate) {
     UpdateNoteHitSfx();
 
     return !Madokawaii::Platform::Core::WindowShouldClose();
+}
+
+
+int AppIterate(void * appstate) {
+    // 扩展 留下放结算画面和开始画面的接口
+    auto& ctx = *static_cast<AppContext*>(appstate);
+    if (!ctx.sys_initialized) return -1;
+    if (!ctx.game_initialized) {
+        if (!ctx.gameInitStarted) {
+            ctx.gameInitStarted = true;
+
+            std::promise<int> initPromise;
+            ctx.gameInitFuture = initPromise.get_future();
+            std::thread([appstate, promise = std::move(initPromise)]() mutable {
+                int result = GameInit_Async(appstate);
+                promise.set_value(result);
+            }).detach();
+
+            Madokawaii::Platform::Log::TraceLog(
+                Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO,
+                "MAIN: Started async chart loading..."
+            );
+        }
+
+        if (ctx.gameInitFuture.valid() &&
+            ctx.gameInitFuture.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
+
+            int initResult = ctx.gameInitFuture.get();
+            if (initResult == 0) {
+                ctx.asyncDataReady = true;
+                Madokawaii::Platform::Log::TraceLog(
+                    Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO,
+                    "MAIN: Async initialization completed!"
+                );
+            } else {
+                Madokawaii::Platform::Log::TraceLog(
+                    Madokawaii::Platform::Log::TraceLogLevel::LOG_ERROR,
+                    "MAIN: Async initialization failed!"
+                );
+                return -1;
+            }
+            } else {
+                Madokawaii::Platform::Graphics::BeginDrawing();
+                Madokawaii::Platform::Graphics::ClearBackground(Madokawaii::Platform::Graphics::M_BLACK);
+                Madokawaii::Platform::Graphics::DrawText("Converting chart..", 1920 / 2 - 100, 1080 / 2 - 50, 20, Madokawaii::Platform::Graphics::M_LIGHTGRAY);
+                Madokawaii::Platform::Graphics::EndDrawing();
+                return !Madokawaii::Platform::Core::WindowShouldClose();
+            }
+        }
+        if (ctx.asyncDataReady && !ctx.game_initialized) {
+            Madokawaii::Platform::Graphics::BeginDrawing();
+            Madokawaii::Platform::Graphics::ClearBackground(Madokawaii::Platform::Graphics::M_BLACK);
+            Madokawaii::Platform::Graphics::DrawText("Setup scene..", 1920 / 2 - 100, 1080 / 2 - 50, 20, Madokawaii::Platform::Graphics::M_LIGHTGRAY);
+            Madokawaii::Platform::Graphics::EndDrawing();
+            // ReSharper disable once CppDFAConstantConditions
+            if (GameInit_Main_Thrd(appstate) == 0) {
+                ctx.game_initialized = true;
+            }
+        }
+
+    return AppIterate_Game(appstate);
 }
 
 int AppExit(void * appstate) {
