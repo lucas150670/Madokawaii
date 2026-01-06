@@ -27,7 +27,7 @@ Future development will expand toward interactive gameplay, cross-platform suppo
 ### Prerequisite
 - cmake
 - vcpkg
-- raylib, rapidjson, libyaml (managed by vcpkg)
+- raylib, rapidjson, libyaml, libzip, libzippp (managed by vcpkg)
 
 
 ## 📌 EXAMPLE
@@ -35,12 +35,16 @@ Future development will expand toward interactive gameplay, cross-platform suppo
 # Install vcpkg and dependencies
 git clone https://github.com/microsoft/vcpkg.git
 ./vcpkg/bootstrap-vcpkg.sh
-./vcpkg/vcpkg install raylib rapidjson libyaml
+./vcpkg/vcpkg install raylib rapidjson libyaml libzip libzippp 
 # Build with cmake
 mkdir build && cd build
 cmake .. -DCMAKE_TOOLCHAIN_FILE=/path/to/vcpkg/scripts/buildsystems/vcpkg.cmake
 make
-# put assets/charts/chart.json and assets/charts/music.wav in correct position.
+# put assets/charts/chart.json,
+# assets/charts/music.wav,
+# assets/charts/illustration.png,
+# assets/respack/default.zip 
+# in correct position.
 ./Madokawaii
 ```
 ---
