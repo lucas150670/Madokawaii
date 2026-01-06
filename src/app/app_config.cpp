@@ -35,6 +35,11 @@ namespace Madokawaii::AppConfig {
         return config_.resPackPath;
     }
 
+    const std::string& ConfigManager::GetBackgroundPath() const
+    {
+        return config_.backgroundPath;
+    }
+
     void ConfigManager::SetChartPath(const std::string& path) {
         config_.chartPath = path;
     }
@@ -46,6 +51,11 @@ namespace Madokawaii::AppConfig {
     void ConfigManager::SetResPackPath(const std::string& path)
     {
         config_.resPackPath = path;
+    }
+
+    void ConfigManager::SetBackgroundPath(const std::string& path)
+    {
+        config_.backgroundPath = path;
     }
 
     bool ConfigManager::LoadDefaults() {

@@ -11,9 +11,11 @@
 
 namespace Madokawaii::AppConfig {
 
-    struct GlobalConfig {
+    struct GlobalConfig
+    {
         std::string chartPath{"assets/charts/chart.json"};
         std::string musicPath{"assets/charts/music.wav"};
+        std::string backgroundPath{"assets/charts/illustration.png"};
         std::string resPackPath{"assets/respacks/default.zip"};
     };
 
@@ -29,10 +31,12 @@ namespace Madokawaii::AppConfig {
         [[nodiscard]] const std::string& GetChartPath() const;
         [[nodiscard]] const std::string& GetMusicPath() const;
         [[nodiscard]] const std::string& GetResPackPath() const;
+        [[nodiscard]] const std::string& GetBackgroundPath() const;
 
         void SetChartPath(const std::string& path);
         void SetMusicPath(const std::string& path);
         void SetResPackPath(const std::string& path);
+        void SetBackgroundPath(const std::string& path);
 
         bool LoadDefaults();
         static bool LoadFromFile(const std::string& filePath);

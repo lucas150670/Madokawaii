@@ -21,14 +21,19 @@ namespace Madokawaii::Platform::Graphics::Texture {
     Texture2D LoadTexture(const char *fileName);
     Texture2D LoadTextureFromImage(Image Image);
     void UnloadTexture(Texture2D texture);
+    void DrawTexture(Texture2D texture, Vector2 position, Color_ tint);
     void DrawTextureEx(Texture2D texture, Vector2, float rotation, float scale, Color_ tint);
     void DrawTextureRec(Texture2D texture, Shape::Rectangle source, Vector2 position, Color_ tint);     //绘制由Rectangle 定义的Texture的一部分
     void DrawTexturePro(Texture2D texture, Shape::Rectangle source, Shape::Rectangle, Vector2 position, float rotation, Color tint);
     void MeasureTexture2D(Texture2D texture, Vector2 *dimension);
+    void ImageResizeNN(Image image, int newWidth,int newHeight);
 
     void MeasureImage(Image image, Vector2 *dimension);
     Image ImageCopy(Image Image);
     void ImageCrop(Image Image, Shape::Rectangle Crop);
+    void ImageColorBrightness(Image image, int brightness);
+    void ImageBlurGaussian(Image image, int blurSize);
+    void ImageColorContrast(Image image, float contrast);
 
 }
 

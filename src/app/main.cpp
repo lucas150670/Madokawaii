@@ -18,6 +18,7 @@
 #include "Madokawaii/platform/log.h"
 #include "Madokawaii/platform/core.h"
 #include "Madokawaii/platform/graphics.h"
+#include "Madokawaii/platform/texture.h"
 
 struct AppContext {
     int screenWidth{1920};
@@ -26,6 +27,7 @@ struct AppContext {
     Madokawaii::App::chart mainChart{};
     bool sys_initialized{false}, game_initialized{false};
     std::shared_ptr<Madokawaii::App::ResPack::ResPack> global_respack;
+    Madokawaii::Platform::Graphics::Texture::Texture2D backgroundTexture{};
 
     std::future<int> gameInitFuture;
     bool gameInitStarted{false};
@@ -84,6 +86,29 @@ int GameInit_Main_Thrd(void* appstate) {
     Madokawaii::Platform::Audio::SetMusicVolume(ctx.music, 0.5f);
     Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "MAIN: Music Length: %f", musicLength);
     Madokawaii::Platform::Audio::PlayMusicStream(ctx.music);
+
+    if (!Madokawaii::Platform::Core::FileExists(danli.GetBackgroundPath().c_str()))
+    {
+        Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_ERROR, "MAIN: Background image does not exist!");
+        return -1;
+    }
+    Madokawaii::Platform::Graphics::Texture::Image background_image = Madokawaii::Platform::Graphics::Texture::LoadImage(danli.GetBackgroundPath().c_str());
+    auto copiedImage = Madokawaii::Platform::Graphics::Texture::ImageCopy(background_image);
+    Madokawaii::Platform::Graphics::Texture::UnloadImage(background_image);
+    Madokawaii::Platform::Graphics::Vector2 bgImageDimension{};
+    Madokawaii::Platform::Graphics::Texture::MeasureImage(copiedImage, &bgImageDimension);
+    auto ratio = bgImageDimension.x / bgImageDimension.y;
+    Madokawaii::Platform::Graphics::Texture::ImageResizeNN(copiedImage, ctx.screenHeight * ratio, ctx.screenHeight); // NOLINT(*-narrowing-conversions)
+    Madokawaii::Platform::Graphics::Texture::MeasureImage(copiedImage, &bgImageDimension);
+    float newStartX = (bgImageDimension.x - ctx.screenWidth) / 2.0f;
+    Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "MAIN: Background image dimension: ({}, {})", bgImageDimension.x, bgImageDimension.y);
+    Madokawaii::Platform::Shape::Rectangle srcRect = {newStartX, 0, bgImageDimension.x, bgImageDimension.y};
+    Madokawaii::Platform::Graphics::Texture::ImageCrop(copiedImage, srcRect);
+    Madokawaii::Platform::Graphics::Texture::ImageColorBrightness(copiedImage, -96.0f);
+    Madokawaii::Platform::Graphics::Texture::ImageColorContrast(copiedImage, -16.0f);
+    Madokawaii::Platform::Graphics::Texture::ImageBlurGaussian(copiedImage, 5.0f);
+    ctx.backgroundTexture = Madokawaii::Platform::Graphics::Texture::LoadTextureFromImage(copiedImage);
+    Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "MAIN: Game initialization completed!");
 
     return 0;
 }
@@ -189,6 +214,7 @@ int AppIterate_Game(void * appstate) {
     Madokawaii::Platform::Audio::UpdateMusicStream(ctx.music);
     Madokawaii::Platform::Graphics::BeginDrawing();
     Madokawaii::Platform::Graphics::ClearBackground(Madokawaii::Platform::Graphics::M_BLACK);
+    DrawTexture(ctx.backgroundTexture, {0, 0}, {255, 255, 255, 255});
 
     auto thisFrameTime = Madokawaii::Platform::Audio::GetMusicTimePlayed(ctx.music);
     if (!Madokawaii::Platform::Audio::IsMusicStreamPlaying(ctx.music)) {
@@ -230,9 +256,9 @@ int AppIterate_Game(void * appstate) {
     }
 
     RenderDebugInfo();
-    Madokawaii::Platform::Graphics::EndDrawing();
     UpdateNoteHitSfx();
     UpdateNoteHitFx(thisFrameTime);
+    Madokawaii::Platform::Graphics::EndDrawing();
 
     return !Madokawaii::Platform::Core::WindowShouldClose();
 }
@@ -255,6 +281,7 @@ int AppExit(void * appstate) {
     if (Madokawaii::Platform::Audio::IsMusicStreamPlaying(ctx.music))
         Madokawaii::Platform::Audio::StopMusicStream(ctx.music);
     Madokawaii::Platform::Audio::UnloadMusicStream(ctx.music);
+    Madokawaii::Platform::Graphics::Texture::UnloadTexture(ctx.backgroundTexture);
     Madokawaii::Platform::Audio::CloseAudioDevice();
     delete static_cast<AppContext*>(appstate);
     return 0;

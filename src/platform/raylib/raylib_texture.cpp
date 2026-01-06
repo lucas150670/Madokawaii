@@ -57,6 +57,12 @@ namespace Madokawaii::Platform::Graphics::Texture {
         }
     }
 
+    void DrawTexture(Texture2D texture, Vector2 position, Color_ tint)
+    {
+        auto& rl = *static_cast<::Texture2D*>(texture.implementationDefinedData);
+        ::DrawTexture(rl, position.x, position.y, RL(tint));
+    }
+
     void DrawTextureEx(Texture2D texture, Vector2 pos, float rotation, float scale, Color_ tint) {
         auto& rl = *static_cast<::Texture2D*>(texture.implementationDefinedData);
         ::DrawTextureEx(rl, {pos.x, pos.y}, rotation, scale, RL(tint));
@@ -84,6 +90,12 @@ namespace Madokawaii::Platform::Graphics::Texture {
         dimension->y = static_cast<float>(rl.height);
     }
 
+    void ImageResizeNN(Image image, int newWidth, int newHeight)
+    {
+        auto rl = static_cast<::Image*>(image.implementationDefinedData);
+        ::ImageResizeNN(rl, newWidth, newHeight);
+    }
+
     void MeasureImage(Image image, Vector2 *dimension) {
         auto& rl = *static_cast<::Image*>(image.implementationDefinedData);
         dimension->x = static_cast<float>(rl.width);
@@ -99,5 +111,23 @@ namespace Madokawaii::Platform::Graphics::Texture {
     void ImageCrop(Image Image, Shape::Rectangle Crop) {
         const auto rl = static_cast<::Image*>(Image.implementationDefinedData);
         ::ImageCrop(rl, {Crop.x, Crop.y, Crop.width, Crop.height});
+    }
+
+    void ImageColorBrightness(Image image, int brightness)
+    {
+        auto rl = static_cast<::Image*>(image.implementationDefinedData);
+        ::ImageColorBrightness(rl, brightness);
+    }
+
+    void ImageBlurGaussian(Image image, int blurSize)
+    {
+        auto rl = static_cast<::Image*>(image.implementationDefinedData);
+        ::ImageBlurGaussian(rl, blurSize);
+    }
+
+    void ImageColorContrast(Image image, float contrast)
+    {
+        auto rl = static_cast<::Image*>(image.implementationDefinedData);
+        ::ImageColorContrast(rl, contrast);
     }
 }
