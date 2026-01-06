@@ -120,6 +120,64 @@ int AppInit(void*& appstate) {
     return ctx.sys_initialized;
 }
 
+int GameInit(void *appstate) {
+    auto &ctx = *static_cast<AppContext *>(appstate);
+    if (!ctx.gameInitStarted) {
+        ctx.gameInitStarted = true;
+
+        std::promise<int> initPromise;
+        ctx.gameInitFuture = initPromise.get_future();
+        std::thread([appstate, promise = std::move(initPromise)]() mutable {
+            int result = GameInit_Async(appstate);
+            promise.set_value(result);
+        }).detach();
+
+        Madokawaii::Platform::Log::TraceLog(
+            Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO,
+            "MAIN: Started async chart loading..."
+        );
+    }
+
+    if (ctx.gameInitFuture.valid() &&
+        ctx.gameInitFuture.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
+        int initResult = ctx.gameInitFuture.get();
+        if (initResult == 0) {
+            ctx.asyncDataReady = true;
+            Madokawaii::Platform::Log::TraceLog(
+                Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO,
+                "MAIN: Async initialization completed!"
+            );
+        } else {
+            Madokawaii::Platform::Log::TraceLog(
+                Madokawaii::Platform::Log::TraceLogLevel::LOG_ERROR,
+                "MAIN: Async initialization failed!"
+            );
+            return -1;
+        }
+    } else {
+        Madokawaii::Platform::Graphics::BeginDrawing();
+        Madokawaii::Platform::Graphics::ClearBackground(Madokawaii::Platform::Graphics::M_BLACK);
+        Madokawaii::Platform::Graphics::DrawText("Converting chart..", 1920 / 2 - 100, 1080 / 2 - 50, 20,
+                                                 Madokawaii::Platform::Graphics::M_LIGHTGRAY);
+        Madokawaii::Platform::Graphics::EndDrawing();
+        return !Madokawaii::Platform::Core::WindowShouldClose();
+    }
+    if (ctx.asyncDataReady && !ctx.game_initialized) {
+        Madokawaii::Platform::Graphics::BeginDrawing();
+        Madokawaii::Platform::Graphics::ClearBackground(Madokawaii::Platform::Graphics::M_BLACK);
+        Madokawaii::Platform::Graphics::DrawText("Setup scene..", 1920 / 2 - 100, 1080 / 2 - 50, 20,
+                                                 Madokawaii::Platform::Graphics::M_LIGHTGRAY);
+        Madokawaii::Platform::Graphics::EndDrawing();
+        if (GameInit_Main_Thrd(appstate) == 0) {
+            ctx.game_initialized = true;
+        } else {
+            Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_ERROR,
+                                                "MAIN: Failed to initialize game!");
+            return -1;
+        }
+    }
+}
+
 int AppIterate_Game(void * appstate) {
     auto& ctx = *static_cast<AppContext*>(appstate);
     if (!ctx.sys_initialized)
@@ -174,61 +232,7 @@ int AppIterate(void * appstate) {
     // 扩展 留下放结算画面和开始画面的接口
     auto& ctx = *static_cast<AppContext*>(appstate);
     if (!ctx.sys_initialized) return -1;
-    if (!ctx.game_initialized) {
-        if (!ctx.gameInitStarted) {
-            ctx.gameInitStarted = true;
-
-            std::promise<int> initPromise;
-            ctx.gameInitFuture = initPromise.get_future();
-            std::thread([appstate, promise = std::move(initPromise)]() mutable {
-                int result = GameInit_Async(appstate);
-                promise.set_value(result);
-            }).detach();
-
-            Madokawaii::Platform::Log::TraceLog(
-                Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO,
-                "MAIN: Started async chart loading..."
-            );
-        }
-
-        if (ctx.gameInitFuture.valid() &&
-            ctx.gameInitFuture.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
-
-            int initResult = ctx.gameInitFuture.get();
-            if (initResult == 0) {
-                ctx.asyncDataReady = true;
-                Madokawaii::Platform::Log::TraceLog(
-                    Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO,
-                    "MAIN: Async initialization completed!"
-                );
-            } else {
-                Madokawaii::Platform::Log::TraceLog(
-                    Madokawaii::Platform::Log::TraceLogLevel::LOG_ERROR,
-                    "MAIN: Async initialization failed!"
-                );
-                return -1;
-            }
-            } else {
-                Madokawaii::Platform::Graphics::BeginDrawing();
-                Madokawaii::Platform::Graphics::ClearBackground(Madokawaii::Platform::Graphics::M_BLACK);
-                Madokawaii::Platform::Graphics::DrawText("Converting chart..", 1920 / 2 - 100, 1080 / 2 - 50, 20, Madokawaii::Platform::Graphics::M_LIGHTGRAY);
-                Madokawaii::Platform::Graphics::EndDrawing();
-                return !Madokawaii::Platform::Core::WindowShouldClose();
-            }
-        }
-        if (ctx.asyncDataReady && !ctx.game_initialized) {
-            Madokawaii::Platform::Graphics::BeginDrawing();
-            Madokawaii::Platform::Graphics::ClearBackground(Madokawaii::Platform::Graphics::M_BLACK);
-            Madokawaii::Platform::Graphics::DrawText("Setup scene..", 1920 / 2 - 100, 1080 / 2 - 50, 20, Madokawaii::Platform::Graphics::M_LIGHTGRAY);
-            Madokawaii::Platform::Graphics::EndDrawing();
-            if (GameInit_Main_Thrd(appstate) == 0) {
-                ctx.game_initialized = true;
-            } else {
-                Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_ERROR, "MAIN: Failed to initialize game!");
-                return -1;
-            }
-        }
-
+    if (!ctx.game_initialized) return GameInit(appstate);
     return AppIterate_Game(appstate);
 }
 
