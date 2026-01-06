@@ -176,6 +176,7 @@ int GameInit(void *appstate) {
             return -1;
         }
     }
+    return 0;
 }
 
 int AppIterate_Game(void * appstate) {
