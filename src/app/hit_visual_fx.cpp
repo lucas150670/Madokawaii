@@ -84,12 +84,11 @@ int InitializeNoteHitFxManager(Madokawaii::App::ResPack::ResPack & pack) {
     return 0;
 }
 
-void RegisterNoteHitFx(float this_frame_time, int type, float position_X, float position_Y) {
+void RegisterNoteHitFx(float this_frame_time, float position_X, float position_Y) {
     HitFxInfo info{};
     info.posX = position_X;
     info.posY = position_Y;
     info.startTime = this_frame_time;
-    info.spriteIndex = type;
     info.isDiscarded = false;
     for (int i = 0; i < 4; i++)
     {
@@ -116,7 +115,7 @@ void UpdateNoteHitFx(float this_frameTime) {
         Madokawaii::Platform::Graphics::Texture::DrawTextureEx(hit_fx_decompressed.hitFxSprites[frame_index], {draw_pos_x, draw_pos_y}, 0.f, 1.0f, {255,236,160, 226});
         // draw particle effects
 
-        float tick = elapsed_time / HIT_FX_SPRITE_FRAME_TIME / HIT_FX_SPRITE_FRAME_RATE;
+        float tick = elapsed_time / HIT_FX_SPRITE_FRAME_TIME / static_cast<float>(hit_fx_decompressed.hitFxSprites.size());
         float particle_size = 30.f * (((0.2078f * tick - 1.6524f) * tick + 1.6399f) * tick + 0.4988f);
         for (int i = 0; i < 4; i++) {
             float nowDirection_distance = hitFx.destination[i] * (9 * tick / (8 * tick + 1));
@@ -131,7 +130,7 @@ void UpdateNoteHitFx(float this_frameTime) {
                 static_cast<int>(nowDirection_y),
                 static_cast<int>(particle_size),
                 static_cast<int>(particle_size),
-                {255,236,160, alpha_channel});
+                {255, 236, 160, alpha_channel});
         }
     }
 

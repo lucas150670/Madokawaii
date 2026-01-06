@@ -2,6 +2,7 @@
 // Created by madoka on 2025/12/15.
 //
 
+#include "Madokawaii/app/note_hit.h"
 #include "Madokawaii/app/note_operation.h"
 #include "Madokawaii/platform/graphics.h"
 #include "Madokawaii/platform/log.h"
@@ -180,16 +181,19 @@ void AddHoldNoteClickingRender(const Madokawaii::App::chart::judgeline::note &no
 }
 
 void RenderHoldCallback(float thisFrameTime, const Madokawaii::App::chart& thisChart) {
+    static std::unordered_map<const Madokawaii::App::chart::judgeline::note*, float> hitFx_Hold_Counter;
     for (auto &hold : holds_to_render) {
 		if (hold.realHoldTime + hold.realTime < thisFrameTime) {
 		    hold.state = Madokawaii::App::NoteState::finished;
+		    hitFx_Hold_Counter.erase(&hold);
             continue;
 		}
+        auto diff = thisFrameTime - hold.realTime;
+        auto& judgeline = thisChart.judgelines[hold.parent_line_id];
         hold.state = Madokawaii::App::NoteState::holding;
-        hold.realHoldTime -= (thisFrameTime - hold.realTime);
+        hold.realHoldTime -= diff;
         hold.realTime = thisFrameTime;
 
-        auto& judgeline = thisChart.judgelines[hold.parent_line_id];
         hold.rotateAngle = judgeline.info.rotateAngle;
         // realholdtime = speed * (holdTime -> real)
         if (fabs(hold.rotateAngle - 360.0) < 1e-6)
@@ -207,6 +211,21 @@ void RenderHoldCallback(float thisFrameTime, const Madokawaii::App::chart& thisC
         hold.coordinateY = screenHeight - centralY;
         // Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "NOTE: Rendering Holding Note, this frame time = %f, hold time = %f, real hold time = %f", thisFrameTime, hold.realTime, hold.realHoldTime);
         RenderHoldNote(hold);
+
+
+        if (hitFx_Hold_Counter.find(&hold) == hitFx_Hold_Counter.end())
+        {
+            hitFx_Hold_Counter.insert({&hold, 0.0f});
+        } else
+        {
+            hitFx_Hold_Counter[&hold] += diff;
+            auto hold_counter = hitFx_Hold_Counter[&hold];
+            if (hold_counter > 0.2f)
+            {
+                RegisterNoteHitFx(thisFrameTime, hold.coordinateX, hold.coordinateY);
+                hitFx_Hold_Counter[&hold] = 0.0f;
+            }
+        }
     }
     std::erase_if(holds_to_render, [](const auto& note) { return note.state == Madokawaii::App::NoteState::finished; });
 }

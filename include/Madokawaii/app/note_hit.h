@@ -12,7 +12,7 @@ void CleanupNoteHitSfxManager();
 void UpdateNoteHitSfx();
 void UnloadNoteHitSfxManager();
 int InitializeNoteHitFxManager(Madokawaii::App::ResPack::ResPack&);
-void RegisterNoteHitFx(float, int type, float position_X, float position_Y);
+void RegisterNoteHitFx(float, float position_X, float position_Y);
 void UpdateNoteHitFx(float);
 
 void UnloadNoteHitFxManager();

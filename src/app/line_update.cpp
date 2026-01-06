@@ -50,7 +50,7 @@ void UpdateJudgeline(Madokawaii::App::chart::judgeline& judgeline, double thisFr
 	auto processNote = [&, thisFrameTime](Madokawaii::App::chart::judgeline::note& note) {
 		if (note.realTime < thisFrameTime) {
 			RegisterNoteHitSfx(note.type);
-			RegisterNoteHitFx(thisFrameTime, note.type, note.coordinateX, note.coordinateY);
+			RegisterNoteHitFx(thisFrameTime, note.coordinateX, note.coordinateY);
 			if (note.type == Madokawaii::App::NoteType::hold) {
 				AddHoldNoteClickingRender(note);
 				note.state = Madokawaii::App::NoteState::holding;
