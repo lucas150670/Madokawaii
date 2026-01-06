@@ -46,4 +46,9 @@ namespace Madokawaii::Platform::Core {
     int GetScreenHeight() {
         return ::GetScreenHeight();
     }
+
+    bool IsAnyKeyPressed() {
+        // raylib 提供 GetKeyPressed() 返回按下的键码，0表示无按键
+        return ::GetKeyPressed() != 0;
+    }
 }

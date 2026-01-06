@@ -1,4 +1,4 @@
-
+﻿
 #include <algorithm>
 #include <ctime>
 #include <format>
@@ -14,25 +14,14 @@
 #include "Madokawaii/app/note_hit.h"
 #include "Madokawaii/app/note_operation.h"
 #include "Madokawaii/app/res_pack.h"
+#include "Madokawaii/app/common.h"
+#include "Madokawaii/app/epilepsy_warning.h"
 #include "Madokawaii/platform/audio.h"
 #include "Madokawaii/platform/log.h"
 #include "Madokawaii/platform/core.h"
+#include "Madokawaii/platform/fonts.h"
 #include "Madokawaii/platform/graphics.h"
 #include "Madokawaii/platform/texture.h"
-
-struct AppContext {
-    int screenWidth{1920};
-    int screenHeight{1080};
-    Madokawaii::Platform::Audio::Music music{};
-    Madokawaii::App::chart mainChart{};
-    bool sys_initialized{false}, game_initialized{false};
-    std::shared_ptr<Madokawaii::App::ResPack::ResPack> global_respack;
-    Madokawaii::Platform::Graphics::Texture::Texture2D backgroundTexture{};
-
-    std::future<int> gameInitFuture;
-    bool gameInitStarted{false};
-    bool asyncDataReady{false};
-};
 
 extern "C" {
 
@@ -268,7 +257,10 @@ int AppIterate(void * appstate) {
     // 扩展 留下放结算画面和开始画面的接口
     auto& ctx = *static_cast<AppContext*>(appstate);
     if (!ctx.sys_initialized) return -1;
+    // 先显示警告页面
+    if (!ctx.warningShown) return AppIterate_Warning(appstate);
     if (!ctx.game_initialized) return GameInit(appstate);
+
     return AppIterate_Game(appstate);
 }
 
@@ -278,10 +270,14 @@ int AppExit(void * appstate) {
     UnloadNoteRenderer();
     UnloadNoteHitSfxManager();
     UnloadNoteHitFxManager();
-    if (Madokawaii::Platform::Audio::IsMusicStreamPlaying(ctx.music))
-        Madokawaii::Platform::Audio::StopMusicStream(ctx.music);
-    Madokawaii::Platform::Audio::UnloadMusicStream(ctx.music);
-    Madokawaii::Platform::Graphics::Texture::UnloadTexture(ctx.backgroundTexture);
+    if (ctx.music.implementationDefined) {
+        if (Madokawaii::Platform::Audio::IsMusicStreamPlaying(ctx.music))
+            Madokawaii::Platform::Audio::StopMusicStream(ctx.music);
+        Madokawaii::Platform::Audio::UnloadMusicStream(ctx.music);
+    }
+    if (ctx.backgroundTexture.implementationDefinedData) {
+        Madokawaii::Platform::Graphics::Texture::UnloadTexture(ctx.backgroundTexture);
+    }
     Madokawaii::Platform::Audio::CloseAudioDevice();
     delete static_cast<AppContext*>(appstate);
     return 0;

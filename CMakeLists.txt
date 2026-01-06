@@ -25,7 +25,8 @@ set(SRC_APP
         src/app/res_pack.cpp
         src/app/note_render.cpp
         src/app/hit_sound_fx.cpp
-        src/app/hit_visual_fx.cpp)
+        src/app/hit_visual_fx.cpp
+        src/app/epilepsy_warning.cpp)
 
 set(SRC_IMP_RAYLIB
         src/platform/raylib/raylib_graphics.cpp
@@ -46,6 +47,9 @@ if(implementer STREQUAL "RAYLIB")
     add_executable(Madokawaii
             ${SRC_APP}
             ${SRC_IMP_RAYLIB})
+    if(MSVC)
+        target_compile_options(Madokawaii PRIVATE /utf-8)
+    endif()
     target_link_libraries(Madokawaii PRIVATE raylib RapidJSON rapidjson yaml libzip::zip libzippp::libzippp)
 # elseif(implementer STREQUAL "DIRECT2D")
 #     add_executable(Madokawaii
