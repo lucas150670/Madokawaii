@@ -247,6 +247,7 @@ namespace Madokawaii::App::Chart {
     }
 
     bool IsNoteInScreen(const double x, const double y, const int screenWidth, const int screenHeight) {
-        return !(x < 0 || x >= screenWidth || y < 0 || y >= screenHeight);
+        // 补偿
+        return !(x < -200 || x >= screenWidth + 200 || y < -200 || y >= screenHeight + 200);
     }
 }

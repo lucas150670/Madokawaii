@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <future>
+#include <unordered_map>
 
 #include "Madokawaii/app/app_config.h"
 #include "Madokawaii/app/def.h"
@@ -152,7 +153,7 @@ int GameInit(void *appstate) {
                 Madokawaii::Platform::Log::TraceLogLevel::LOG_ERROR,
                 "MAIN: Async initialization failed!"
             );
-            return -1;
+            return false;
         }
     } else {
         Madokawaii::Platform::Graphics::BeginDrawing();
@@ -173,10 +174,10 @@ int GameInit(void *appstate) {
         } else {
             Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_ERROR,
                                                 "MAIN: Failed to initialize game!");
-            return -1;
+            return false;
         }
     }
-    return 0;
+    return true;
 }
 
 int AppIterate_Game(void * appstate) {
@@ -205,13 +206,20 @@ int AppIterate_Game(void * appstate) {
 
     }
 
-    for (auto notePtrIter = noteRenderList.begin(); notePtrIter != noteRenderList.end(); ++notePtrIter) {
-        for (auto notePtrIter1 = notePtrIter + 1; notePtrIter1 != noteRenderList.end(); ++notePtrIter1) {
-            if (fabs((*notePtrIter)->realTime - (*notePtrIter1)->realTime) < 1e-6) {
-                (*notePtrIter1)->isMultipleNote = (*notePtrIter)->isMultipleNote = true;
-            } else if ((*notePtrIter1)->realTime > (*notePtrIter)->realTime) {
-                break;
-            }
+    // 多押标记优化:O(n^2)->O(n)
+    auto timeToKey = [](double time) {
+        auto keyStr = std::to_string(static_cast<long long>(std::round(time * 1e6)));
+        return Madokawaii::Platform::Core::hash_compile_time(keyStr.c_str());
+    };
+
+    std::unordered_map<uint64_t, int> timeCount;
+    for (const auto& notePtr : noteRenderList) {
+        timeCount[timeToKey(notePtr->realTime)]++;
+    }
+
+    for (auto& notePtr : noteRenderList) {
+        if (timeCount[timeToKey(notePtr->realTime)] >= 2) {
+            notePtr->isMultipleNote = true;
         }
     }
 
@@ -224,6 +232,7 @@ int AppIterate_Game(void * appstate) {
     RenderDebugInfo();
     Madokawaii::Platform::Graphics::EndDrawing();
     UpdateNoteHitSfx();
+    UpdateNoteHitFx(thisFrameTime);
 
     return !Madokawaii::Platform::Core::WindowShouldClose();
 }

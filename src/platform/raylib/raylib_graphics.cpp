@@ -46,6 +46,11 @@ namespace Madokawaii::Platform::Graphics {
         ::DrawLineEx({start.x, start.y}, {end.x, end.y}, thick, RL(color));
     }
 
+    void DrawRectangle(int posX, int posY, int width, int height, Color Color)
+    {
+        ::DrawRectangle(posX, posY, width, height, RL(Color));
+    }
+
     void SetTransform(float x, float y, float rotate, float scaleX, float scaleY)
     {
         rlPushMatrix();
