@@ -67,7 +67,7 @@ int GameInit_Main_Thrd(void* appstate) {
 
     InitializeNoteRenderer(*ctx.global_respack, ctx.screenWidth, ctx.screenHeight);
     if (InitializeNoteHitSfxManager(*ctx.global_respack)) return -1;
-    if (InitializeNoteHitFxManager(*ctx.global_respack)) return -1;
+    if (InitializeNoteHitFxManager(*ctx.global_respack, ctx.perfectColor)) return -1;
 
     ctx.music.looping = false;
     auto musicLength = Madokawaii::Platform::Audio::GetMusicTimeLength(ctx.music);
@@ -119,6 +119,8 @@ int AppInit(void*& appstate) {
     }
     ctx.global_respack = Madokawaii::App::ResPack::LoadResPackFromMemoryStream(respack_mem_stream, dataSize);
     Madokawaii::Platform::Core::UnloadFileData(respack_mem_stream);
+    auto [r, g, b, a] = danli.GetPerfectColor();
+    ctx.perfectColor = {r, g, b, a};
 
     Madokawaii::Platform::Core::InitWindow(ctx.screenWidth, ctx.screenHeight, "Madokawaii");
     // Madokawaii::Platform::Core::ToggleFullscreen();
@@ -217,7 +219,7 @@ int AppIterate_Game(void * appstate) {
 
     for (auto &judgeline: ctx.mainChart.judgelines) {
         UpdateJudgeline(judgeline, thisFrameTime, ctx.screenWidth, ctx.screenHeight, noteRenderList);
-        RenderJudgeline(judgeline, ctx.screenWidth, ctx.screenHeight);
+        RenderJudgeline(judgeline, ctx.screenWidth, ctx.screenHeight, ctx.perfectColor);
 
     }
 

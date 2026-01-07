@@ -9,16 +9,15 @@
 #include "Madokawaii/app/line_operation.h"
 #include "Madokawaii/platform/graphics.h"
 
-void RenderJudgeline(const Madokawaii::App::chart::judgeline& judgeline, int screenWidth, int screenHeight) {
-    auto c = Madokawaii::Platform::Graphics::M_RAYWHITE;
-    c.a = static_cast<unsigned char>(judgeline.info.opacity * 255);
+void RenderJudgeline(const Madokawaii::App::chart::judgeline& judgeline, int screenWidth, int screenHeight, Madokawaii::Platform::Graphics::Color perfectColor) {
+    perfectColor.a = static_cast<unsigned char>(judgeline.info.opacity * 255);
     auto screenX = static_cast<float>(judgeline.info.posX * screenWidth),
          screenY = static_cast<float>((1 - judgeline.info.posY) * screenHeight),
          aspectRatio = screenWidth * 1.0f / screenHeight; // NOLINT(*-narrowing-conversions)
     if (fabs(judgeline.info.rotateAngle) < 1e-6 || fabs(judgeline.info.rotateAngle - 180.0f) < 1e-6) {
-        DrawLineEx(Madokawaii::Platform::Graphics::Vector2{screenX - 5000, screenY}, Madokawaii::Platform::Graphics::Vector2{screenX + 5000, screenY}, 10.0f, c);
+        DrawLineEx(Madokawaii::Platform::Graphics::Vector2{screenX - 5000, screenY}, Madokawaii::Platform::Graphics::Vector2{screenX + 5000, screenY}, 10.0f, perfectColor);
     } else if (fabs(judgeline.info.rotateAngle - 90.0f) < 1e-6 || fabs(judgeline.info.rotateAngle - 270.0f) < 1e-6) {
-        DrawLineEx(Madokawaii::Platform::Graphics::Vector2{screenX, screenY - 5000}, Madokawaii::Platform::Graphics::Vector2{screenX, screenY + 5000}, 10.0f, c);
+        DrawLineEx(Madokawaii::Platform::Graphics::Vector2{screenX, screenY - 5000}, Madokawaii::Platform::Graphics::Vector2{screenX, screenY + 5000}, 10.0f, perfectColor);
     } else {
         float k, kx0, y0;
         k = static_cast<float>(tan(judgeline.info.rotateAngle / 180.0 * M_PI) * aspectRatio);
@@ -27,7 +26,7 @@ void RenderJudgeline(const Madokawaii::App::chart::judgeline& judgeline, int scr
         Madokawaii::Platform::Graphics::Vector2 p1{}, p2{};
         p1 = {-10.0f * screenWidth, screenHeight - (-10 * k - kx0 + y0) * screenHeight}; // NOLINT(*-narrowing-conversions)
         p2 = {10.0f * screenWidth, screenHeight - (10 * k - kx0 + y0) * screenHeight}; // NOLINT(*-narrowing-conversions)
-        DrawLineEx(p1, p2, 10.0f, c);
+        DrawLineEx(p1, p2, 10.0f, perfectColor);
     }
 
     // 画线ID

@@ -40,6 +40,11 @@ namespace Madokawaii::AppConfig {
         return config_.backgroundPath;
     }
 
+    ColorSave ConfigManager::GetPerfectColor() const
+    {
+        return config_.perfectColor;
+    }
+
     void ConfigManager::SetChartPath(const std::string& path) {
         config_.chartPath = path;
     }
@@ -56,6 +61,11 @@ namespace Madokawaii::AppConfig {
     void ConfigManager::SetBackgroundPath(const std::string& path)
     {
         config_.backgroundPath = path;
+    }
+
+    void ConfigManager::SetPerfectColor(const ColorSave& color)
+    {
+        config_.perfectColor = color;
     }
 
     bool ConfigManager::LoadDefaults() {

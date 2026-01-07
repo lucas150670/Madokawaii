@@ -31,6 +31,7 @@ struct AppContext {
     bool sys_initialized{false}, game_initialized{false};
     std::shared_ptr<Madokawaii::App::ResPack::ResPack> global_respack;
     Madokawaii::Platform::Graphics::Texture::Texture2D backgroundTexture{};
+    Madokawaii::Platform::Graphics::Color perfectColor{};
 
     std::future<int> gameInitFuture;
     bool gameInitStarted{false};

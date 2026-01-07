@@ -18,6 +18,7 @@ struct Respack_HitFx_Decompressed
 {
     std::vector<Madokawaii::Platform::Graphics::Texture::Texture2D> hitFxSprites;
     float sprite_unit_width, sprite_unit_height;
+    Madokawaii::Platform::Graphics::Color perfectColor{};
 };
 
 Respack_HitFx_Decompressed hit_fx_decompressed{};
@@ -47,7 +48,7 @@ static std::pair<float, float> ParticleEffects_Destination_Gen()
     return {rand1 * 80 + 185, static_cast<float>(rand2 * 2 * M_PI)};
 }
 
-int InitializeNoteHitFxManager(Madokawaii::App::ResPack::ResPack & pack) {
+int InitializeNoteHitFxManager(Madokawaii::App::ResPack::ResPack & pack, Madokawaii::Platform::Graphics::Color perfectColor) {
     pack.hitFxCount = pack.hitFxHeight * pack.hitFxWidth;
     // load hit fx image from stream
     Madokawaii::Platform::Graphics::Texture::Image image =
@@ -81,6 +82,7 @@ int InitializeNoteHitFxManager(Madokawaii::App::ResPack::ResPack & pack) {
             Madokawaii::Platform::Graphics::Texture::UnloadImage(croped_image);
         }
     }
+    hit_fx_decompressed.perfectColor = perfectColor;
     return 0;
 }
 
@@ -112,7 +114,7 @@ void UpdateNoteHitFx(float this_frameTime) {
         }
         float draw_pos_x = hitFx.posX - hit_fx_decompressed.sprite_unit_width / 2.f;
         float draw_pos_y = hitFx.posY - hit_fx_decompressed.sprite_unit_height / 2.f;
-        Madokawaii::Platform::Graphics::Texture::DrawTextureEx(hit_fx_decompressed.hitFxSprites[frame_index], {draw_pos_x, draw_pos_y}, 0.f, 1.0f, {255,236,160, 226});
+        Madokawaii::Platform::Graphics::Texture::DrawTextureEx(hit_fx_decompressed.hitFxSprites[frame_index], {draw_pos_x, draw_pos_y}, 0.f, 1.0f, hit_fx_decompressed.perfectColor);
         // draw particle effects
 
         float tick = elapsed_time / HIT_FX_SPRITE_FRAME_TIME / static_cast<float>(hit_fx_decompressed.hitFxSprites.size());
@@ -130,7 +132,7 @@ void UpdateNoteHitFx(float this_frameTime) {
                 static_cast<int>(nowDirection_y),
                 static_cast<int>(particle_size),
                 static_cast<int>(particle_size),
-                {255, 236, 160, alpha_channel});
+                {hit_fx_decompressed.perfectColor.r, hit_fx_decompressed.perfectColor.g, hit_fx_decompressed.perfectColor.b, alpha_channel});
         }
     }
 

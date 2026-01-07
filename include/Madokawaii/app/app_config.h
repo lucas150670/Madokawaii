@@ -11,12 +11,18 @@
 
 namespace Madokawaii::AppConfig {
 
+    struct ColorSave
+    {
+        unsigned char r, g, b, a;
+    };
+
     struct GlobalConfig
     {
         std::string chartPath{"assets/charts/chart.json"};
         std::string musicPath{"assets/charts/music.wav"};
         std::string backgroundPath{"assets/charts/illustration.png"};
         std::string resPackPath{"assets/respacks/default.zip"};
+        ColorSave perfectColor{255,236,160, 226};
     };
 
     class ConfigManager {
@@ -32,11 +38,13 @@ namespace Madokawaii::AppConfig {
         [[nodiscard]] const std::string& GetMusicPath() const;
         [[nodiscard]] const std::string& GetResPackPath() const;
         [[nodiscard]] const std::string& GetBackgroundPath() const;
+        [[nodiscard]] ColorSave GetPerfectColor() const;
 
         void SetChartPath(const std::string& path);
         void SetMusicPath(const std::string& path);
         void SetResPackPath(const std::string& path);
         void SetBackgroundPath(const std::string& path);
+        void SetPerfectColor(const ColorSave& color);
 
         bool LoadDefaults();
         static bool LoadFromFile(const std::string& filePath);
