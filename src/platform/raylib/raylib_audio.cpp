@@ -11,6 +11,9 @@
 
 namespace Madokawaii::Platform::Audio {
 
+    static double lastAudioTime = 0.0;
+    static std::chrono::steady_clock::time_point lastSystemTime;
+
     static ::Music& AsRL(Music& m) { return *static_cast<::Music*>(m.implementationDefined); }
     static const ::Music& AsRL(const Music& m) { return *static_cast<const ::Music*>(m.implementationDefined); }
     static ::Sound& AsRL(Sound& s) { return *static_cast<::Sound*>(s.implementationDefined); }
@@ -57,9 +60,25 @@ namespace Madokawaii::Platform::Audio {
 
     bool IsMusicStreamPlaying(Music m) { return ::IsMusicStreamPlaying(AsRL(m)); }
 
-    float GetMusicTimeLength(Music m) { return ::GetMusicTimeLength(AsRL(m)); }
+    double GetMusicTimeLength(Music m) { return ::GetMusicTimeLength(AsRL(m)); }
 
-    float GetMusicTimePlayed(Music m) { return ::GetMusicTimePlayed(AsRL(m)); }
+    double GetMusicTimePlayed(Music m) {
+        double audioTime = ::GetMusicTimePlayed(AsRL(m));
+        auto now = std::chrono::steady_clock::now();
+        if (lastAudioTime == 0.0) { // 第一次调用，初始化
+            lastAudioTime = audioTime;
+            lastSystemTime = now;
+            return audioTime;
+        }
+        if (fabs(audioTime - lastAudioTime) > 1e-3f) {
+            lastAudioTime = audioTime;
+            lastSystemTime = now;
+            return static_cast<float>(audioTime);
+        }
+        double delta = std::chrono::duration<double>(now - lastSystemTime).count();
+        return lastAudioTime + delta;
+    }
+
 
     void SetMusicPitch(Music m, float pitch) { ::SetMusicPitch(AsRL(m), pitch); }
 

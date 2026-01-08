@@ -22,8 +22,8 @@ namespace Madokawaii::Platform::Audio {
     void PauseMusicStream(Music);
     void ResumeMusicStream(Music);
     bool IsMusicStreamPlaying(Music);
-    float GetMusicTimeLength(Music);
-    float GetMusicTimePlayed(Music);
+    double GetMusicTimeLength(Music);
+    double GetMusicTimePlayed(Music);
     // 调试用：设置音高，可以改变音频播放速率
     void SetMusicPitch(Music, float pitch);
     void SetMusicVolume(Music m, float volume);

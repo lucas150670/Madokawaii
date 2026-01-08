@@ -57,6 +57,11 @@ void UpdateJudgeline(Madokawaii::App::chart::judgeline& judgeline, double thisFr
 			}
 			else
 				note.state = Madokawaii::App::NoteState::finished;
+			auto diff = thisFrameTime - note.realTime;
+			if (fabs(diff) > 1e-3f) {
+				Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_WARNING,
+					"NOTE: abnormal time event, realTime=%f, thisTime=%f, diff=%f", note.realTime, thisFrameTime, diff);
+			}
 		}
 		if (note.type != Madokawaii::App::NoteType::hold)
 			note.positionY = note.speed * (note.floorPosition - judgeline.info.positionY);
