@@ -159,12 +159,12 @@ namespace Madokawaii::App::Chart {
             for (const auto &notesAbove: judgeline["notesAbove"].GetArray()) {
                 thisjudgeline.notesAbove.emplace_back(chart::judgeline::note{
                     .type = notesAbove["type"].GetInt(),
-                    .time = notesAbove["time"].GetInt(),
+                    .time = notesAbove["time"].GetDouble(),
                     .positionX = notesAbove["positionX"].GetDouble(),
                     .holdTime = notesAbove["holdTime"].GetDouble(),
                     .speed = notesAbove["speed"].GetDouble(),
                     .floorPosition = notesAbove["floorPosition"].GetDouble(),
-                    .realTime = (++mainChart.numOfNotes, CalcRealTime(thisjudgeline.bpm, notesAbove["time"].GetInt())),
+                    .realTime = (++mainChart.numOfNotes, CalcRealTime(thisjudgeline.bpm, notesAbove["time"].GetDouble())),
                     .isNoteBelow = false,
                     .state = invisible_or_appeared,
                     .parent_line_id = thisjudgeline.id
@@ -175,12 +175,12 @@ namespace Madokawaii::App::Chart {
             for (const auto &notesBelow: judgeline["notesBelow"].GetArray()) {
                 thisjudgeline.notesBelow.emplace_back(chart::judgeline::note{
                     .type = notesBelow["type"].GetInt(),
-                    .time = notesBelow["time"].GetInt(),
+                    .time = notesBelow["time"].GetDouble(),
                     .positionX = notesBelow["positionX"].GetDouble(),
                     .holdTime = notesBelow["holdTime"].GetDouble(),
                     .speed = notesBelow["speed"].GetDouble(),
                     .floorPosition = notesBelow["floorPosition"].GetDouble(),
-                    .realTime = (++mainChart.numOfNotes, CalcRealTime(thisjudgeline.bpm, notesBelow["time"].GetInt())),
+                    .realTime = (++mainChart.numOfNotes, CalcRealTime(thisjudgeline.bpm, notesBelow["time"].GetDouble())),
                     .isNoteBelow = true,
                     .state = invisible_or_appeared,
                     .parent_line_id = thisjudgeline.id
@@ -209,11 +209,11 @@ namespace Madokawaii::App::Chart {
         return chart.formatVersion == 3 && !chart.judgelines.empty();
     }
 
-    double CalcRealTime(const double bpm, const int time) {
+    double CalcRealTime(const double bpm, const double time) {
         return time * 1.875 / bpm;
     }
 
-    double CalcBeatTime(const double bpm, const float realTime) {
+    double CalcBeatTime(const double bpm, const double realTime) {
         return realTime * bpm / 1.875;
     }
 

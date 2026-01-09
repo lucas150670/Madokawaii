@@ -112,6 +112,7 @@ void UpdateNoteHitFx(float this_frameTime) {
             hitFx.isDiscarded = true;
             continue;
         }
+        if (frame_index < 0) frame_index = 0;
         float draw_pos_x = hitFx.posX - hit_fx_decompressed.sprite_unit_width / 2.f;
         float draw_pos_y = hitFx.posY - hit_fx_decompressed.sprite_unit_height / 2.f;
         Madokawaii::Platform::Graphics::Texture::DrawTextureEx(hit_fx_decompressed.hitFxSprites[frame_index], {draw_pos_x, draw_pos_y}, 0.f, 1.0f, hit_fx_decompressed.perfectColor);

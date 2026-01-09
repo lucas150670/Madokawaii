@@ -27,6 +27,7 @@ namespace Madokawaii::Platform::Audio {
         Music m{};
         auto rl = ::LoadMusicStream(path);
         m.looping = true;
+        m.pitch = 1.0f;
         m.implementationDefined = new ::Music(rl);
         return m;
     }
@@ -36,6 +37,7 @@ namespace Madokawaii::Platform::Audio {
         Music m{};
         auto rl = ::LoadMusicStreamFromMemory(fileType, data, dataSize);
         m.looping = true;
+        m.pitch = 1.0f;
         m.implementationDefined = new ::Music(rl);
         return m;
     }
@@ -64,13 +66,15 @@ namespace Madokawaii::Platform::Audio {
 
     double GetMusicTimePlayed(Music m) {
         double audioTime = ::GetMusicTimePlayed(AsRL(m));
+        if (fabs(m.pitch - 1.0f) > 1e-6)
+            return audioTime;
         auto now = std::chrono::steady_clock::now();
         if (lastAudioTime == 0.0) { // 第一次调用，初始化
             lastAudioTime = audioTime;
             lastSystemTime = now;
             return audioTime;
         }
-        if (fabs(audioTime - lastAudioTime) > 1e-3f) {
+        if (fabs(audioTime - lastAudioTime) > 1e-2) {
             lastAudioTime = audioTime;
             lastSystemTime = now;
             return static_cast<float>(audioTime);
@@ -80,7 +84,10 @@ namespace Madokawaii::Platform::Audio {
     }
 
 
-    void SetMusicPitch(Music m, float pitch) { ::SetMusicPitch(AsRL(m), pitch); }
+    void SetMusicPitch(Music m, float pitch) {
+        m.pitch = pitch;
+        ::SetMusicPitch(AsRL(m), pitch);
+    }
 
     void SetMusicVolume(Music m, float volume) { ::SetMusicVolume(AsRL(m), volume); }
 

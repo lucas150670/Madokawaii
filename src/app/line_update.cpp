@@ -11,7 +11,7 @@
 
 void UpdateJudgeline(Madokawaii::App::chart::judgeline& judgeline, double thisFrameTime, int screenWidth, int screenHeight, std::vector<Madokawaii::App::chart::judgeline::note*>& noteRenderList) {
 	auto calcEventRealTime = [&judgeline](const double beatTime) {
-		return Madokawaii::App::Chart::CalcRealTime(judgeline.bpm, static_cast<int>(beatTime));
+		return Madokawaii::App::Chart::CalcRealTime(judgeline.bpm, beatTime);
 		};
 
 	for (; !(calcEventRealTime(judgeline.info.disappearEventPointer->endTime) > thisFrameTime); ++judgeline.info.disappearEventPointer) {
@@ -48,7 +48,13 @@ void UpdateJudgeline(Madokawaii::App::chart::judgeline& judgeline, double thisFr
 	const double judgelineScreenY = judgeline.info.posY * screenHeight;
 
 	auto processNote = [&, thisFrameTime](Madokawaii::App::chart::judgeline::note& note) {
+		if (fabs(note.rotateAngle - 360.0) < 1e-6)
+			note.rotateAngle = 0.0f;
+		auto note_rotate_angle_rad = note.rotateAngle * M_PI / 180.0;
 		if (note.realTime < thisFrameTime) {
+			// force normalize timing event
+			note.coordinateX = judgelineScreenX + cos(note_rotate_angle_rad) * note.positionX * screenWidth * 0.05625;
+			note.coordinateY = screenHeight - (judgelineScreenY + sin(note_rotate_angle_rad) * note.positionX * screenWidth * 0.05625);
 			RegisterNoteHitSfx(note.type);
 			RegisterNoteHitFx(thisFrameTime, note.coordinateX, note.coordinateY);
 			if (note.type == Madokawaii::App::NoteType::hold) {
@@ -58,7 +64,7 @@ void UpdateJudgeline(Madokawaii::App::chart::judgeline& judgeline, double thisFr
 			else
 				note.state = Madokawaii::App::NoteState::finished;
 			auto diff = thisFrameTime - note.realTime;
-			if (fabs(diff) > 1e-3f) {
+			if (fabs(diff) > 1e-2f) {
 				Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_WARNING,
 					"NOTE: abnormal time event, realTime=%f, thisTime=%f, diff=%f", note.realTime, thisFrameTime, diff);
 			}
@@ -69,10 +75,7 @@ void UpdateJudgeline(Madokawaii::App::chart::judgeline& judgeline, double thisFr
 			note.positionY = note.floorPosition - judgeline.info.positionY;
 		note.rotateAngle = judgeline.info.rotateAngle;
 		// realholdtime = speed * (holdTime -> real)
-		note.realHoldTime = Madokawaii::App::Chart::CalcRealTime(judgeline.bpm, static_cast<int>(note.holdTime));
-		if (fabs(note.rotateAngle - 360.0) < 1e-6)
-			note.rotateAngle = 0.0f;
-		auto note_rotate_angle_rad =  note.rotateAngle * M_PI / 180.0;
+		note.realHoldTime = Madokawaii::App::Chart::CalcRealTime(judgeline.bpm, note.holdTime);
 
 		switch (note.state) {
 		case Madokawaii::App::NoteState::holding:

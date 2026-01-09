@@ -26,8 +26,8 @@ namespace Madokawaii::App::Chart {
     chart LoadChartFromMemory(const char *data, size_t size);
     bool IsValidChart(const chart&);
 
-    double CalcRealTime(double bpm, int time);
-    double CalcBeatTime(double bpm, float realTime);
+    double CalcRealTime(double bpm, double time);
+    double CalcBeatTime(double bpm, double realTime);
 
     double CalcEventProgress1Param(const chart::judgeline::event_base &event,
                                    double thisFrameTime,

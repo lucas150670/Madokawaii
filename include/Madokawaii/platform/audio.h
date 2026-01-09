@@ -11,6 +11,7 @@ namespace Madokawaii::Platform::Audio {
 
     struct Music {
         bool looping;
+        float pitch;
         void *implementationDefined;
     };
     Music LoadMusicStream(const char*);

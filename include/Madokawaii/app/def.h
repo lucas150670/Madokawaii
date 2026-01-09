@@ -57,7 +57,8 @@ namespace Madokawaii::App {
             std::vector<event_base> speedEvents;
 
             typedef struct {
-                int type, time;
+                int type;
+                double time;
                 double positionX, holdTime, speed, floorPosition;
                 // real-time calculated values
                 double realTime, positionY, coordinateX, coordinateY, realHoldTime;
