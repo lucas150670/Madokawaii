@@ -18,10 +18,17 @@ namespace Madokawaii::AppConfig {
 
     struct GlobalConfig
     {
+#if !defined(PLATFORM_ANDROID)
         std::string chartPath{"assets/charts/chart.json"};
         std::string musicPath{"assets/charts/music.wav"};
         std::string backgroundPath{"assets/charts/illustration.png"};
         std::string resPackPath{"assets/respacks/default.zip"};
+#else
+        std::string chartPath{"chart.json"};
+        std::string musicPath{"music.wav"};
+        std::string backgroundPath{"illustration.png"};
+        std::string resPackPath{"default.zip"};
+#endif
         ColorSave perfectColor{255,236,160, 226};
     };
 

@@ -61,6 +61,16 @@ int GameInit_Main_Thrd(void* appstate) {
     auto& ctx = *static_cast<AppContext*>(appstate);
     auto& danli = Madokawaii::AppConfig::ConfigManager::Instance();
     const auto& musicPath = danli.GetMusicPath();
+    const auto& resPackPath = danli.GetResPackPath();
+    int dataSize;
+    auto respack_mem_stream = Madokawaii::Platform::Core::LoadFileData(resPackPath.c_str(), &dataSize);
+    if (!respack_mem_stream)
+    {
+        Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_ERROR, "MAIN: Failed to load respack file into memory!");
+        return false;
+    }
+    ctx.global_respack = Madokawaii::App::ResPack::LoadResPackFromMemoryStream(respack_mem_stream, dataSize);
+    Madokawaii::Platform::Core::UnloadFileData(respack_mem_stream);
 
     ctx.music = Madokawaii::Platform::Audio::LoadMusicStream(musicPath.c_str());
     Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "MAIN: Music stream loaded");
@@ -111,21 +121,19 @@ int AppInit(void*& appstate) {
     const auto& resPackPath = danli.GetResPackPath();
 
     int dataSize = 0;
-    auto respack_mem_stream = Madokawaii::Platform::Core::LoadFileData(resPackPath.c_str(), &dataSize);
-    if (!respack_mem_stream)
-    {
-        Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_ERROR, "MAIN: Failed to load respack file into memory!");
-        return false;
-    }
-    ctx.global_respack = Madokawaii::App::ResPack::LoadResPackFromMemoryStream(respack_mem_stream, dataSize);
-    Madokawaii::Platform::Core::UnloadFileData(respack_mem_stream);
     auto [r, g, b, a] = danli.GetPerfectColor();
     ctx.perfectColor = {r, g, b, a};
 
+
+#if defined(PLATFORM_ANDROID)
+    ctx.screenWidth = 1280;
+    ctx.screenHeight = 720;
+
     Madokawaii::Platform::Core::InitWindow(ctx.screenWidth, ctx.screenHeight, "Madokawaii");
-    // Madokawaii::Platform::Core::ToggleFullscreen();
-    // ctx.screenWidth = Madokawaii::Platform::Core::GetScreenWidth();
-    // ctx.screenHeight = Madokawaii::Platform::Core::GetScreenHeight();
+    Madokawaii::Platform::Core::SetWindowSize(Madokawaii::Platform::Core::GetScreenWidth(), Madokawaii::Platform::Core::GetScreenHeight());
+#else
+    Madokawaii::Platform::Core::InitWindow(ctx.screenWidth, ctx.screenHeight, "Madokawaii");
+#endif
     /* Enable vertical sync by uncommenting this line
     Madokawaii::Platform::Graphics::SetTargetFPS(
         Madokawaii::Platform::Core::GetMonitorRefreshRate(

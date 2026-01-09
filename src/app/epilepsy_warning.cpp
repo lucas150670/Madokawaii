@@ -11,7 +11,11 @@ int AppIterate_Warning(void * appstate) {
 
     if (!ctx.warningState.fontLoaded) {
         ctx.warningState.chineseFont = Madokawaii::Platform::Graphics::Fonts::LoadFontWithChinese(
+#if !defined(PLATFORM_ANDROID)
             "assets/font.ttf", 48);
+#else
+        "font.ttf", 48);
+#endif
 
         if (!Madokawaii::Platform::Graphics::Fonts::IsFontValid(ctx.warningState.chineseFont)) {
             Madokawaii::Platform::Log::TraceLog(

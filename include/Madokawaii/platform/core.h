@@ -34,6 +34,8 @@ namespace Madokawaii::Platform::Core {
 
     void CloseWindow();
 
+    void SetWindowSize(int width, int height);
+
     const char* GetWorkingDirectory();
 
     int GetFileLength(const char *fileName);

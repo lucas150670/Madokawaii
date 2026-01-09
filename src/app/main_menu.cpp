@@ -36,7 +36,11 @@ namespace Madokawaii::App::MainMenu {
 
         if (!dialogsInitialized) {
             Madokawaii::Platform::Gui::InitGui();
+#if !defined(PLATFORM_ANDROID)
             const char* workDir = Madokawaii::Platform::Core::GetWorkingDirectory();
+#else
+            const char* workDir = "/storage/emulated/0/";
+#endif
             for (auto& fileDialog : fileDialogs) {
                 fileDialog = Madokawaii::Platform::Gui::InitFileDialog(workDir);
             }
