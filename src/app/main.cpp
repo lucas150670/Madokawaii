@@ -260,7 +260,18 @@ int AppIterate(void * appstate) {
     auto& ctx = *static_cast<AppContext*>(appstate);
     if (!ctx.sys_initialized) return -1;
     // 先显示警告页面
-    if (!ctx.warningShown) return AppIterate_Warning(appstate);
+    if (!ctx.warningShown) return AppIterate_Warning(appstate);// 显示主菜单
+    if (!ctx.menuCompleted) {
+        Madokawaii::Platform::Graphics::BeginDrawing();
+        Madokawaii::Platform::Graphics::ClearBackground(Madokawaii::Platform::Graphics::M_BLACK);
+
+        if (Madokawaii::App::MainMenu::RenderMainMenu(ctx.menuState, ctx.screenWidth, ctx.screenHeight)) {
+            ctx.menuCompleted = true;
+        }
+
+        Madokawaii::Platform::Graphics::EndDrawing();
+        return !Madokawaii::Platform::Core::WindowShouldClose();
+    }
     if (!ctx.game_initialized) return GameInit(appstate);
 
     return AppIterate_Game(appstate);

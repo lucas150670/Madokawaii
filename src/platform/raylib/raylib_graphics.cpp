@@ -46,6 +46,10 @@ namespace Madokawaii::Platform::Graphics {
         ::DrawLineEx({start.x, start.y}, {end.x, end.y}, thick, RL(color));
     }
 
+    int MeasureText(const char* text, int fontSize) {
+		return ::MeasureText(text, fontSize);
+    }
+
     void DrawRectangle(int posX, int posY, int width, int height, Color Color)
     {
         ::DrawRectangle(posX, posY, width, height, RL(Color));

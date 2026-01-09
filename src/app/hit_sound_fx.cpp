@@ -41,6 +41,8 @@ void UnloadNoteHitSfxManager() {
         unloadSound(audio_sfx_decompressed.flickSound[i]);
         unloadSound(audio_sfx_decompressed.dragSound[i]);
     }
+    memset(&audio_sfx_decompressed, 0, sizeof(ResPack_Audio_Decompressed));
+    sfx_play_map.clear();
 }
 
 void RegisterNoteHitSfx(int type) {

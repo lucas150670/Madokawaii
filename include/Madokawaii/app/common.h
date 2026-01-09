@@ -13,6 +13,7 @@
 #include "Madokawaii/platform/graphics.h"
 #include "Madokawaii/platform/texture.h"
 #include "Madokawaii/platform/fonts.h"
+#include "Madokawaii/app/main_menu.h"
 
 struct WarningState {
     float elapsedTime{0.0f};
@@ -38,6 +39,9 @@ struct AppContext {
     bool asyncDataReady{false};
     WarningState warningState{};
     bool warningShown{false};
+    // 主菜单状态
+    Madokawaii::App::MainMenu::MainMenuState menuState{};
+    bool menuCompleted{ false };
 };
 
 #endif //MADOKAWAII_COMMON_H

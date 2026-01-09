@@ -141,6 +141,7 @@ void UpdateNoteHitFx(float this_frameTime) {
 }
 
 void UnloadNoteHitFxManager() {
+    hitFx_list.clear();
     for (auto& sprite : hit_fx_decompressed.hitFxSprites) {
         Madokawaii::Platform::Graphics::Texture::UnloadTexture(sprite);
     }

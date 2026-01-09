@@ -18,6 +18,7 @@ message(STATUS "implementer: ${implementer}")
 
 set(SRC_APP
         src/app/main.cpp
+        src/app/main_menu.cpp
         src/app/chart.cpp
         src/app/app_config.cpp
         src/app/line_update.cpp
@@ -36,6 +37,7 @@ set(SRC_IMP_RAYLIB
         src/platform/raylib/raylib_audio.cpp
         src/platform/raylib/raylib_fonts.cpp
         src/platform/raylib/raylib_texture.cpp
+        src/platform/raylib/raylib_gui.cpp
 )
 
 # set(SRC_IMP_DIRECT2D
