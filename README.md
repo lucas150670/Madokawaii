@@ -20,6 +20,10 @@ The project currently focuses on implementing autoplay functionality for officia
 
 Future development will expand toward interactive gameplay, cross-platform support, and advanced rendering features.
 
+**本项目包含由LLM模型生成的代码 ，因为我实在是写不动ui了**
+
+**THIS PROJECT CONTAINS CODE GENERATED FROM LLM MODELS, I DON'T WANT TO BUILD UI FROM SCRATCH GRAPHICS APIS**
+
 ---
 
 ## 🛠 INSTALLATION & RUNNING

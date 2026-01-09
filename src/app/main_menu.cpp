@@ -48,10 +48,22 @@ namespace Madokawaii::App::MainMenu {
 
     static void DrawFileSelector(int x, int y, int width, int height,
         const char* label, char* pathBuf, int bufSize,
-        bool& editing, int dialogIndex) {
+        bool& editing, int dialogIndex, bool fileExists) {
         using namespace Madokawaii::Platform;
 
-        Graphics::DrawText(label, x, y - 25, 18, { 200, 200, 200, 255 });
+        // 根据文件是否存在选择标签颜色
+        Graphics::Color_ labelColor = fileExists ?
+            Graphics::Color_{ 200, 200, 200, 255 } :  // 正常灰色
+            Graphics::Color_{ 255, 100, 100, 255 };   // 红色警告
+
+        Graphics::DrawText(label, x, y - 25, 18, labelColor);
+
+        // 如果文件不存在，在标签后显示警告
+        if (!fileExists && pathBuf[0] != '\0') {
+            const char* warning = " [File not found!]";
+            int labelWidth = Graphics::MeasureText(label, 18);
+            Graphics::DrawText(warning, x + labelWidth, y - 25, 18, { 255, 80, 80, 255 });
+        }
 
         int textBoxWidth = width - 120;
 
@@ -105,21 +117,27 @@ namespace Madokawaii::App::MainMenu {
         int rowHeight = 36;
         int rowSpacing = 70;
 
+        // 检查各文件是否存在
+        bool chartExists = Core::FileExists(chartPathBuf);
+        bool musicExists = Core::FileExists(musicPathBuf);
+        bool resPackExists = Core::FileExists(resPackPathBuf);
+        bool backgroundExists = Core::FileExists(backgroundPathBuf);
+
         DrawFileSelector(panelX, startY, panelWidth, rowHeight,
             "Chart File (.json):", chartPathBuf, sizeof(chartPathBuf),
-            state.chartPathEditing, 0);
+            state.chartPathEditing, 0, chartExists);
 
         DrawFileSelector(panelX, startY + rowSpacing, panelWidth, rowHeight,
             "Music File (.wav/.ogg):", musicPathBuf, sizeof(musicPathBuf),
-            state.musicPathEditing, 1);
+            state.musicPathEditing, 1, musicExists);
 
         DrawFileSelector(panelX, startY + rowSpacing * 2, panelWidth, rowHeight,
             "Resource Pack (.zip):", resPackPathBuf, sizeof(resPackPathBuf),
-            state.resPackPathEditing, 2);
+            state.resPackPathEditing, 2, resPackExists);
 
         DrawFileSelector(panelX, startY + rowSpacing * 3, panelWidth, rowHeight,
             "Background Image:", backgroundPathBuf, sizeof(backgroundPathBuf),
-            state.backgroundPathEditing, 3);
+            state.backgroundPathEditing, 3, backgroundExists);
 
         int btnWidth = 200;
         int btnHeight = 50;
@@ -135,7 +153,17 @@ namespace Madokawaii::App::MainMenu {
 
         bool canStart = (activeDialogIndex == -1 || !fileDialogs[activeDialogIndex].windowActive);
 
-        if (canStart && Gui::Button(startBtn, "START GAME")) {
+        // 检查所有必需文件是否存在
+        bool allFilesExist = chartExists && musicExists && resPackExists && backgroundExists;
+
+        // 显示文件缺失警告
+        if (!allFilesExist) {
+            const char* errorMsg = "Please select all required files before starting";
+            int errorWidth = Graphics::MeasureText(errorMsg, 16);
+            Graphics::DrawText(errorMsg, (screenWidth - errorWidth) / 2, btnY - 30, 16, { 255, 100, 100, 255 });
+        }
+
+        if (canStart && allFilesExist && Gui::Button(startBtn, "START GAME")) {
             state.chartPath = chartPathBuf;
             state.musicPath = musicPathBuf;
             state.resPackPath = resPackPathBuf;
@@ -143,6 +171,10 @@ namespace Madokawaii::App::MainMenu {
 
             ApplyMenuConfig(state);
             state.startRequested = true;
+        }
+        else if (canStart && !allFilesExist) {
+            // 文件不完整时显示禁用状态的按钮
+            Gui::Button(startBtn, "START GAME");
         }
 
         if (activeDialogIndex >= 0) {

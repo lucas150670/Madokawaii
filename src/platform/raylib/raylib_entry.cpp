@@ -39,7 +39,7 @@ void LogCallback(int msgType, const char *text, va_list args)
     printf("%s\n", buffer);
 }
 
-int main() {
+int main(int argc, char *argv[]) {
     SetTraceLogCallback(LogCallback);
 
     void ** appstate = new void *;
