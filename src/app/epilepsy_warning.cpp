@@ -9,22 +9,6 @@
 int AppIterate_Warning(void * appstate) {
     auto& ctx = *static_cast<AppContext*>(appstate);
 
-    if (!ctx.warningState.fontLoaded) {
-        ctx.warningState.chineseFont = Madokawaii::Platform::Graphics::Fonts::LoadFontWithChinese(
-#if !defined(PLATFORM_ANDROID)
-            "assets/font.ttf", 48);
-#else
-        "font.ttf", 48);
-#endif
-
-        if (!Madokawaii::Platform::Graphics::Fonts::IsFontValid(ctx.warningState.chineseFont)) {
-            Madokawaii::Platform::Log::TraceLog(
-                Madokawaii::Platform::Log::TraceLogLevel::LOG_WARNING,
-                "WARNING: Failed to load Chinese font!");
-        }
-        ctx.warningState.fontLoaded = true;
-    }
-
     float deltaTime = Madokawaii::Platform::Graphics::GetFrameTime();
     ctx.warningState.elapsedTime += deltaTime;
 
@@ -32,7 +16,6 @@ int AppIterate_Warning(void * appstate) {
     bool autoSkip = ctx.warningState.elapsedTime >= WarningState::AUTO_SKIP_TIME;
 
     if (autoSkip || (canSkip && Madokawaii::Platform::Core::IsAnyKeyPressed())) {
-        Madokawaii::Platform::Graphics::Fonts::UnloadFont(ctx.warningState.chineseFont);
         ctx.warningShown = true;
         return !Madokawaii::Platform::Core::WindowShouldClose();
     }
@@ -41,7 +24,7 @@ int AppIterate_Warning(void * appstate) {
     Madokawaii::Platform::Graphics::ClearBackground(Madokawaii::Platform::Graphics::M_BLACK);
 
     constexpr auto title = "光敏性癫痫警告";
-    const auto& font = ctx.warningState.chineseFont;
+    const auto& font = ctx.chineseFont;
     const float centerX = ctx.screenWidth / 2.0f;
 
     float titleFontSize = 48.0f;
