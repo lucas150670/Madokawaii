@@ -126,18 +126,38 @@ int AppInit(void*& appstate) {
 
 
 #if defined(PLATFORM_ANDROID)
-
+    int screenHeight = Madokawaii::Platform::Core::GetScreenHeight();
+    if (screenHeight <= 320) {
+        ctx.screenWidth = 320; ctx.screenHeight = 240;
+    }
+    if (screenHeight <= 640) {
+        ctx.screenWidth = 854; ctx.screenHeight = 480;
+    }
+    else if (screenHeight <= 960) {
+        ctx.screenWidth = 1280; ctx.screenHeight = 720;
+    }
+    else {
+        ctx.screenWidth = 1920; ctx.screenHeight = 1080;
+    }
+    Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO,
+                                        "MAIN: real resolution: %d, %d", Madokawaii::Platform::Core::GetScreenWidth(), Madokawaii::Platform::Core::GetScreenHeight());
+    Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO,
+                                        "MAIN: selected resolution: %d, %d", ctx.screenWidth, ctx.screenHeight);
     Madokawaii::Platform::Core::InitWindow(ctx.screenWidth, ctx.screenHeight, "Madokawaii");
-    Madokawaii::Platform::Core::SetWindowSize(Madokawaii::Platform::Core::GetScreenWidth(), Madokawaii::Platform::Core::GetScreenHeight());
 #else
     Madokawaii::Platform::Core::InitWindow(ctx.screenWidth, ctx.screenHeight, "Madokawaii");
 #endif
     /* Enable vertical sync by uncommenting this line
-    Madokawaii::Platform::Graphics::SetTargetFPS(
-        Madokawaii::Platform::Core::GetMonitorRefreshRate(
-            Madokawaii::Platform::Core::GetCurrentMonitor()
-            )
-    );*/
+     */
+#if defined(PLATFORM_ANDROID)
+    int refresh_rate =
+            Madokawaii::Platform::Core::GetMonitorRefreshRate(
+                    Madokawaii::Platform::Core::GetCurrentMonitor()
+            );
+    Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO,
+                                        "MAIN: screen refresh rate = %d", refresh_rate);
+    Madokawaii::Platform::Graphics::SetTargetFPS(refresh_rate);
+#endif
 
     ctx.sys_initialized = true;
     return ctx.sys_initialized;
@@ -180,7 +200,7 @@ int GameInit(void *appstate) {
     } else {
         Madokawaii::Platform::Graphics::BeginDrawing();
         Madokawaii::Platform::Graphics::ClearBackground(Madokawaii::Platform::Graphics::M_BLACK);
-        Madokawaii::Platform::Graphics::DrawText("Converting chart..", 1920 / 2 - 100, 1080 / 2 - 50, 20,
+        Madokawaii::Platform::Graphics::DrawText("Converting chart..", ctx.screenWidth / 2 - 100, ctx.screenHeight / 2 - 50, 20,
                                                  Madokawaii::Platform::Graphics::M_LIGHTGRAY);
         Madokawaii::Platform::Graphics::EndDrawing();
         return !Madokawaii::Platform::Core::WindowShouldClose();
@@ -188,7 +208,7 @@ int GameInit(void *appstate) {
     if (ctx.asyncDataReady && !ctx.game_initialized) {
         Madokawaii::Platform::Graphics::BeginDrawing();
         Madokawaii::Platform::Graphics::ClearBackground(Madokawaii::Platform::Graphics::M_BLACK);
-        Madokawaii::Platform::Graphics::DrawText("Setup scene..", 1920 / 2 - 100, 1080 / 2 - 50, 20,
+        Madokawaii::Platform::Graphics::DrawText("Setup scene..", ctx.screenWidth / 2 - 100, ctx.screenHeight / 2 - 50, 20,
                                                  Madokawaii::Platform::Graphics::M_LIGHTGRAY);
         Madokawaii::Platform::Graphics::EndDrawing();
         if (GameInit_Main_Thrd(appstate) == 0) {

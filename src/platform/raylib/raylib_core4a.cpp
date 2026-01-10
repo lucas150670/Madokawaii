@@ -257,11 +257,6 @@ namespace Madokawaii::Platform::Core {
         return 0;
     }
 
-    int GetMonitorRefreshRate(int monitor) {
-        (void)monitor;
-        return 60;
-    }
-
     void InitWindow(int width, int height, const char* title) {
         :: InitWindow(width, height, title);
         InitStoragePaths();
@@ -301,14 +296,6 @@ namespace Madokawaii::Platform::Core {
             return fileSize;
         }
         return 0;
-    }
-
-    int GetScreenWidth() {
-        return ::GetScreenWidth();
-    }
-
-    int GetScreenHeight() {
-        return ::GetScreenHeight();
     }
 
     void ToggleFullscreen() {
