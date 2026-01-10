@@ -8,6 +8,7 @@
 #define MADOKAWAII_PLATFORM_COMMON_H
 
 #include <cstdint>
+#include <string>
 
 namespace Madokawaii::Platform::Core {
     // Common operation, like file io, thread create, etc
