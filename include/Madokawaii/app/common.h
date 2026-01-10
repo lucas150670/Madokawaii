@@ -41,7 +41,10 @@ struct AppContext {
     bool warningShown{false};
     // 主菜单状态
     Madokawaii::App::MainMenu::MainMenuState menuState{};
-    bool menuCompleted{ false };
+    bool menuCompleted{ false }; 
+    bool gameCompleted{ false };
 };
+
+int AppIterate_Ending(AppContext* context);
 
 #endif //MADOKAWAII_COMMON_H

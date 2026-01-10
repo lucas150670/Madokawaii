@@ -216,8 +216,9 @@ int AppIterate_Game(void * appstate) {
     auto thisFrameTime = Madokawaii::Platform::Audio::GetMusicTimePlayed(ctx.music);
     if (!Madokawaii::Platform::Audio::IsMusicStreamPlaying(ctx.music)) {
         Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "MAIN: Music playback end");
-        Madokawaii::Platform::Graphics::EndDrawing();
-        return false;
+        Madokawaii::Platform::Graphics::EndDrawing(); 
+        ctx.gameCompleted = true;
+        return !Madokawaii::Platform::Core::WindowShouldClose();
     }
 
     RenderHoldCallback(thisFrameTime, ctx.mainChart);
@@ -279,7 +280,7 @@ int AppIterate(void * appstate) {
         return !Madokawaii::Platform::Core::WindowShouldClose();
     }
     if (!ctx.game_initialized) return GameInit(appstate);
-
+    if (ctx.gameCompleted) return AppIterate_Ending(&ctx);
     return AppIterate_Game(appstate);
 }
 

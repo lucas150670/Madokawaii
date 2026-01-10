@@ -20,6 +20,7 @@ set(SRC_APP
         src/app/main.cpp
         src/app/main_menu.cpp
         src/app/chart.cpp
+        src/app/ending.cpp
         src/app/app_config.cpp
         src/app/line_update.cpp
         src/app/line_renderer.cpp
