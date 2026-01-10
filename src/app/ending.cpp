@@ -102,9 +102,12 @@ int AppIterate_Ending(AppContext* context) {
 
     float screenWidth = static_cast<float>(context->screenWidth);
     float screenHeight = static_cast<float>(context->screenHeight);
+    auto scaleX = screenWidth / 1920.f;
+    auto scaleY = screenWidth / 1080.f;
+    auto scale = std::min(scaleX, scaleY);
 
     const float trapezoidHeight = context->screenHeight;
-    constexpr float topOffset = 120.0f;
+    const float topOffset = 120.0f * scale;
     constexpr float bottomOffset = 0.0f;
 
     float trapezoidX = screenWidth * 0.35f;
@@ -117,11 +120,11 @@ int AppIterate_Ending(AppContext* context) {
 
     float textCenterX = trapezoidX + topOffset / 2.0f + (trapezoidWidth - topOffset) / 2.0f;
 
-    constexpr float titleFontSize = 48.0f;
-    constexpr float difficultyFontSize = 28.0f;
-    constexpr float rightPadding = 40.0f;
-    constexpr float topPadding = 40.0f;
-    constexpr float fontSpacing = 2.0f;
+    const float titleFontSize = 48.0f * scale;
+    const float difficultyFontSize = 28.0f * scale;
+    const float rightPadding = 40.0f * scale;
+    const float topPadding = 40.0f * scale;
+    const float fontSpacing = 2.0f * scale;
 
     auto& font = context->chineseFont;
 
@@ -156,10 +159,10 @@ int AppIterate_Ending(AppContext* context) {
     );
 
     auto scoreText = std::format("{}", 1000000);
-    constexpr float scoreFontSize = 72.0f;
+    const float scoreFontSize = 72.0f * scale;
     auto scoreSize = Madokawaii::Platform::Graphics::Fonts::MeasureTextEx(font, scoreText.c_str(), scoreFontSize, fontSpacing);
     float scoreX = textCenterX - scoreSize.x / 2.0f;
-    float scoreY = trapezoidY + 400;
+    float scoreY = trapezoidY + 400 * scale;
     Madokawaii::Platform::Graphics::Fonts::DrawTextEx(
         font,
         scoreText.c_str(),
@@ -171,10 +174,10 @@ int AppIterate_Ending(AppContext* context) {
     );
 
     const char* autoPlayText = "AUTO PLAY";
-    constexpr float autoPlayFontSize = 40.0f;
+    const float autoPlayFontSize = 40.0f * scale;
     auto autoPlaySize = Madokawaii::Platform::Graphics::Fonts::MeasureTextEx(font, autoPlayText, autoPlayFontSize, fontSpacing);
     float autoPlayX = textCenterX - autoPlaySize.x / 2.0f;
-    float autoPlayY = trapezoidY + 480;
+    float autoPlayY = trapezoidY + 480 * scale;
     Madokawaii::Platform::Graphics::Fonts::DrawTextEx(
         font,
         autoPlayText,
@@ -185,10 +188,10 @@ int AppIterate_Ending(AppContext* context) {
         Madokawaii::Platform::Graphics::M_GOLD
     );
 
-    constexpr float labelFontSize = 28.0f;
-    constexpr float valueFontSize = 36.0f;
-    constexpr float itemSpacing = 150.0f;
-    float judgementY = autoPlayY + 80.0f;
+    const float labelFontSize = 28.0f * scale;
+    const float valueFontSize = 36.0f * scale;
+    const float itemSpacing = 150.0f * scale;
+    float judgementY = autoPlayY + 80.0f * scale;
 
     float totalWidth = itemSpacing * 3;
     float startX = textCenterX - totalWidth / 2.0f;

@@ -127,8 +127,8 @@ int AppInit(void*& appstate) {
 
 #if defined(PLATFORM_ANDROID)
     int screenHeight = Madokawaii::Platform::Core::GetScreenHeight();
-    if (screenHeight <= 480) {
-        ctx.screenWidth = 320; ctx.screenHeight = 240;
+    if (screenHeight <= 360) {
+        ctx.screenWidth = 426; ctx.screenHeight = 240;
     }
     else if (screenHeight <= 640) {
         ctx.screenWidth = 854; ctx.screenHeight = 480;
@@ -160,12 +160,18 @@ int AppInit(void*& appstate) {
 #endif
 
     if (!ctx.fontLoaded) {
+        if (Madokawaii::Platform::Graphics::GetImplementer().find("Mali") == std::string::npos)
         ctx.chineseFont = Madokawaii::Platform::Graphics::Fonts::LoadFontWithChinese(
 #if !defined(PLATFORM_ANDROID)
-            "assets/font.ttf", 48);
+            "assets/font.ttf", 16);
 #else
             "font.ttf", 48);
 #endif
+        else {
+            // fuck mali gpu
+            // crash when codepoint is too large
+            ctx.chineseFont = Madokawaii::Platform::Graphics::Fonts::LoadFontWithChinese("font.ttf", 16);
+        }
 
         Madokawaii::Platform::Graphics::SetTargetFPS(60);
         if (!Madokawaii::Platform::Graphics::Fonts::IsFontValid(ctx.chineseFont)) {
@@ -290,7 +296,7 @@ int AppIterate_Game(void * appstate) {
         RenderNote(*notePtr);
     }
 
-    RenderDebugInfo();
+    RenderDebugInfo(ctx.screenWidth, ctx.screenHeight);
     UpdateNoteHitSfx();
     UpdateNoteHitFx(thisFrameTime, ctx.screenWidth, ctx.screenHeight);
     Madokawaii::Platform::Graphics::EndDrawing();
