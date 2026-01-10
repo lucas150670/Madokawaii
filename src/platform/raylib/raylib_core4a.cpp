@@ -79,11 +79,9 @@ namespace {
 
         if (asset) {
             AAsset_close(asset);
-            LOGD("Asset exists: %s", assetPath);
             return true;
         }
 
-        LOGD("Asset not found: %s", assetPath);
         return false;
     }
 
@@ -93,11 +91,9 @@ namespace {
 
         if (result == 0) {
             bool isFile = S_ISREG(buffer.st_mode);
-            LOGD("File check: %s - exists=%d, isFile=%d", path, true, isFile);
             return isFile;
         }
 
-        LOGD("File not found: %s (errno=%d:  %s)", path, errno, strerror(errno));
         return false;
     }
 }
@@ -110,7 +106,6 @@ namespace Madokawaii::Platform::Core {
             return false;
         }
 
-        LOGD("FileExists checking: %s", path);
 
         if (IsAssetPath(path)) {
             return AssetExists(path);
@@ -145,7 +140,6 @@ namespace Madokawaii::Platform::Core {
         if (!path || ! fileSize) return nullptr;
 
         *fileSize = 0;
-        LOGD("LoadFileData: %s", path);
 
         if (IsAssetPath(path)) {
             struct android_app* app = GetAndroidApp();

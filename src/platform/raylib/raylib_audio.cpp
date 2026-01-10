@@ -80,7 +80,13 @@ namespace Madokawaii::Platform::Audio {
             lastSystemTime = now;
             return audioTime;
         }
-        if (fabs(audioTime - lastAudioTime) > 1e-2) {
+        if (fabs(audioTime - lastAudioTime) >
+            #if !defined(PLATFORM_ANDROID)
+            1e-2)
+            #else
+            1) // fuck android audio pipeline
+            #endif
+        {
             lastAudioTime = audioTime;
             lastSystemTime = now;
             return static_cast<float>(audioTime);

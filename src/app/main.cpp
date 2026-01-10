@@ -127,10 +127,10 @@ int AppInit(void*& appstate) {
 
 #if defined(PLATFORM_ANDROID)
     int screenHeight = Madokawaii::Platform::Core::GetScreenHeight();
-    if (screenHeight <= 320) {
+    if (screenHeight <= 480) {
         ctx.screenWidth = 320; ctx.screenHeight = 240;
     }
-    if (screenHeight <= 640) {
+    else if (screenHeight <= 640) {
         ctx.screenWidth = 854; ctx.screenHeight = 480;
     }
     else if (screenHeight <= 960) {
