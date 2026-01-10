@@ -163,7 +163,7 @@ int AppInit(void*& appstate) {
         if (Madokawaii::Platform::Graphics::GetImplementer().find("Mali") == std::string::npos)
         ctx.chineseFont = Madokawaii::Platform::Graphics::Fonts::LoadFontWithChinese(
 #if !defined(PLATFORM_ANDROID)
-            "assets/font.ttf", 16);
+            "assets/font.ttf", 48);
 #else
             "font.ttf", 48);
 #endif
