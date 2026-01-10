@@ -167,6 +167,7 @@ int AppInit(void*& appstate) {
             "font.ttf", 48);
 #endif
 
+        Madokawaii::Platform::Graphics::SetTargetFPS(60);
         if (!Madokawaii::Platform::Graphics::Fonts::IsFontValid(ctx.chineseFont)) {
             Madokawaii::Platform::Log::TraceLog(
                 Madokawaii::Platform::Log::TraceLogLevel::LOG_WARNING,

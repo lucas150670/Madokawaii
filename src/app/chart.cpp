@@ -165,6 +165,8 @@ namespace Madokawaii::App::Chart {
                     .speed = notesAbove["speed"].GetDouble(),
                     .floorPosition = notesAbove["floorPosition"].GetDouble(),
                     .realTime = (++mainChart.numOfNotes, CalcRealTime(thisjudgeline.bpm, notesAbove["time"].GetDouble())),
+                    .coordinateX = -10000.0,
+                    .coordinateY = -10000.0,
                     .isNoteBelow = false,
                     .state = invisible_or_appeared,
                     .parent_line_id = thisjudgeline.id
@@ -181,6 +183,8 @@ namespace Madokawaii::App::Chart {
                     .speed = notesBelow["speed"].GetDouble(),
                     .floorPosition = notesBelow["floorPosition"].GetDouble(),
                     .realTime = (++mainChart.numOfNotes, CalcRealTime(thisjudgeline.bpm, notesBelow["time"].GetDouble())),
+                    .coordinateX = -10000.0,
+                    .coordinateY = -10000.0,
                     .isNoteBelow = true,
                     .state = invisible_or_appeared,
                     .parent_line_id = thisjudgeline.id

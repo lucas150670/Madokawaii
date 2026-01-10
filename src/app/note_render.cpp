@@ -182,6 +182,7 @@ void RenderNote(const Madokawaii::App::chart::judgeline::note& note)
 
 void AddHoldNoteClickingRender(const Madokawaii::App::chart::judgeline::note &note) {
     holds_to_render.push_back(note);
+    RenderHoldNote(note);
 }
 
 void RenderHoldCallback(float thisFrameTime, const Madokawaii::App::chart& thisChart) {
