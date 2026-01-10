@@ -3,6 +3,7 @@
 //
 
 #include <raylib.h>
+#include <filesystem>
 #include "Madokawaii/platform/core.h"
 
 namespace Madokawaii::Platform::Core {
@@ -54,5 +55,9 @@ namespace Madokawaii::Platform::Core {
     bool IsAnyKeyPressed() {
         // raylib 提供 GetKeyPressed() 返回按下的键码，0表示无按键
         return ::GetKeyPressed() != 0 || ::GetTouchPointCount() > 0;
+    }
+
+    std::string GetInternalCachePath() {
+        return std::filesystem::temp_directory_path().string();
     }
 }
