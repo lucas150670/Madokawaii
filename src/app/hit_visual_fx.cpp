@@ -102,7 +102,7 @@ void RegisterNoteHitFx(float this_frame_time, float position_X, float position_Y
     hitFx_list.push_back(info);
 }
 
-void UpdateNoteHitFx(float this_frameTime) {
+void UpdateNoteHitFx(float this_frameTime, float screen_X, float screen_Y) {
     static const int spriteCount = static_cast<int>(hit_fx_decompressed.hitFxSprites.size());
     for (auto& hitFx: hitFx_list) {
         float elapsed_time = this_frameTime - hitFx.startTime;
@@ -113,15 +113,16 @@ void UpdateNoteHitFx(float this_frameTime) {
             continue;
         }
         if (frame_index < 0) frame_index = 0;
-        float draw_pos_x = hitFx.posX - hit_fx_decompressed.sprite_unit_width / 2.f;
-        float draw_pos_y = hitFx.posY - hit_fx_decompressed.sprite_unit_height / 2.f;
-        Madokawaii::Platform::Graphics::Texture::DrawTextureEx(hit_fx_decompressed.hitFxSprites[frame_index], {draw_pos_x, draw_pos_y}, 0.f, 1.0f, hit_fx_decompressed.perfectColor);
+        float scale_Ratio = screen_Y / 1080.0f;
+        float draw_pos_x = hitFx.posX - hit_fx_decompressed.sprite_unit_width * scale_Ratio / 2.f;
+        float draw_pos_y = hitFx.posY - hit_fx_decompressed.sprite_unit_height * scale_Ratio / 2.f;
+        Madokawaii::Platform::Graphics::Texture::DrawTextureEx(hit_fx_decompressed.hitFxSprites[frame_index], {draw_pos_x, draw_pos_y}, 0.f, scale_Ratio, hit_fx_decompressed.perfectColor);
         // draw particle effects
 
         float tick = elapsed_time / HIT_FX_SPRITE_FRAME_TIME / static_cast<float>(hit_fx_decompressed.hitFxSprites.size());
-        float particle_size = 30.f * (((0.2078f * tick - 1.6524f) * tick + 1.6399f) * tick + 0.4988f);
+        float particle_size = 30.f * (((0.2078f * tick - 1.6524f) * tick + 1.6399f) * tick + 0.4988f) * scale_Ratio;
         for (int i = 0; i < 4; i++) {
-            float nowDirection_distance = hitFx.destination[i] * (9 * tick / (8 * tick + 1));
+            float nowDirection_distance = hitFx.destination[i] * (9 * tick / (8 * tick + 1)) * scale_Ratio;
             float nowDirection_angleRad = hitFx.direction[i];
             float nowDirection_x = hitFx.posX + nowDirection_distance * cos(nowDirection_angleRad);
             float nowDirection_y = hitFx.posY + nowDirection_distance * sin(nowDirection_angleRad);

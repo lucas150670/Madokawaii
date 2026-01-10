@@ -159,6 +159,22 @@ int AppInit(void*& appstate) {
     Madokawaii::Platform::Graphics::SetTargetFPS(refresh_rate);
 #endif
 
+    if (!ctx.fontLoaded) {
+        ctx.chineseFont = Madokawaii::Platform::Graphics::Fonts::LoadFontWithChinese(
+#if !defined(PLATFORM_ANDROID)
+            "assets/font.ttf", 48);
+#else
+            "font.ttf", 48);
+#endif
+
+        if (!Madokawaii::Platform::Graphics::Fonts::IsFontValid(ctx.chineseFont)) {
+            Madokawaii::Platform::Log::TraceLog(
+                Madokawaii::Platform::Log::TraceLogLevel::LOG_WARNING,
+                "WARNING: Failed to load Chinese font!");
+        }
+        ctx.fontLoaded = true;
+    }
+
     ctx.sys_initialized = true;
     return ctx.sys_initialized;
 }
@@ -275,7 +291,7 @@ int AppIterate_Game(void * appstate) {
 
     RenderDebugInfo();
     UpdateNoteHitSfx();
-    UpdateNoteHitFx(thisFrameTime);
+    UpdateNoteHitFx(thisFrameTime, ctx.screenWidth, ctx.screenHeight);
     Madokawaii::Platform::Graphics::EndDrawing();
 
     return !Madokawaii::Platform::Core::WindowShouldClose();

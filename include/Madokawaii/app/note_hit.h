@@ -14,7 +14,7 @@ void UpdateNoteHitSfx();
 void UnloadNoteHitSfxManager();
 int InitializeNoteHitFxManager(Madokawaii::App::ResPack::ResPack&, Madokawaii::Platform::Graphics::Color color = Madokawaii::Platform::Graphics::M_WHITE);
 void RegisterNoteHitFx(float, float position_X, float position_Y);
-void UpdateNoteHitFx(float);
+void UpdateNoteHitFx(float, float, float);
 
 void UnloadNoteHitFxManager();
 

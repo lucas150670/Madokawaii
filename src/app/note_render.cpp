@@ -26,6 +26,7 @@ struct ResPackDecompressed
 
 std::vector<Madokawaii::App::chart::judgeline::note> holds_to_render{};
 float screenWidth{}, screenHeight{};
+constexpr float NOTE_WIDTH_RATIO = 1.0f / 8.0f;
 
 ResPackDecompressed respack_decompressed{};
 
@@ -77,7 +78,8 @@ void RenderHoldNote(const Madokawaii::App::chart::judgeline::note& note)
     Madokawaii::Platform::Graphics::Color_ tint{ 255, 255, 255, 255 };
 
     const auto rotateAngle = static_cast<float>(360 - note.rotateAngle);
-    constexpr float scale = 0.2f;
+    float targetWidth = screenWidth * NOTE_WIDTH_RATIO;
+    float scale = targetWidth / texture_dimension.x;
 
     float holdBodyTextureHeight = texture_dimension.y - holdAtlasHead - holdAtlasTail;
     auto bodyHeight = static_cast<float>(noteHoldLength);
@@ -168,12 +170,14 @@ void RenderNote(const Madokawaii::App::chart::judgeline::note& note)
     }
     Madokawaii::Platform::Graphics::Vector2 pos{}, texture_dimension{};
     Madokawaii::Platform::Graphics::Texture::MeasureTexture2D(texture, &texture_dimension);
+    float targetWidth = screenWidth * NOTE_WIDTH_RATIO;
+    float scale = targetWidth / texture_dimension.x;
     Madokawaii::Platform::Graphics::Color_ tint{255, 255, 255, 255};
     const auto rotateAngle = static_cast<float>(360 - note.rotateAngle), rotateAngleRad = rotateAngle * static_cast<float>(M_PI) / 180.f;
-    float xOffset = texture_dimension.x / 2.f * 0.2f, yOffset = texture_dimension.y / 2.f * 0.2f;
+    float xOffset = texture_dimension.x / 2.f * scale, yOffset = texture_dimension.y / 2.f * scale;
     pos.x = static_cast<float>(note.coordinateX - cos(rotateAngleRad) * xOffset + sin(rotateAngleRad) * yOffset);
     pos.y = static_cast<float>(note.coordinateY - cos(rotateAngleRad) * yOffset - sin(rotateAngleRad) * xOffset);
-    Madokawaii::Platform::Graphics::Texture::DrawTextureEx(texture, pos, rotateAngle, 0.2f, tint);
+    Madokawaii::Platform::Graphics::Texture::DrawTextureEx(texture, pos, rotateAngle, scale, tint);
 }
 
 void AddHoldNoteClickingRender(const Madokawaii::App::chart::judgeline::note &note) {

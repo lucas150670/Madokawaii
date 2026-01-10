@@ -6,7 +6,7 @@
 #include "Madokawaii/platform/core.h"
 #include "Madokawaii/platform/log.h"
 
-int AppIterate_Warning(void * appstate) {
+int AppIterate_Warning(void* appstate) {
     auto& ctx = *static_cast<AppContext*>(appstate);
 
     float deltaTime = Madokawaii::Platform::Graphics::GetFrameTime();
@@ -23,19 +23,26 @@ int AppIterate_Warning(void * appstate) {
     Madokawaii::Platform::Graphics::BeginDrawing();
     Madokawaii::Platform::Graphics::ClearBackground(Madokawaii::Platform::Graphics::M_BLACK);
 
+    const float scaleX = ctx.screenWidth / 1920.0f;
+    const float scaleY = ctx.screenHeight / 1080.0f;
+    const float scale = std::min(scaleX, scaleY);
+
     constexpr auto title = "光敏性癫痫警告";
     const auto& font = ctx.chineseFont;
     const float centerX = ctx.screenWidth / 2.0f;
 
-    float titleFontSize = 48.0f;
+    float titleFontSize = 48.0f * scale;
     auto titleSize = Madokawaii::Platform::Graphics::Fonts::MeasureTextEx(font, title, titleFontSize, 1.0f);
     Madokawaii::Platform::Graphics::Fonts::DrawTextEx(font, title,
-        centerX - titleSize.x / 2, 120, titleFontSize, 1.0f,
+        centerX - titleSize.x / 2, 120 * scaleY, titleFontSize, 1.0f,
         Madokawaii::Platform::Graphics::M_RED);
 
     constexpr auto title_eng = "Epilepsy Warning";
-    Madokawaii::Platform::Graphics::DrawText(title_eng, 1920 / 2 - 80, 180, 20, Madokawaii::Platform::Graphics::M_RED);
-
+    float engFontSize = 20.0f * scale;
+    auto engSize = Madokawaii::Platform::Graphics::Fonts::MeasureTextEx(font, title_eng, engFontSize, 1.0f);
+    Madokawaii::Platform::Graphics::Fonts::DrawTextEx(font, title_eng,
+        centerX - engSize.x / 2, 180 * scaleY, engFontSize, 1.0f,
+        Madokawaii::Platform::Graphics::M_RED);
 
     constexpr char warningLines[14][256] = {
         "请在使用此软件(Madokawaii)前阅读:",
@@ -54,30 +61,35 @@ int AppIterate_Warning(void * appstate) {
         "",
     };
 
+    const float startY = 250 * scaleY;
+    const float lineHeight = 46 * scale;
+    const float textFontSize = 36.0f * scale;
+
     for (int i = 0; i < std::size(warningLines); i++) {
-        constexpr int startY = 250;
-        constexpr int lineHeight = 46;
-        constexpr int textFontSize = 36;
         auto [x, y] = Madokawaii::Platform::Graphics::Fonts::MeasureTextEx(
-            font, warningLines[i], textFontSize, 1.0f); // NOLINT(*-narrowing-conversions)
+            font, warningLines[i], textFontSize, 1.0f);
         Madokawaii::Platform::Graphics::Fonts::DrawTextEx(font, warningLines[i],
-            centerX - x / 2, startY + i * lineHeight, textFontSize, 1.0f, // NOLINT(*-narrowing-conversions)
+            centerX - x / 2, startY + i * lineHeight, textFontSize, 1.0f,
             Madokawaii::Platform::Graphics::M_LIGHTGRAY);
     }
+
     const char* skipHint = canSkip ? "按任意键继续..." : "请等待...";
-    constexpr float hintFontSize = 28.0f;
+    float hintFontSize = 28.0f * scale;
     const auto [x, y] = Madokawaii::Platform::Graphics::Fonts::MeasureTextEx(font, skipHint, hintFontSize, 1.0f);
-    const float hintY = ctx.screenHeight - 120.0f;
+    const float hintY = ctx.screenHeight - 120.0f * scaleY;
     Madokawaii::Platform::Graphics::Fonts::DrawTextEx(font, skipHint,
-       centerX - x / 2, hintY, hintFontSize, 1.0f,
-       Madokawaii::Platform::Graphics::M_GRAY);
+        centerX - x / 2, hintY, hintFontSize, 1.0f,
+        Madokawaii::Platform::Graphics::M_GRAY);
 
     if (!canSkip) {
         const float remaining = WarningState::MIN_DISPLAY_TIME - ctx.warningState.elapsedTime;
         char timeText[32];
         snprintf(timeText, sizeof(timeText), "%.1f", remaining);
-        Madokawaii::Platform::Graphics::DrawText(timeText, ctx.screenWidth / 2 - 20, hintY + 40, 24, // NOLINT(*-narrowing-conversions)
-                                                 Madokawaii::Platform::Graphics::M_DARKGRAY);
+        float timeFontSize = 24.0f * scale;
+        auto timeSize = Madokawaii::Platform::Graphics::Fonts::MeasureTextEx(font, timeText, timeFontSize, 1.0f);
+        Madokawaii::Platform::Graphics::Fonts::DrawTextEx(font, timeText,
+            centerX - timeSize.x / 2, hintY + 40 * scale, timeFontSize, 1.0f,
+            Madokawaii::Platform::Graphics::M_DARKGRAY);
     }
 
     Madokawaii::Platform::Graphics::EndDrawing();

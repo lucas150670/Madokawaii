@@ -106,20 +106,23 @@ namespace Madokawaii::App::MainMenu {
         using namespace Madokawaii::Platform;
 
         InitMainMenu(state);
+        const float scaleX = screenWidth / 1280.0f;
+        const float scaleY = screenHeight / 720.0f;
+        const float scale = std::min(scaleX, scaleY);
 
         const char* title = "Madokawaii";
-        int titleWidth = Madokawaii::Platform::Graphics::MeasureText(title, 48);
-        Graphics::DrawText(title, (screenWidth - titleWidth) / 2, 80, 48, { 255, 255, 255, 255 });
+        int titleWidth = Madokawaii::Platform::Graphics::MeasureText(title, 48 * scale);
+        Graphics::DrawText(title, (screenWidth - titleWidth) / 2, 80 * scale, 48 * scale, { 255, 255, 255, 255 });
 
         const char* subtitle = "select chart and respack here";
-        int subtitleWidth = Madokawaii::Platform::Graphics::MeasureText(subtitle, 20);
-        Graphics::DrawText(subtitle, (screenWidth - subtitleWidth) / 2, 140, 20, { 180, 180, 180, 255 });
+        int subtitleWidth = Madokawaii::Platform::Graphics::MeasureText(subtitle, 20 * scale);
+        Graphics::DrawText(subtitle, (screenWidth - subtitleWidth) / 2, 140 * scale, 20 * scale, { 180, 180, 180, 255 });
 
-        int panelWidth = 700;
+        int panelWidth = 700 * scale;
         int panelX = (screenWidth - panelWidth) / 2;
-        int startY = 220;
-        int rowHeight = 36;
-        int rowSpacing = 70;
+        int startY = 220 * scale;
+        int rowHeight = 36 * scale;
+        int rowSpacing = 70 * scale;
 
         // 检查各文件是否存在
         bool chartExists = Core::FileExists(chartPathBuf);
@@ -143,8 +146,8 @@ namespace Madokawaii::App::MainMenu {
             "Background Image:", backgroundPathBuf, sizeof(backgroundPathBuf),
             state.backgroundPathEditing, 3, backgroundExists);
 
-        int btnWidth = 200;
-        int btnHeight = 50;
+        int btnWidth = 200 * scale;
+        int btnHeight = 50 * scale;
         int btnX = (screenWidth - btnWidth) / 2;
         int btnY = startY + rowSpacing * 4 + 40;
 
