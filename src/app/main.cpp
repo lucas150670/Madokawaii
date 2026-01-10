@@ -126,8 +126,6 @@ int AppInit(void*& appstate) {
 
 
 #if defined(PLATFORM_ANDROID)
-    ctx.screenWidth = 1280;
-    ctx.screenHeight = 720;
 
     Madokawaii::Platform::Core::InitWindow(ctx.screenWidth, ctx.screenHeight, "Madokawaii");
     Madokawaii::Platform::Core::SetWindowSize(Madokawaii::Platform::Core::GetScreenWidth(), Madokawaii::Platform::Core::GetScreenHeight());

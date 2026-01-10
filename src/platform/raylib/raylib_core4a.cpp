@@ -31,9 +31,9 @@ extern "C" struct android_app* GetAndroidApp();
 
 namespace {
     // 缓存内部存储路径
-    static char internalDataPath[512] = {0};
-    static char externalDataPath[512] = {0};
-    static bool pathsInitialized = false;
+    char internalDataPath[512] = {0};
+    char externalDataPath[512] = {0};
+    bool pathsInitialized = false;
 
     void InitStoragePaths() {
         if (pathsInitialized) return;
@@ -95,7 +95,7 @@ namespace {
 
     // 检查普通文件是否存在
     bool RegularFileExists(const char* path) {
-        struct stat buffer;
+        struct stat buffer{};
         int result = stat(path, &buffer);
 
         if (result == 0) {
@@ -181,7 +181,7 @@ namespace Madokawaii::Platform::Core {
             }
 
             off_t size = AAsset_getLength(asset);
-            unsigned char* data = (unsigned char*)malloc(size + 1);
+            auto* data = (unsigned char*)malloc(size + 1);
 
             if (data) {
                 int bytesRead = AAsset_read(asset, data, size);
@@ -236,7 +236,7 @@ namespace Madokawaii::Platform::Core {
         long size = ftell(file);
         fseek(file, 0, SEEK_SET);
 
-        unsigned char* data = (unsigned char*)malloc(size + 1);
+        auto* data = (unsigned char*)malloc(size + 1);
         if (data) {
             size_t bytesRead = fread(data, 1, size, file);
             if (bytesRead == (size_t)size) {
@@ -269,7 +269,7 @@ namespace Madokawaii::Platform::Core {
     }
 
     int GetMonitorCount() {
-        return 1; // Android 通常只有一个屏幕
+        return 1;
     }
 
     int GetCurrentMonitor() {
@@ -301,17 +301,14 @@ namespace Madokawaii::Platform::Core {
     const char* GetWorkingDirectory() {
         InitStoragePaths();
 
-        // 优先返回外部存储路径（用户可访问）
         if (externalDataPath[0] != '\0') {
             return externalDataPath;
         }
 
-        // 回退到内部存储
         if (internalDataPath[0] != '\0') {
             return internalDataPath;
         }
 
-        // 最后回退
         return "/data/local/tmp";
     }
 
@@ -340,7 +337,7 @@ namespace Madokawaii::Platform::Core {
 
     bool IsAnyKeyPressed() {
         // 检查常见的 Android 按键
-        return :: GetKeyPressed() != 0;
+        return :: GetKeyPressed() != 0 || ::GetTouchPointCount() > 0;
     }
 
 } // namespace Madokawaii::Platform:: Core

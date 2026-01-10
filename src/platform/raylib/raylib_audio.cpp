@@ -8,6 +8,12 @@
 
 #include "Madokawaii/platform/audio.h"
 #include "Madokawaii/platform/log.h"
+#include "Madokawaii/platform/core.h"
+
+#ifdef PLATFORM_ANDROID
+#include <fcntl.h> // open
+#include <unistd.h> // write, close
+#endif
 
 namespace Madokawaii::Platform::Audio {
 
@@ -104,10 +110,24 @@ namespace Madokawaii::Platform::Audio {
         static std::random_device rd;
         static std::default_random_engine e(rd());
         static std::uniform_int_distribution<int> dist(0, 1000000);
-        std::filesystem::path path = std::filesystem::temp_directory_path() / std::format("temp_sound_{}{}", dist(e), fileType);
+        std::filesystem::path path = Madokawaii::Platform::Core::GetInternalCachePath() +  std::format("/temp_sound_{}{}", dist(e), fileType);
         {
+#if !defined(PLATFORM_ANDROID)
             std::ofstream ofs(path, std::ios::binary);
             ofs.write(reinterpret_cast<const char*>(data), dataSize);
+            TraceLog(TraceLogLevel::LOG_INFO, "RSOUND: Write %d bytes to local storage, expected = %d", ofs.tellp(), dataSize);
+#else
+            {
+                int fd = ::open(path.string().c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666);
+                if (fd == -1) {
+                    TraceLog(TraceLogLevel::LOG_ERROR, "RSOUND: Failed to open file for writing: %s", path.string().c_str());
+                } else {
+                    ssize_t written = ::write(fd, data, dataSize);
+                    ::close(fd);
+                    TraceLog(TraceLogLevel::LOG_INFO, "RSOUND: Write %zd bytes to local storage, expected = %d", written, dataSize);
+                }
+            }
+#endif
         }
         ::Sound snd = ::LoadSound(path.string().c_str());
         Sound s{};
