@@ -28,7 +28,8 @@ set(SRC_APP
         src/app/note_render.cpp
         src/app/hit_sound_fx.cpp
         src/app/hit_visual_fx.cpp
-        src/app/epilepsy_warning.cpp)
+        src/app/epilepsy_warning.cpp
+        src/app/pec.cpp)
 
 set(SRC_IMP_RAYLIB
         src/platform/raylib/raylib_graphics.cpp

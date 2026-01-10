@@ -39,6 +39,13 @@ int GameInit_Async(void* appstate) {
 
     const clock_t begin = clock();
     ctx.mainChart = Madokawaii::App::Chart::LoadChartFromFile(chartPath.c_str());
+    // 如果官谱格式加载失败，尝试 PEC 格式
+    // if (!Madokawaii::App::Chart::IsValidChart(ctx.mainChart)) {
+    //     Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_WARNING,
+    //                                         "MAIN: Failed to load chart as official format, trying PEC format...");
+    //     ctx.mainChart = Madokawaii::App::Chart::LoadChartFromPEC(chartPath.c_str());
+    // }
+
     if (!Madokawaii::App::Chart::IsValidChart(ctx.mainChart)) {
         Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_ERROR, "MAIN: Failed to load chart!");
         return -1;
@@ -173,7 +180,7 @@ int AppInit(void*& appstate) {
             ctx.chineseFont = Madokawaii::Platform::Graphics::Fonts::LoadFontWithChinese("font.ttf", 16);
         }
 
-        Madokawaii::Platform::Graphics::SetTargetFPS(60);
+        // Madokawaii::Platform::Graphics::SetTargetFPS(60);
         if (!Madokawaii::Platform::Graphics::Fonts::IsFontValid(ctx.chineseFont)) {
             Madokawaii::Platform::Log::TraceLog(
                 Madokawaii::Platform::Log::TraceLogLevel::LOG_WARNING,

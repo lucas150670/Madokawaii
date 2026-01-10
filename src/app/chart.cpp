@@ -241,7 +241,7 @@ namespace Madokawaii::App::Chart {
             judgeline.info.opacity = 0;
             judgeline.info.posX = judgeline.info.posY = 0.5;
             judgeline.info.rotateAngle = 0;
-            judgeline.info.speed = 0;
+            judgeline.info.speed = 1.0;
 
             judgeline.info.disappearEventPointer = judgeline.judgelineDisappearedEvents.cbegin();
             judgeline.info.moveEventPointer = judgeline.judgelineMoveEvents.cbegin();

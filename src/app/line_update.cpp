@@ -14,36 +14,54 @@ void UpdateJudgeline(Madokawaii::App::chart::judgeline& judgeline, double thisFr
 		return Madokawaii::App::Chart::CalcRealTime(judgeline.bpm, beatTime);
 		};
 
-	for (; calcEventRealTime(judgeline.info.disappearEventPointer->endTime) < thisFrameTime; ++judgeline.info.disappearEventPointer) {
-		judgeline.info.opacity = judgeline.info.disappearEventPointer->end;
+	if (!judgeline.judgelineDisappearedEvents.empty()) {
+		for (; judgeline.info.disappearEventPointer != judgeline.judgelineDisappearedEvents.end()
+			&& calcEventRealTime(judgeline.info.disappearEventPointer->endTime) < thisFrameTime; ++judgeline.info.disappearEventPointer) {
+			judgeline.info.opacity = judgeline.info.disappearEventPointer->end;
+		}
+		if (judgeline.info.disappearEventPointer != judgeline.judgelineDisappearedEvents.end())
+			judgeline.info.opacity = Madokawaii::App::Chart::CalcEventProgress1Param(*judgeline.info.disappearEventPointer,
+				Madokawaii::App::Chart::CalcBeatTime(judgeline.bpm, thisFrameTime));
 	}
-	for (; calcEventRealTime(judgeline.info.moveEventPointer->endTime) < thisFrameTime; ++judgeline.info.moveEventPointer) {
-		judgeline.info.posX = judgeline.info.moveEventPointer->end;
-		judgeline.info.posY = judgeline.info.moveEventPointer->end2;
+	if (!judgeline.judgelineMoveEvents.empty()) {
+		for (; judgeline.info.moveEventPointer != judgeline.judgelineMoveEvents.end()
+				&& calcEventRealTime(judgeline.info.moveEventPointer->endTime) < thisFrameTime; ++judgeline.info.moveEventPointer) {
+			judgeline.info.posX = judgeline.info.moveEventPointer->end;
+			judgeline.info.posY = judgeline.info.moveEventPointer->end2;
+		}
+		if (judgeline.info.moveEventPointer != judgeline.judgelineMoveEvents.end()) {
+			auto point = Madokawaii::App::Chart::CalcEventProgress2Params(*judgeline.info.moveEventPointer,
+				Madokawaii::App::Chart::CalcBeatTime(judgeline.bpm, thisFrameTime));
+			judgeline.info.posX = std::get<0>(point);
+			judgeline.info.posY = std::get<1>(point);
+		}
 	}
-	for (; calcEventRealTime(judgeline.info.rotateEventPointer->endTime) < thisFrameTime; ++judgeline.info.rotateEventPointer) {
-		judgeline.info.rotateAngle = judgeline.info.rotateEventPointer->end;
+	if (!judgeline.judgelineRotateEvents.empty()) {
+		for (; judgeline.info.rotateEventPointer != judgeline.judgelineRotateEvents.end()
+				&& calcEventRealTime(judgeline.info.rotateEventPointer->endTime) < thisFrameTime; ++judgeline.info.rotateEventPointer) {
+			judgeline.info.rotateAngle = judgeline.info.rotateEventPointer->end;
+		}
+		if (judgeline.info.rotateEventPointer != judgeline.judgelineRotateEvents.end()) {
+			judgeline.info.rotateAngle = Madokawaii::App::Chart::CalcEventProgress1Param(*judgeline.info.rotateEventPointer,
+				Madokawaii::App::Chart::CalcBeatTime(judgeline.bpm, thisFrameTime),
+				[](double angle) {
+					while (angle < 0) angle += 360;
+					while (angle > 360) angle -= 360;
+					return angle;
+				});
+		}
 	}
-	for (; calcEventRealTime(judgeline.info.speedEventPointer->endTime) < thisFrameTime; ++judgeline.info.speedEventPointer) {
-		judgeline.info.positionY = judgeline.info.speedEventPointer->floorPosition;
+	if (!judgeline.speedEvents.empty()) {
+		for (; judgeline.info.speedEventPointer != judgeline.speedEvents.end()
+				&& calcEventRealTime(judgeline.info.speedEventPointer->endTime) < thisFrameTime; ++judgeline.info.speedEventPointer) {
+			judgeline.info.positionY = judgeline.info.speedEventPointer->floorPosition;
+		}
+		if (judgeline.info.speedEventPointer != judgeline.speedEvents.end()) {
+			judgeline.info.positionY = judgeline.info.speedEventPointer->floorPosition + (thisFrameTime - calcEventRealTime(judgeline.info.speedEventPointer->startTime)) * judgeline.info.speedEventPointer->value;
+		}
 	}
-
-	judgeline.info.opacity = Madokawaii::App::Chart::CalcEventProgress1Param(*judgeline.info.disappearEventPointer,
-		Madokawaii::App::Chart::CalcBeatTime(judgeline.bpm, thisFrameTime));
-	auto point = Madokawaii::App::Chart::CalcEventProgress2Params(*judgeline.info.moveEventPointer,
-		Madokawaii::App::Chart::CalcBeatTime(judgeline.bpm, thisFrameTime));
-	judgeline.info.posX = std::get<0>(point);
-	judgeline.info.posY = std::get<1>(point);
-	judgeline.info.rotateAngle = Madokawaii::App::Chart::CalcEventProgress1Param(*judgeline.info.rotateEventPointer,
-		Madokawaii::App::Chart::CalcBeatTime(judgeline.bpm, thisFrameTime),
-		[](double angle) {
-			while (angle < 0) angle += 360;
-			while (angle > 360) angle -= 360;
-			return angle;
-		});
 
 	// note update
-	judgeline.info.positionY = judgeline.info.speedEventPointer->floorPosition + (thisFrameTime - calcEventRealTime(judgeline.info.speedEventPointer->startTime)) * judgeline.info.speedEventPointer->value;
 	const double judgelineScreenX = judgeline.info.posX * screenWidth;
 	const double judgelineScreenY = judgeline.info.posY * screenHeight;
 

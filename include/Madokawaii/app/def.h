@@ -36,6 +36,7 @@ namespace Madokawaii::App {
     struct chart {
         int formatVersion{};
         double offset{};
+        double global_bpm{};
         int judgelineCount{};
 
         // int numOfNotes;
