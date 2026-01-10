@@ -6,6 +6,7 @@
 #include "Madokawaii/platform/audio.h"
 #include "Madokawaii/platform/log.h"
 #include "Madokawaii/platform/graphics.h"
+#include "Madokawaii/platform/fonts.h"
 #include "Madokawaii/platform/texture.h"
 #include "Madokawaii/platform/core.h"
 #include <format>
@@ -36,27 +37,32 @@ namespace {
         }
     }
 
-    void DrawJudgementItem(const char* label, int value, float centerX, float y,
-        int labelFontSize, int valueFontSize,
+    void DrawJudgementItem(Madokawaii::Platform::Graphics::Fonts::Font font,
+        const char* label, int value, float centerX, float y,
+        float labelFontSize, float valueFontSize, float spacing,
         Madokawaii::Platform::Graphics::Color labelColor,
         Madokawaii::Platform::Graphics::Color valueColor) {
-        int labelWidth = Madokawaii::Platform::Graphics::MeasureText(label, labelFontSize);
-        Madokawaii::Platform::Graphics::DrawText(
+        auto labelSize = Madokawaii::Platform::Graphics::Fonts::MeasureTextEx(font, label, labelFontSize, spacing);
+        Madokawaii::Platform::Graphics::Fonts::DrawTextEx(
+            font,
             label,
-            static_cast<int>(centerX - labelWidth / 2.0f),
-            static_cast<int>(y),
+            centerX - labelSize.x / 2.0f,
+            y,
             labelFontSize,
+            spacing,
             labelColor
         );
 
         auto valueText = std::format("{}", value);
-        int valueWidth = Madokawaii::Platform::Graphics::MeasureText(valueText.c_str(), valueFontSize);
-        float valueY = y + static_cast<float>(labelFontSize) + 10.0f;
-        Madokawaii::Platform::Graphics::DrawText(
+        auto valueSize = Madokawaii::Platform::Graphics::Fonts::MeasureTextEx(font, valueText.c_str(), valueFontSize, spacing);
+        float valueY = y + labelFontSize + 10.0f;
+        Madokawaii::Platform::Graphics::Fonts::DrawTextEx(
+            font,
             valueText.c_str(),
-            static_cast<int>(centerX - valueWidth / 2.0f),
-            static_cast<int>(valueY),
+            centerX - valueSize.x / 2.0f,
+            valueY,
             valueFontSize,
+            spacing,
             valueColor
         );
     }
@@ -111,88 +117,99 @@ int AppIterate_Ending(AppContext* context) {
 
     float textCenterX = trapezoidX + topOffset / 2.0f + (trapezoidWidth - topOffset) / 2.0f;
 
-    constexpr int titleFontSize = 48;
-    constexpr int difficultyFontSize = 28;
+    constexpr float titleFontSize = 48.0f;
+    constexpr float difficultyFontSize = 28.0f;
     constexpr float rightPadding = 40.0f;
     constexpr float topPadding = 40.0f;
+    constexpr float fontSpacing = 2.0f;
 
-	// TODO: replace "untitled" with actual song title
+    auto& font = context->chineseFont;
+
+    // TODO: replace "untitled" with actual song title
     const char* songTitle = "untitled";
-    int titleWidth = Madokawaii::Platform::Graphics::MeasureText(songTitle, titleFontSize);
-    float titleX = screenWidth - titleWidth - rightPadding;
+    auto titleSize = Madokawaii::Platform::Graphics::Fonts::MeasureTextEx(font, songTitle, titleFontSize, fontSpacing);
+    float titleX = screenWidth - titleSize.x - rightPadding;
     float titleY = topPadding;
-    Madokawaii::Platform::Graphics::DrawText(
+    Madokawaii::Platform::Graphics::Fonts::DrawTextEx(
+        font,
         songTitle,
-        static_cast<int>(titleX),
-        static_cast<int>(titleY),
+        titleX,
+        titleY,
         titleFontSize,
+        fontSpacing,
         Madokawaii::Platform::Graphics::M_RAYWHITE
     );
 
-	// TODO: replace sp lv.? with actual difficulty
+    // TODO: replace sp lv.? with actual difficulty
     const char* difficulty = "SP Lv.?";
-    int difficultyWidth = Madokawaii::Platform::Graphics::MeasureText(difficulty, difficultyFontSize);
-    float difficultyX = screenWidth - difficultyWidth - rightPadding;
+    auto difficultySize = Madokawaii::Platform::Graphics::Fonts::MeasureTextEx(font, difficulty, difficultyFontSize, fontSpacing);
+    float difficultyX = screenWidth - difficultySize.x - rightPadding;
     float difficultyY = titleY + titleFontSize + 10.0f;
-    Madokawaii::Platform::Graphics::DrawText(
+    Madokawaii::Platform::Graphics::Fonts::DrawTextEx(
+        font,
         difficulty,
-        static_cast<int>(difficultyX),
-        static_cast<int>(difficultyY),
+        difficultyX,
+        difficultyY,
         difficultyFontSize,
+        fontSpacing,
         Madokawaii::Platform::Graphics::M_PURPLE
     );
 
     auto scoreText = std::format("{}", 1000000);
-    int scoreFontSize = 72;
-    int scoreTextWidth = Madokawaii::Platform::Graphics::MeasureText(scoreText.c_str(), scoreFontSize);
-    float scoreX = textCenterX - scoreTextWidth / 2.0f;
+    constexpr float scoreFontSize = 72.0f;
+    auto scoreSize = Madokawaii::Platform::Graphics::Fonts::MeasureTextEx(font, scoreText.c_str(), scoreFontSize, fontSpacing);
+    float scoreX = textCenterX - scoreSize.x / 2.0f;
     float scoreY = trapezoidY + 400;
-    Madokawaii::Platform::Graphics::DrawText(
+    Madokawaii::Platform::Graphics::Fonts::DrawTextEx(
+        font,
         scoreText.c_str(),
-        static_cast<int>(scoreX),
-        static_cast<int>(scoreY),
+        scoreX,
+        scoreY,
         scoreFontSize,
+        fontSpacing,
         Madokawaii::Platform::Graphics::M_GOLD
     );
 
     const char* autoPlayText = "AUTO PLAY";
-    int autoPlayFontSize = 40;
-    int autoPlayTextWidth = Madokawaii::Platform::Graphics::MeasureText(autoPlayText, autoPlayFontSize);
-    float autoPlayX = textCenterX - autoPlayTextWidth / 2.0f;
+    constexpr float autoPlayFontSize = 40.0f;
+    auto autoPlaySize = Madokawaii::Platform::Graphics::Fonts::MeasureTextEx(font, autoPlayText, autoPlayFontSize, fontSpacing);
+    float autoPlayX = textCenterX - autoPlaySize.x / 2.0f;
     float autoPlayY = trapezoidY + 480;
-    Madokawaii::Platform::Graphics::DrawText(
+    Madokawaii::Platform::Graphics::Fonts::DrawTextEx(
+        font,
         autoPlayText,
-        static_cast<int>(autoPlayX),
-        static_cast<int>(autoPlayY),
+        autoPlayX,
+        autoPlayY,
         autoPlayFontSize,
+        fontSpacing,
         Madokawaii::Platform::Graphics::M_GOLD
     );
 
-    constexpr int labelFontSize = 28;
-    constexpr int valueFontSize = 36;
+    constexpr float labelFontSize = 28.0f;
+    constexpr float valueFontSize = 36.0f;
     constexpr float itemSpacing = 150.0f;
-    float judgementY = autoPlayY + 80.0f; 
+    float judgementY = autoPlayY + 80.0f;
 
-    float totalWidth = itemSpacing * 3; 
+    float totalWidth = itemSpacing * 3;
     float startX = textCenterX - totalWidth / 2.0f;
 
-    DrawJudgementItem("Perfect", context->mainChart.numOfNotes, startX, judgementY,
-        labelFontSize, valueFontSize,
+    DrawJudgementItem(font, "Perfect", context->mainChart.numOfNotes, startX, judgementY,
+        labelFontSize, valueFontSize, fontSpacing,
         Madokawaii::Platform::Graphics::M_GOLD,
         Madokawaii::Platform::Graphics::M_RAYWHITE);
 
-    DrawJudgementItem("Great", 0, startX + itemSpacing, judgementY,
-        labelFontSize, valueFontSize,
+    DrawJudgementItem(font, "Great", 0, startX + itemSpacing, judgementY,
+        labelFontSize, valueFontSize, fontSpacing,
         Madokawaii::Platform::Graphics::M_SKYBLUE,
         Madokawaii::Platform::Graphics::M_RAYWHITE);
 
-    DrawJudgementItem("Bad", 0, startX + itemSpacing * 2, judgementY,
-        labelFontSize, valueFontSize,
+    DrawJudgementItem(font, "Bad", 0, startX + itemSpacing * 2, judgementY,
+        labelFontSize, valueFontSize, fontSpacing,
         Madokawaii::Platform::Graphics::M_GRAY,
         Madokawaii::Platform::Graphics::M_RAYWHITE);
 
-    DrawJudgementItem("Miss", 0, startX + itemSpacing * 3, judgementY,
-        labelFontSize, valueFontSize,
+    DrawJudgementItem(font, "Miss", 0, startX + itemSpacing * 3, judgementY,
+        labelFontSize, valueFontSize, fontSpacing,
         Madokawaii::Platform::Graphics::M_RED,
         Madokawaii::Platform::Graphics::M_RAYWHITE);
 
