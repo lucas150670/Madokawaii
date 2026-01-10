@@ -21,12 +21,11 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <errno.h>
+#include <cerrno>
 
 #define LOGD(... ) __android_log_print(ANDROID_LOG_DEBUG, "Madokawaii", __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, "Madokawaii", __VA_ARGS__)
 
-// 外部引用 Android app 实例（由 raylib 或 main 提供）
 extern "C" struct android_app* GetAndroidApp();
 
 namespace {
@@ -40,13 +39,11 @@ namespace {
 
         struct android_app* app = GetAndroidApp();
         if (app && app->activity) {
-            // 内部存储路径 (始终可访问)
             if (app->activity->internalDataPath) {
                 strncpy(internalDataPath, app->activity->internalDataPath, sizeof(internalDataPath) - 1);
                 LOGD("Internal data path:  %s", internalDataPath);
             }
 
-            // 外部存储路径 (需要权限)
             if (app->activity->externalDataPath) {
                 strncpy(externalDataPath, app->activity->externalDataPath, sizeof(externalDataPath) - 1);
                 LOGD("External data path: %s", externalDataPath);
@@ -56,19 +53,16 @@ namespace {
         pathsInitialized = true;
     }
 
-    // 检查路径是否是 asset 路径
     bool IsAssetPath(const char* path) {
         return (strncmp(path, "assets/", 7) == 0 || strncmp(path, "/assets/", 8) == 0);
     }
 
-    // 获取 asset 的相对路径
     const char* GetAssetRelativePath(const char* path) {
         if (strncmp(path, "/assets/", 8) == 0) return path + 8;
         if (strncmp(path, "assets/", 7) == 0) return path + 7;
         return path;
     }
 
-    // 检查文件是否存在于 assets 中
     bool AssetExists(const char* path) {
         struct android_app* app = GetAndroidApp();
         if (!app || !app->activity || !app->activity->assetManager) {
@@ -93,7 +87,6 @@ namespace {
         return false;
     }
 
-    // 检查普通文件是否存在
     bool RegularFileExists(const char* path) {
         struct stat buffer{};
         int result = stat(path, &buffer);
@@ -119,22 +112,18 @@ namespace Madokawaii::Platform::Core {
 
         LOGD("FileExists checking: %s", path);
 
-        // 1. 检查是否是 asset 路径
         if (IsAssetPath(path)) {
             return AssetExists(path);
         }
 
-        // 2. 检查绝对路径
         if (path[0] == '/') {
             return RegularFileExists(path);
         }
 
-        // 3. 相对路径 - 先检查外部存储，再检查内部存储
         InitStoragePaths();
 
         char fullPath[1024];
 
-        // 尝试外部存储
         if (externalDataPath[0] != '\0') {
             snprintf(fullPath, sizeof(fullPath), "%s/%s", externalDataPath, path);
             if (RegularFileExists(fullPath)) {
@@ -142,7 +131,6 @@ namespace Madokawaii::Platform::Core {
             }
         }
 
-        // 尝试内部存储
         if (internalDataPath[0] != '\0') {
             snprintf(fullPath, sizeof(fullPath), "%s/%s", internalDataPath, path);
             if (RegularFileExists(fullPath)) {
@@ -150,7 +138,6 @@ namespace Madokawaii::Platform::Core {
             }
         }
 
-        // 4. 最后尝试作为 asset
         return AssetExists(path);
     }
 
@@ -160,7 +147,6 @@ namespace Madokawaii::Platform::Core {
         *fileSize = 0;
         LOGD("LoadFileData: %s", path);
 
-        // 1. 从 assets 加载
         if (IsAssetPath(path)) {
             struct android_app* app = GetAndroidApp();
             if (!app || !app->activity || !app->activity->assetManager) {
@@ -200,15 +186,12 @@ namespace Madokawaii::Platform::Core {
             return data;
         }
 
-        // 2. 从文件系统加载
         const char* actualPath = path;
         char fullPath[1024];
 
-        // 处理相对路径
         if (path[0] != '/') {
             InitStoragePaths();
 
-            // 尝试外部存储
             if (externalDataPath[0] != '\0') {
                 snprintf(fullPath, sizeof(fullPath), "%s/%s", externalDataPath, path);
                 if (RegularFileExists(fullPath)) {
@@ -216,7 +199,6 @@ namespace Madokawaii::Platform::Core {
                 }
             }
 
-            // 尝试内部存储
             if (actualPath == path && internalDataPath[0] != '\0') {
                 snprintf(fullPath, sizeof(fullPath), "%s/%s", internalDataPath, path);
                 if (RegularFileExists(fullPath)) {
@@ -228,7 +210,6 @@ namespace Madokawaii::Platform::Core {
         FILE* file = fopen(actualPath, "rb");
         if (!file) {
             LOGE("Failed to open file: %s (errno=%d)", actualPath, errno);
-            // 回退到 asset
             return LoadFileData((std::string("assets/") + path).c_str(), fileSize);
         }
 
@@ -278,7 +259,7 @@ namespace Madokawaii::Platform::Core {
 
     int GetMonitorRefreshRate(int monitor) {
         (void)monitor;
-        return 60; // 默认 60Hz，可通过 JNI 获取实际值
+        return 60;
     }
 
     void InitWindow(int width, int height, const char* title) {
@@ -331,13 +312,11 @@ namespace Madokawaii::Platform::Core {
     }
 
     void ToggleFullscreen() {
-        // Android 默认全屏，可通过 JNI 控制系统 UI
         ::ToggleFullscreen();
     }
 
     bool IsAnyKeyPressed() {
-        // 检查常见的 Android 按键
-        return :: GetKeyPressed() != 0 || ::GetTouchPointCount() > 0;
+        return ::GetKeyPressed() != 0 || ::GetTouchPointCount() > 0;
     }
 
 } // namespace Madokawaii::Platform:: Core
