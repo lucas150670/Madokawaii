@@ -40,11 +40,11 @@ int GameInit_Async(void* appstate) {
     const clock_t begin = clock();
     ctx.mainChart = Madokawaii::App::Chart::LoadChartFromFile(chartPath.c_str());
     // 如果官谱格式加载失败，尝试 PEC 格式
-    // if (!Madokawaii::App::Chart::IsValidChart(ctx.mainChart)) {
-    //     Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_WARNING,
-    //                                         "MAIN: Failed to load chart as official format, trying PEC format...");
-    //     ctx.mainChart = Madokawaii::App::Chart::LoadChartFromPEC(chartPath.c_str());
-    // }
+    if (!Madokawaii::App::Chart::IsValidChart(ctx.mainChart)) {
+        Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_WARNING,
+                                            "MAIN: Failed to load chart as official format, trying PEC format...");
+        ctx.mainChart = Madokawaii::App::Chart::LoadChartFromPEC(chartPath.c_str());
+    }
 
     if (!Madokawaii::App::Chart::IsValidChart(ctx.mainChart)) {
         Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_ERROR, "MAIN: Failed to load chart!");
@@ -263,11 +263,17 @@ int AppIterate_Game(void * appstate) {
     Madokawaii::Platform::Graphics::ClearBackground(Madokawaii::Platform::Graphics::M_BLACK);
     DrawTexture(ctx.backgroundTexture, {0, 0}, {255, 255, 255, 255});
 
-    auto thisFrameTime = Madokawaii::Platform::Audio::GetMusicTimePlayed(ctx.music);
+    auto thisFrameTime = Madokawaii::Platform::Audio::GetMusicTimePlayed(ctx.music) - ctx.mainChart.offset;
     if (!Madokawaii::Platform::Audio::IsMusicStreamPlaying(ctx.music)) {
         Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "MAIN: Music playback end");
         Madokawaii::Platform::Graphics::EndDrawing(); 
         ctx.gameCompleted = true;
+        return !Madokawaii::Platform::Core::WindowShouldClose();
+    }
+
+    if (thisFrameTime < 0) {
+        RenderDebugInfo(ctx.screenWidth, ctx.screenHeight);
+        Madokawaii::Platform::Graphics::EndDrawing();
         return !Madokawaii::Platform::Core::WindowShouldClose();
     }
 
