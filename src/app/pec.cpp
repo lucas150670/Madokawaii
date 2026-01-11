@@ -1,9 +1,12 @@
+
 //
 // Created by madoka on 2026/1/11.
 //
 
 // pec.cpp
 #include <algorithm>
+#include <cmath>
+#include <functional>
 
 #include "Madokawaii/app/chart.h"
 #include "Madokawaii/platform/core.h"
@@ -19,6 +22,241 @@
 namespace Madokawaii::App::Chart {
 
     namespace {
+        // ============================================================
+        // Index mapping: 0-1 = linear, 2-29 = various easing types
+        // ============================================================
+        using EasingFunc = std::function<double(double)>;
+
+        // Forward declarations for recursive easing functions
+        double easeOutBounce(double t);
+        double easeInBounce(double t);
+
+        double easeOutSine(double t) { return std::sin(t * M_PI / 2.0); }
+        double easeInSine(double t) { return 1.0 - std::cos(t * M_PI / 2.0); }
+        double easeOutQuad(double t) { return 1.0 - (t - 1.0) * (t - 1.0); }
+        double easeInQuad(double t) { return t * t; }
+        double easeInOutSine(double t) { return (1.0 - std::cos(t * M_PI)) / 2.0; }
+        double easeInOutQuad(double t) {
+            t *= 2.0;
+            return t < 1.0 ? (t * t) / 2.0 : -((t - 2.0) * (t - 2.0) - 2.0) / 2.0;
+        }
+        double easeOutCubic(double t) { return 1.0 + (t - 1.0) * (t - 1.0) * (t - 1.0); }
+        double easeInCubic(double t) { return t * t * t; }
+        double easeOutQuart(double t) { double x = t - 1.0; return 1.0 - x * x * x * x; }
+        double easeInQuart(double t) { return t * t * t * t; }
+        double easeInOutCubic(double t) {
+            t *= 2.0;
+            return t < 1.0 ? (t * t * t) / 2.0 : ((t - 2.0) * (t - 2.0) * (t - 2.0) + 2.0) / 2.0;
+        }
+        double easeInOutQuart(double t) {
+            t *= 2.0;
+            double x = t - 2.0;
+            return t < 1.0 ? (t * t * t * t) / 2.0 : -(x * x * x * x - 2.0) / 2.0;
+        }
+        double easeOutQuint(double t) { double x = t - 1.0; return 1.0 + x * x * x * x * x; }
+        double easeInQuint(double t) { return t * t * t * t * t; }
+        double easeOutExpo(double t) { return 1.0 - std::pow(2.0, -10.0 * t); }
+        double easeInExpo(double t) { return std::pow(2.0, 10.0 * (t - 1.0)); }
+        double easeOutCirc(double t) { return std::sqrt(1.0 - (t - 1.0) * (t - 1.0)); }
+        double easeInCirc(double t) { return 1.0 - std::sqrt(1.0 - t * t); }
+        double easeOutBack(double t) {
+            return (2.70158 * t - 1.0) * (t - 1.0) * (t - 1.0) + 1.0;
+        }
+        double easeInBack(double t) {
+            return (2.70158 * t - 1.70158) * t * t;
+        }
+        double easeInOutCirc(double t) {
+            t *= 2.0;
+            return t < 1.0
+                ? (1.0 - std::sqrt(1.0 - t * t)) / 2.0
+                : (std::sqrt(1.0 - (t - 2.0) * (t - 2.0)) + 1.0) / 2.0;
+        }
+
+        double easeInOutBack(double t) {
+            return t < 0.5
+                ? (14.379638 * t - 5.189819) * t * t
+                : (14.379638 * t - 9.189819) * (t - 1.0) * (t - 1.0) + 1.0;
+        }
+
+        double easeOutElastic(double t) {
+            return 1.0 - std::pow(2.0, -10.0 * t) * std::cos(t * M_PI / 0.15);
+        }
+        double easeInElastic(double t) {
+            return std::pow(2.0, 10.0 * (t - 1.0)) * std::cos((t - 1.0) * M_PI / 0.15);
+        }
+        double easeOutBounce(double t) {
+            t *= 11.0;
+            if (t < 4.0) return (t * t) / 16.0;
+            if (t < 8.0) return ((t - 6.0) * (t - 6.0) + 12.0) / 16.0;
+            if (t < 10.0) return ((t - 9.0) * (t - 9.0) + 15.0) / 16.0;
+            return ((t - 10.5) * (t - 10.5) + 15.75) / 16.0;
+        }
+        double easeInBounce(double t) {
+            return 1.0 - easeOutBounce(1.0 - t);
+        }
+        double easeInOutBounce(double t) {
+            t *= 2.0;
+            return t < 1.0 ? easeOutBounce(t) / 2.0 : easeInBounce(t - 1.0) / 2.0 + 0.5;
+        }
+        double easeInOutElastic(double t) {
+            return t < 0.5
+                ? std::pow(2.0, 20.0 * t - 11.0) * std::sin((160.0 * t + 1.0) * M_PI / 18.0)
+                : 1.0 - std::pow(2.0, 9.0 - 20.0 * t) * std::sin((160.0 * t + 1.0) * M_PI / 18.0);
+        }
+
+        bool isLinearEasing(int index) {
+            index = static_cast<int>(std::trunc(index));
+            return index < 2 || index > 29;
+        }
+
+        EasingFunc getEasingFunc(int index) {
+            index = static_cast<int>(std::trunc(index));
+            if (index < 2 || index > 29) return nullptr;
+
+            static const EasingFunc easingTable[30] = {
+                nullptr, nullptr,  // 0, 1: linear (null)
+                easeOutSine,       // 2
+                easeInSine,        // 3
+                easeOutQuad,       // 4
+                easeInQuad,        // 5
+                easeInOutSine,     // 6
+                easeInOutQuad,     // 7
+                easeOutCubic,      // 8
+                easeInCubic,       // 9
+                easeOutQuart,      // 10
+                easeInQuart,       // 11
+                easeInOutCubic,    // 12
+                easeInOutQuart,    // 13
+                easeOutQuint,      // 14
+                easeInQuint,       // 15
+                easeOutExpo,       // 16
+                easeInExpo,        // 17
+                easeOutCirc,       // 18
+                easeInCirc,        // 19
+                easeOutBack,       // 20
+                easeInBack,        // 21
+                easeInOutCirc,     // 22
+                easeInOutBack,     // 23
+                easeOutElastic,    // 24
+                easeInElastic,     // 25
+                easeOutBounce,     // 26
+                easeInBounce,      // 27
+                easeInOutBounce,   // 28
+                easeInOutElastic   // 29
+            };
+            return easingTable[index];
+        }
+
+        /**
+         * @brief
+         *
+         * 转换复杂事件到官谱格式中的线性插值事件
+         *
+         * @param startTime
+         * @param endTime
+         * @param startVal1
+         * @param endVal1
+         * @param startVal2 当事件拥有start2/end2时，此参数有效
+         * @param endVal2
+         * @param easingIdx  缓动类型编号
+         * @param pushFn     将分割后的线性插值缓动插入新判定线的回调函数
+         * @param tolerance  允许与真实缓动类型之间的误差
+         * @param minSamples 最小线性插值数量
+         */
+        void sampleEasingToLinear(
+            double startTime, double endTime,
+            double startVal1, double endVal1,
+            double startVal2, double endVal2,
+            int easingIdx,
+            const std::function<void(double, double, double, double, double, double)>& pushFn,
+            double tolerance = 0.002,
+            int minSamples = 8
+        ) {
+            EasingFunc easing = getEasingFunc(easingIdx);
+
+            // 若为线性插值变换，直接返回
+            if (!easing) {
+                pushFn(startTime, endTime, startVal1, endVal1, startVal2, endVal2);
+                return;
+            }
+
+            double duration = endTime - startTime;
+            if (duration <= 0) {
+                pushFn(startTime, endTime, startVal1, endVal1, startVal2, endVal2);
+                return;
+            }
+
+            struct Segment {
+                double t0, t1;
+                double v1_0, v1_1;
+                double v2_0, v2_1;
+            };
+
+            // 对变量进行线性插值
+            auto evalEased = [&](double t) -> std::pair<double, double> {
+                double e = easing(t);
+                double v1 = startVal1 + (endVal1 - startVal1) * e;
+                double v2 = startVal2 + (endVal2 - startVal2) * e;
+                return {v1, v2};
+            };
+
+            std::vector<double> samplePoints;
+            for (int i = 0; i <= minSamples; ++i) {
+                samplePoints.push_back(static_cast<double>(i) / minSamples);
+            }
+
+            constexpr int maxRefinements = 4;
+            for (int refine = 0; refine < maxRefinements; ++refine) {
+                std::vector<double> newPoints;
+                newPoints.push_back(samplePoints[0]);
+
+                for (size_t i = 0; i + 1 < samplePoints.size(); ++i) {
+                    double t0 = samplePoints[i];
+                    double t1 = samplePoints[i + 1];
+                    double tMid = (t0 + t1) / 2.0;
+
+                    auto [v1_0, v2_0] = evalEased(t0);
+                    auto [v1_1, v2_1] = evalEased(t1);
+                    auto [v1_mid_true, v2_mid_true] = evalEased(tMid);
+
+                    double v1_mid_linear = (v1_0 + v1_1) / 2.0;
+                    double v2_mid_linear = (v2_0 + v2_1) / 2.0;
+
+                    double range1 = std::abs(endVal1 - startVal1);
+                    double range2 = std::abs(endVal2 - startVal2);
+                    double err1 = (range1 > 1e-9) ? std::abs(v1_mid_true - v1_mid_linear) / range1 : 0;
+                    double err2 = (range2 > 1e-9) ? std::abs(v2_mid_true - v2_mid_linear) / range2 : 0;
+                    double maxErr = std::max(err1, err2);
+
+                    if (maxErr > tolerance) {
+                        // 大于误差，插入中点，递归线性插值
+                        newPoints.push_back(tMid);
+                    }
+                    newPoints.push_back(t1);
+                }
+
+                if (newPoints.size() == samplePoints.size()) {
+                    break;
+                }
+                samplePoints = std::move(newPoints);
+            }
+
+            std::ranges::sort(samplePoints);
+
+            for (size_t i = 0; i + 1 < samplePoints.size(); ++i) {
+                double t0 = samplePoints[i];
+                double t1 = samplePoints[i + 1];
+
+                auto [v1_0, v2_0] = evalEased(t0);
+                auto [v1_1, v2_1] = evalEased(t1);
+
+                double realT0 = startTime + t0 * duration;
+                double realT1 = startTime + t1 * duration;
+
+                pushFn(realT0, realT1, v1_0, v1_1, v2_0, v2_1);
+            }
+        }
+
         struct BpmEventPec { double start{}, end{}, bpm{}, value{}; };
         class BpmList {
         public:
@@ -49,16 +287,20 @@ namespace Madokawaii::App::Chart {
             double time{}, posX{}, holdTime{}, speed{};
             bool above{}, fake{};
         };
-        struct LineEventPec { double startTime{}, endTime{}, v1{}, v2{}, motion{}; enum Type { Alpha, Move, Rotate } type; };
+        struct LineEventPec {
+            double startTime{}, endTime{}, v1{}, v2{};
+            int motion{};
+            enum Type { Alpha, Move, Rotate } type;
+        };
         struct LinePec {
             explicit LinePec(double bpm) : bpm_(std::isnan(bpm) ? 120.0 : bpm) {}
             void pushNote(int type, double time, double posX, double hold, double speed, bool above, bool fake) {
                 notes_.push_back({type, time, posX, hold, speed, above, fake});
             }
             void pushSpeed(double t, double v) { speedEvents_.push_back({t, v}); }
-            void pushAlpha(double s, double e, double v, double motion) { events_.push_back({s, e, v, 0.0, motion, LineEventPec::Alpha}); }
-            void pushMove(double s, double e, double x, double y, double motion) { events_.push_back({s, e, x, y, motion, LineEventPec::Move}); }
-            void pushRotate(double s, double e, double r, double motion) { events_.push_back({s, e, r, 0.0, motion, LineEventPec::Rotate}); }
+            void pushAlpha(double s, double e, double v, int motion) { events_.push_back({s, e, v, 0.0, motion, LineEventPec::Alpha}); }
+            void pushMove(double s, double e, double x, double y, int motion) { events_.push_back({s, e, x, y, motion, LineEventPec::Move}); }
+            void pushRotate(double s, double e, double r, int motion) { events_.push_back({s, e, r, 0.0, motion, LineEventPec::Rotate}); }
 
             chart::judgeline format(int id, chart &mainChart) const {
                 chart::judgeline jl{};
@@ -122,31 +364,43 @@ namespace Madokawaii::App::Chart {
                     return (a.startTime == b.startTime) ? (a.endTime < b.endTime) : (a.startTime < b.startTime);
                 });
 
-                auto pushRangeEvents = [&](LineEventPec::Type type, auto &&pushFn) {
+                auto pushRangeEventsWithEasing = [&](LineEventPec::Type type, auto &&pushFn) {
                     double lastTime = 0.0, last1 = 0.0, last2 = 0.0;
                     for (const auto &e : events) {
                         if (e.type != type) continue;
-                        pushFn(lastTime, e.startTime, last1, last1, last2, last2);
-                        // 别急 现在只支持官方线性插值缓动，在做了
-                        pushFn(e.startTime, e.endTime,
-                               last1, e.v1,
-                               last2, e.type == LineEventPec::Move ? e.v2 : last2);
+
+                        if (lastTime < e.startTime) {
+                            pushFn(lastTime, e.startTime, last1, last1, last2, last2);
+                        }
+
+                        double endV1 = e.v1;
+                        double endV2 = (type == LineEventPec::Move) ? e.v2 : last2;
+
+                        sampleEasingToLinear(
+                            e.startTime, e.endTime,
+                            last1, endV1,
+                            last2, endV2,
+                            e.motion,
+                            pushFn
+                        );
+
                         lastTime = e.endTime;
-                        last1 = e.v1;
-                        last2 = type == LineEventPec::Move ? e.v2 : last2;
+                        last1 = endV1;
+                        last2 = endV2;
                     }
+                    // 添加极大事件，兼容官谱渲染逻辑
                     pushFn(lastTime, 1e9, last1, last1, last2, last2);
                 };
 
-                pushRangeEvents(LineEventPec::Alpha, [&](double s, double e, double v1, double v2, double, double) {
+                pushRangeEventsWithEasing(LineEventPec::Alpha, [&](double s, double e, double v1, double v2, double, double) {
                     jl.judgelineDisappearedEvents.push_back({s, e, v1, v2, 0, 0, 0});
                     ++mainChart.disappearEventCount;
                 });
-                pushRangeEvents(LineEventPec::Move, [&](double s, double e, double v1, double v2, double v3, double v4) {
+                pushRangeEventsWithEasing(LineEventPec::Move, [&](double s, double e, double v1, double v2, double v3, double v4) {
                     jl.judgelineMoveEvents.push_back({s, e, v1, v2, v3, v4, 0});
                     ++mainChart.moveEventCount;
                 });
-                pushRangeEvents(LineEventPec::Rotate, [&](double s, double e, double v1, double v2, double, double) {
+                pushRangeEventsWithEasing(LineEventPec::Rotate, [&](double s, double e, double v1, double v2, double, double) {
                     jl.judgelineRotateEvents.push_back({s, e, v1, v2, 0, 0, 0});
                     ++mainChart.rotateEventCount;
                 });
@@ -178,7 +432,7 @@ namespace Madokawaii::App::Chart {
             double time{}, time2{};
             double speed{};
             double offsetX{}, offsetY{}, rotation{}, alpha{};
-            double motionType{};
+            int motionType{};  // Changed to int
         };
 
         int mapNoteType(int pecType) {
@@ -246,7 +500,7 @@ namespace Madokawaii::App::Chart {
                 double tmpLine = 0;
                 double tmp;
                 if (!read(tmpLine) || !read(n.time)) return {};
-                n.lineId = tmpLine;
+                n.lineId = static_cast<int>(tmpLine);
                 n.time2 = (n.type == 2 ? (read(tmp) ? tmp : n.time) : n.time);
                 n.offsetX = (read(tmp) ? tmp : 0.0);
                 int above = 0, fake = 0;
@@ -272,16 +526,19 @@ namespace Madokawaii::App::Chart {
             } else if (cmd.size() >= 2 && cmd[0] == 'c' && std::string("vpdamrf").find(cmd[1]) != std::string::npos) {
                 LineCommand c{};
                 c.type = cmd[1];
-                int tmpLine = 0;
+                double tmpLine = 0;
                 double tmp;
                 if (!read(tmpLine) || !read(c.time)) return {};
-                c.lineId = tmpLine;
+                c.lineId = static_cast<int>(tmpLine);
                 if (c.type == 'v') { if (!read(c.speed)) return {}; }
                 c.time2 = std::string("mrf").find(c.type) != std::string::npos ? (read(tmp) ? tmp : c.time) : c.time;
                 if (std::string("pm").find(c.type) != std::string::npos) { if (!read(c.offsetX) || !read(c.offsetY)) return {}; }
                 if (std::string("dr").find(c.type) != std::string::npos) { if (!read(c.rotation)) return {}; }
                 if (std::string("af").find(c.type) != std::string::npos) { if (!read(c.alpha)) return {}; }
-                if (std::string("mr").find(c.type) != std::string::npos) { if (!read(c.motionType)) return {}; }
+                if (std::string("mr").find(c.type) != std::string::npos) {
+                    if (!read(tmp)) return {};
+                    c.motionType = static_cast<int>(tmp);
+                }
                 if (std::string("pdaf").find(c.type) != std::string::npos) c.motionType = 1;
                 lines.push_back(c);
             } else {
@@ -327,7 +584,7 @@ namespace Madokawaii::App::Chart {
             }
         }
 
-        auto isMotion = [](double m) { return static_cast<int>(std::trunc(m)) != m ? false : (m == 1 || (m >= 2 && m <= 29)); };
+        auto isValidMotion = [](int m) { return m == 1 || (m >= 2 && m <= 29); };
         for (const auto &c : lines) {
             ensureLine(c.lineId);
             const double t1 = bpmList.calc(c.time);
@@ -343,10 +600,10 @@ namespace Madokawaii::App::Chart {
             }
             if (c.type == 'p' || c.type == 'm') {
                 lineObjs[c.lineId]->pushMove(t1, t2, c.offsetX / 2048.0, c.offsetY / 1400.0,
-                                             isMotion(c.motionType) ? c.motionType : 1);
+                                             isValidMotion(c.motionType) ? c.motionType : 1);
             }
             if (c.type == 'd' || c.type == 'r') {
-                lineObjs[c.lineId]->pushRotate(t1, t2, -c.rotation, isMotion(c.motionType) ? c.motionType : 1);
+                lineObjs[c.lineId]->pushRotate(t1, t2, -c.rotation, isValidMotion(c.motionType) ? c.motionType : 1);
             }
         }
 
@@ -370,7 +627,7 @@ namespace Madokawaii::App::Chart {
             return {};
         }
 
-        Platform::Log::TraceLog(Platform::Log::TraceLogLevel::LOG_INFO, "CHART: PEC Chart Loaded");
+        Platform::Log::TraceLog(Platform::Log::TraceLogLevel::LOG_INFO, "CHART: PEC Chart Loaded (with easing sampling)");
         return mainChart;
     }
 
