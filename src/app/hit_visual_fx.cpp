@@ -104,7 +104,14 @@ void RegisterNoteHitFx(float this_frame_time, float position_X, float position_Y
 
 void UpdateNoteHitFx(float this_frameTime, float screen_X, float screen_Y) {
     static const int spriteCount = static_cast<int>(hit_fx_decompressed.hitFxSprites.size());
+    static float recorded_frameTime = 0.0f;
+    if (fabs(recorded_frameTime - this_frameTime) > 1e-6f)
+    {
+        recorded_frameTime = this_frameTime;
+    }
+    auto hitFx_size = hitFx_list.size();
     for (auto& hitFx: hitFx_list) {
+        bool draw_this_hitFx = true; // indicating this hitFx will be drawn
         float elapsed_time = this_frameTime - hitFx.startTime;
         int frame_index = std::floor(elapsed_time / HIT_FX_SPRITE_FRAME_TIME);
         if (frame_index >= spriteCount)
@@ -113,10 +120,26 @@ void UpdateNoteHitFx(float this_frameTime, float screen_X, float screen_Y) {
             continue;
         }
         if (frame_index < 0) frame_index = 0;
+
+        if (hitFx_size > 2000)
+        {
+            // 用一点障眼法，确保屏幕上只出现2000个（左右）打击特效避免卡顿
+            auto display_proportion = 2000.0 / hitFx_size;
+            static std::random_device rd;
+            static std::default_random_engine generator(rd());
+            static std::uniform_int_distribution distributor(0, 10000);
+            int random_number = distributor(generator);
+            if (random_number / 10000.0 > display_proportion)
+                draw_this_hitFx = false;
+        }
+
         float scale_Ratio = screen_Y / 1080.0f;
         float draw_pos_x = hitFx.posX - hit_fx_decompressed.sprite_unit_width * scale_Ratio / 2.f;
         float draw_pos_y = hitFx.posY - hit_fx_decompressed.sprite_unit_height * scale_Ratio / 2.f;
-        Madokawaii::Platform::Graphics::Texture::DrawTextureEx(hit_fx_decompressed.hitFxSprites[frame_index], {draw_pos_x, draw_pos_y}, 0.f, scale_Ratio, hit_fx_decompressed.perfectColor);
+        if (draw_this_hitFx)
+        {
+            Madokawaii::Platform::Graphics::Texture::DrawTextureEx(hit_fx_decompressed.hitFxSprites[frame_index], {draw_pos_x, draw_pos_y}, 0.f, scale_Ratio, hit_fx_decompressed.perfectColor);
+        }
         // draw particle effects
 
         float tick = elapsed_time / HIT_FX_SPRITE_FRAME_TIME / static_cast<float>(hit_fx_decompressed.hitFxSprites.size());
@@ -129,12 +152,13 @@ void UpdateNoteHitFx(float this_frameTime, float screen_X, float screen_Y) {
             // Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "HITFX: Particle effect at (%f, %f), size = %f, distance = %f, angle = %f",
             //     nowDirection_x, nowDirection_y, particle_size, nowDirection_distance, nowDirection_angleRad);
             const auto alpha_channel = static_cast<unsigned char>(226 * (1 - tick));
-            Madokawaii::Platform::Graphics::DrawRectangle(
-                static_cast<int>(nowDirection_x),
-                static_cast<int>(nowDirection_y),
-                static_cast<int>(particle_size),
-                static_cast<int>(particle_size),
-                {hit_fx_decompressed.perfectColor.r, hit_fx_decompressed.perfectColor.g, hit_fx_decompressed.perfectColor.b, alpha_channel});
+            if (draw_this_hitFx)
+                Madokawaii::Platform::Graphics::DrawRectangle(
+                    static_cast<int>(nowDirection_x),
+                    static_cast<int>(nowDirection_y),
+                    static_cast<int>(particle_size),
+                    static_cast<int>(particle_size),
+                    {hit_fx_decompressed.perfectColor.r, hit_fx_decompressed.perfectColor.g, hit_fx_decompressed.perfectColor.b, alpha_channel});
         }
     }
 
