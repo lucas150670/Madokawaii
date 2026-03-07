@@ -7,6 +7,8 @@
 #include <memory>
 #include <string>
 
+#include "Madokawaii/platform/graphics.h"
+
 namespace Madokawaii::App::ResPack
 {
     struct ResPackData
@@ -25,6 +27,7 @@ namespace Madokawaii::App::ResPack
         ResPackData* musicEnding = nullptr;
         int hitFxCount{}, hitFxWidth{}, hitFxHeight{};
         ResPackData* imageHitFx = nullptr;
+        Platform::Graphics::Color colorPerfect{}, colorGood{};
     };
 
     std::shared_ptr<ResPack> LoadResPackFromMemoryStream(const unsigned char* data, size_t size);

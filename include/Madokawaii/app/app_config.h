@@ -45,7 +45,7 @@ namespace Madokawaii::AppConfig {
         [[nodiscard]] const std::string& GetMusicPath() const;
         [[nodiscard]] const std::string& GetResPackPath() const;
         [[nodiscard]] const std::string& GetBackgroundPath() const;
-        [[nodiscard]] ColorSave GetPerfectColor() const;
+        [[nodiscard, deprecated]] ColorSave GetPerfectColor() const;
 
         void SetChartPath(const std::string& path);
         void SetMusicPath(const std::string& path);

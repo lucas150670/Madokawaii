@@ -107,7 +107,7 @@ int GameInit_Main_Thrd(void* appstate) {
     Madokawaii::Platform::Graphics::Texture::ImageResizeNN(copiedImage, ctx.screenHeight * ratio, ctx.screenHeight); // NOLINT(*-narrowing-conversions)
     Madokawaii::Platform::Graphics::Texture::MeasureImage(copiedImage, &bgImageDimension);
     float newStartX = (bgImageDimension.x - ctx.screenWidth) / 2.0f;
-    Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "MAIN: Background image dimension: ({}, {})", bgImageDimension.x, bgImageDimension.y);
+    Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "MAIN: Background image dimension: (%f, %f)", bgImageDimension.x, bgImageDimension.y);
     Madokawaii::Platform::Shape::Rectangle srcRect = {newStartX, 0, bgImageDimension.x, bgImageDimension.y};
     Madokawaii::Platform::Graphics::Texture::ImageCrop(copiedImage, srcRect);
     Madokawaii::Platform::Graphics::Texture::ImageColorBrightness(copiedImage, -96.0f);
@@ -261,7 +261,10 @@ int AppIterate_Game(void * appstate) {
     Madokawaii::Platform::Audio::UpdateMusicStream(ctx.music);
     Madokawaii::Platform::Graphics::BeginDrawing();
     Madokawaii::Platform::Graphics::ClearBackground(Madokawaii::Platform::Graphics::M_BLACK);
-    DrawTexture(ctx.backgroundTexture, {0, 0}, {255, 255, 255, 255});
+    Madokawaii::Platform::Graphics::Vector2 texture_dimension{};
+    Madokawaii::Platform::Graphics::Texture::MeasureTexture2D(ctx.backgroundTexture, &texture_dimension);
+
+    DrawTexture(ctx.backgroundTexture, {(ctx.screenWidth - texture_dimension.x) / 2, 0}, {255, 255, 255, 255});
 
     auto thisFrameTime = Madokawaii::Platform::Audio::GetMusicTimePlayed(ctx.music) - ctx.mainChart.offset;
     if (!Madokawaii::Platform::Audio::IsMusicStreamPlaying(ctx.music)) {

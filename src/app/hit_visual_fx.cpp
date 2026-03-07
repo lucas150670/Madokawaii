@@ -11,14 +11,14 @@
 #include "Madokawaii/platform/log.h"
 #include "Madokawaii/platform/texture.h"
 
-constexpr int HIT_FX_SPRITE_FRAME_RATE = 60;
-constexpr float HIT_FX_SPRITE_FRAME_TIME = 1.0f / HIT_FX_SPRITE_FRAME_RATE;
-
 struct Respack_HitFx_Decompressed
 {
     std::vector<Madokawaii::Platform::Graphics::Texture::Texture2D> hitFxSprites;
     float sprite_unit_width, sprite_unit_height;
     Madokawaii::Platform::Graphics::Color perfectColor{};
+
+    int spriteFrameRate{};
+    float spriteFrameTime{};
 };
 
 Respack_HitFx_Decompressed hit_fx_decompressed{};
@@ -83,6 +83,8 @@ int InitializeNoteHitFxManager(Madokawaii::App::ResPack::ResPack & pack, Madokaw
         }
     }
     hit_fx_decompressed.perfectColor = perfectColor;
+    hit_fx_decompressed.spriteFrameRate = 2 * static_cast<int>(hit_fx_decompressed.hitFxSprites.size());
+    hit_fx_decompressed.spriteFrameTime = 1.0f / hit_fx_decompressed.spriteFrameRate;
     return 0;
 }
 
@@ -113,7 +115,7 @@ void UpdateNoteHitFx(float this_frameTime, float screen_X, float screen_Y) {
     for (auto& hitFx: hitFx_list) {
         bool draw_this_hitFx = true; // indicating this hitFx will be drawn
         float elapsed_time = this_frameTime - hitFx.startTime;
-        int frame_index = std::floor(elapsed_time / HIT_FX_SPRITE_FRAME_TIME);
+        int frame_index = std::floor(elapsed_time / hit_fx_decompressed.spriteFrameTime);
         if (frame_index >= spriteCount)
         {
             hitFx.isDiscarded = true;
@@ -142,7 +144,7 @@ void UpdateNoteHitFx(float this_frameTime, float screen_X, float screen_Y) {
         }
         // draw particle effects
 
-        float tick = elapsed_time / HIT_FX_SPRITE_FRAME_TIME / static_cast<float>(hit_fx_decompressed.hitFxSprites.size());
+        float tick = elapsed_time / hit_fx_decompressed.spriteFrameTime / static_cast<float>(hit_fx_decompressed.hitFxSprites.size());
         float particle_size = 30.f * (((0.2078f * tick - 1.6524f) * tick + 1.6399f) * tick + 0.4988f) * scale_Ratio;
         for (int i = 0; i < 4; i++) {
             float nowDirection_distance = hitFx.destination[i] * (9 * tick / (8 * tick + 1)) * scale_Ratio;

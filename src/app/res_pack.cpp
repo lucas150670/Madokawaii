@@ -14,6 +14,23 @@
 
 namespace Madokawaii::App::ResPack
 {
+
+    Platform::Graphics::Color ParseResPackColor(const std::string& entry) {
+        try {
+            int color_parsed = std::stoi(entry, nullptr, 16);
+            TraceLog(Platform::Log::TraceLogLevel::LOG_INFO, "RESPACK: Using perfect color: %x", color_parsed);
+            const unsigned char r = static_cast<unsigned char>((color_parsed & 0xFF0000) >> 16);
+            const unsigned char g = static_cast<unsigned char>((color_parsed & 0x00FF00) >> 8);
+            const unsigned char b = static_cast<unsigned char>(color_parsed & 0x0000FF);
+            TraceLog(Platform::Log::TraceLogLevel::LOG_INFO, "RESPACK: R=%d, G=%d, B=%d", r, g, b);
+            return {r, g, b};
+        }
+        catch (std::invalid_argument& e) {
+            TraceLog(Platform::Log::TraceLogLevel::LOG_ERROR, "RESPACK: Invalid color entry %s", entry.c_str());
+            return {255, 236, 160, 226};
+        }
+    }
+
     std::shared_ptr<ResPack> LoadResPackFromMemoryStream(
         const unsigned char* data, size_t size)
     {
@@ -193,6 +210,8 @@ namespace Madokawaii::App::ResPack
                         out_data->name = value;
                     else if (currentKey == "author")
                         out_data->author = value;
+                    else if (currentKey == "colorPerfect")
+                        out_data->colorPerfect = ParseResPackColor(value);
                     currentKey.clear();
                 }
                 break;
