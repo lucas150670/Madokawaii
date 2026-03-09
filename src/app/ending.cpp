@@ -93,9 +93,12 @@ int AppIterate_Ending(AppContext* context) {
     Madokawaii::Platform::Graphics::ClearBackground(Madokawaii::Platform::Graphics::M_BLACK);
 
     if (context->backgroundTexture.implementationDefinedData) {
+        Madokawaii::Platform::Graphics::Vector2 texture_dimension{};
+        Madokawaii::Platform::Graphics::Texture::MeasureTexture2D(context->backgroundTexture, &texture_dimension);
+
         Madokawaii::Platform::Graphics::Texture::DrawTexture(
             context->backgroundTexture,
-            { 0, 0 },
+            {(context->screenWidth - texture_dimension.x) / 2, 0},
             { 255, 255, 255, 255 }
         );
     }

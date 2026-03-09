@@ -104,7 +104,8 @@ int GameInit_Main_Thrd(void* appstate) {
     Madokawaii::Platform::Graphics::Vector2 bgImageDimension{};
     Madokawaii::Platform::Graphics::Texture::MeasureImage(copiedImage, &bgImageDimension);
     auto ratio = bgImageDimension.x / bgImageDimension.y;
-    Madokawaii::Platform::Graphics::Texture::ImageResizeNN(copiedImage, ctx.screenHeight * ratio, ctx.screenHeight); // NOLINT(*-narrowing-conversions)
+    if (ratio > 1)
+        Madokawaii::Platform::Graphics::Texture::ImageResizeNN(copiedImage, ctx.screenHeight * ratio, ctx.screenHeight); // NOLINT(*-narrowing-conversions)
     Madokawaii::Platform::Graphics::Texture::MeasureImage(copiedImage, &bgImageDimension);
     float newStartX = (bgImageDimension.x - ctx.screenWidth) / 2.0f;
     Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "MAIN: Background image dimension: (%f, %f)", bgImageDimension.x, bgImageDimension.y);
@@ -232,6 +233,7 @@ int GameInit(void *appstate) {
         Madokawaii::Platform::Graphics::ClearBackground(Madokawaii::Platform::Graphics::M_BLACK);
         Madokawaii::Platform::Graphics::DrawText("Converting chart..", ctx.screenWidth / 2 - 100, ctx.screenHeight / 2 - 50, 20,
                                                  Madokawaii::Platform::Graphics::M_LIGHTGRAY);
+        // add state description
         Madokawaii::Platform::Graphics::EndDrawing();
         return !Madokawaii::Platform::Core::WindowShouldClose();
     }
@@ -283,10 +285,12 @@ int AppIterate_Game(void * appstate) {
     RenderHoldCallback(thisFrameTime, ctx.mainChart);
     auto noteRenderList = std::vector<Madokawaii::App::chart::judgeline::note *>();
 
+    int played_note_count = 0;
     for (auto &judgeline: ctx.mainChart.judgelines) {
-        UpdateJudgeline(judgeline, thisFrameTime, ctx.screenWidth, ctx.screenHeight, noteRenderList);
+        int line_played_note = 0;
+        UpdateJudgeline(judgeline, thisFrameTime, ctx.screenWidth, ctx.screenHeight, noteRenderList, &line_played_note);
         RenderJudgeline(judgeline, ctx.screenWidth, ctx.screenHeight, ctx.perfectColor);
-
+        played_note_count += line_played_note;
     }
 
     // 多押标记优化:O(n^2)->O(n)
@@ -313,6 +317,23 @@ int AppIterate_Game(void * appstate) {
     }
 
     RenderDebugInfo(ctx.screenWidth, ctx.screenHeight);
+    // render point
+    char strPoint[8];
+    sprintf(strPoint, "%07d", static_cast<int>(played_note_count * 1.0 / ctx.mainChart.numOfNotes * 1000000));
+    auto scoreDimension = Madokawaii::Platform::Graphics::Fonts::MeasureTextEx(ctx.chineseFont, strPoint, 48.0f, 2.0f);
+    Madokawaii::Platform::Graphics::Fonts::DrawTextEx(ctx.chineseFont, strPoint, ctx.screenWidth - 45 - scoreDimension.x, 83.0f - scoreDimension.y, 48.0f, 2.0f, Madokawaii::Platform::Graphics::M_RAYWHITE);
+
+    if (played_note_count > 2) {
+        char hitNoteCountStr[128];
+        sprintf(hitNoteCountStr, "%d", played_note_count);
+        auto hitNoteCountDimension = Madokawaii::Platform::Graphics::Fonts::MeasureTextEx(ctx.chineseFont, hitNoteCountStr, 64.0f, 2.0f);
+        Madokawaii::Platform::Graphics::Fonts::DrawTextEx(ctx.chineseFont, hitNoteCountStr, ctx.screenWidth / 2 - hitNoteCountDimension.x / 2, 15.0f, 64.0f, 2.0f, Madokawaii::Platform::Graphics::M_RAYWHITE);
+
+        constexpr char autoPlayText[] = "Autoplay";
+        auto autoPlayDimension = Madokawaii::Platform::Graphics::Fonts::MeasureTextEx(ctx.chineseFont, autoPlayText, 24.0f, 2.0f);
+        Madokawaii::Platform::Graphics::Fonts::DrawTextEx(ctx.chineseFont, autoPlayText, ctx.screenWidth / 2 - autoPlayDimension.x / 2, 75.0f, 24.0f, 2.0f, Madokawaii::Platform::Graphics::M_RAYWHITE);
+    }
+
     UpdateNoteHitSfx();
     UpdateNoteHitFx(thisFrameTime, ctx.screenWidth, ctx.screenHeight);
     Madokawaii::Platform::Graphics::EndDrawing();

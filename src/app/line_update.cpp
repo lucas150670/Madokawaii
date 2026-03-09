@@ -9,7 +9,7 @@
 #include "Madokawaii/app/note_hit.h"
 #include "Madokawaii/app/note_operation.h"
 
-void UpdateJudgeline(Madokawaii::App::chart::judgeline& judgeline, double thisFrameTime, int screenWidth, int screenHeight, std::vector<Madokawaii::App::chart::judgeline::note*>& noteRenderList) {
+void UpdateJudgeline(Madokawaii::App::chart::judgeline& judgeline, double thisFrameTime, int screenWidth, int screenHeight, std::vector<Madokawaii::App::chart::judgeline::note*>& noteRenderList, int* playedNoteCount) {
 	auto calcEventRealTime = [&judgeline](const double beatTime) {
 		return Madokawaii::App::Chart::CalcRealTime(judgeline.bpm, beatTime);
 		};
@@ -138,4 +138,6 @@ void UpdateJudgeline(Madokawaii::App::chart::judgeline& judgeline, double thisFr
 	for (size_t index = judgeline.info.notesBelowIndex; index < judgeline.notesBelow.size(); ++index) {
 		if (processNote(judgeline.notesBelow[index])) break;
 	}
+	if (playedNoteCount)
+		*playedNoteCount = static_cast<int>(judgeline.info.notesAboveIndex + judgeline.info.notesBelowIndex);
 }
