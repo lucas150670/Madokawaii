@@ -78,6 +78,12 @@ int GameInit_Main_Thrd(void* appstate) {
     }
     ctx.global_respack = Madokawaii::App::ResPack::LoadResPackFromMemoryStream(respack_mem_stream, dataSize);
     Madokawaii::Platform::Core::UnloadFileData(respack_mem_stream);
+    if (ctx.global_respack->colorPerfect.r != 0
+        || ctx.global_respack->colorPerfect.g != 0
+        || ctx.global_respack->colorPerfect.b != 0) {
+        ctx.perfectColor = ctx.global_respack->colorPerfect;
+        ctx.perfectColor.a = 255;
+    }
 
     ctx.music = Madokawaii::Platform::Audio::LoadMusicStream(musicPath.c_str());
     Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "MAIN: Music stream loaded");

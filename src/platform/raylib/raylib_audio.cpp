@@ -119,9 +119,10 @@ namespace Madokawaii::Platform::Audio {
         std::filesystem::path path = Madokawaii::Platform::Core::GetInternalCachePath() +  std::format("/temp_sound_{}{}", dist(e), fileType);
         {
 #if !defined(PLATFORM_ANDROID)
-            std::ofstream ofs(path, std::ios::binary);
-            ofs.write(reinterpret_cast<const char*>(data), dataSize);
-            TraceLog(TraceLogLevel::LOG_INFO, "RSOUND: Write %d bytes to local storage, expected = %d", ofs.tellp(), dataSize);
+            auto fd = fopen(path.string().c_str(), "wb");
+            auto written = fwrite(data, dataSize, 1, fd);
+            TraceLog(TraceLogLevel::LOG_INFO, "RSOUND: Write %zd bytes to local storage, excepted = %d", written * dataSize, dataSize);
+            fclose(fd);
 #else
             {
                 int fd = ::open(path.string().c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666);
