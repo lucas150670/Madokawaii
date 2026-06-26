@@ -8,21 +8,20 @@
   山有木兮木有枝，心悦君兮君不知。
 </p>
 
-![GitHub top language](https://img.shields.io/github/languages/top/lucas150670/Madokawaii)
-![GitHub commit activity](https://img.shields.io/github/commit-activity/w/lucas150670/Madokawaii)
-![Telegram](https://telegram-badge.vercel.app/api/telegram-badge?channelId=@MadokawaiiChat)
-![GitHub License](https://img.shields.io/github/license/lucas150670/Madokawaii)
-[![State-of-the-art Shitcode](https://img.shields.io/static/v1?label=State-of-the-art&message=Shitcode&color=7B5804)](https://github.com/trekhleb/state-of-the-art-shitcode)
+![GitHub top language](https://img.shields.io/github/languages/top/lucas150670/Madokawaii?style=for-the-badge)
+![GitHub commit activity](https://img.shields.io/github/commit-activity/w/lucas150670/Madokawaii?style=for-the-badge)
+![Telegram](https://telegram-badge.vercel.app/api/telegram-badge?channelId=@MadokawaiiChat&style=for-the-badge)
+![GitHub License](https://img.shields.io/github/license/lucas150670/Madokawaii?style=for-the-badge)
+[![State-of-the-art Shitcode](https://img.shields.io/static/v1?label=State-of-the-art&message=Shitcode&color=7B5804&style=for-the-badge)](https://github.com/trekhleb/state-of-the-art-shitcode)
 
 Madokawaii is an early-stage rhythm game simulator inspired by *Phigros*. 
 
-The project currently focuses on implementing autoplay functionality for official Phigros chart formats.
+The project currently focuses on implementing autoplay functionality for official Phigros chart formats, version 3 and PhiEdit format.
 
 Future development will expand toward interactive gameplay, cross-platform support, and advanced rendering features.
 
-**本项目包含由LLM模型生成的代码 ，因为我实在是写不动ui了**
-
-**THIS PROJECT CONTAINS CODE GENERATED FROM LLM MODELS, I DON'T WANT TO BUILD UI FROM SCRATCH GRAPHICS APIS**
+NOTICE: raylib is the **only reference implementation** of the render backend.
+this project makes no guarantees regarding other backends' operational results.
 
 ---
 
@@ -32,7 +31,8 @@ Future development will expand toward interactive gameplay, cross-platform suppo
 - cmake
 - vcpkg
 - raylib, rapidjson, libyaml, libzip, libzippp (managed by vcpkg)
-
+- Windows SDK & DirectX SDK (when Direct2D backend enabled)
+- for Android project, see [here](https://github.com/lucas150670/Madokawaii_Android) 
 
 ## 📌 EXAMPLE
 ```bash
@@ -63,7 +63,8 @@ Madokawaii/
 ├── src/                # source
     ├── app             # app logic
     └── platform        # platfor-specific code
-       ├── raylib       # default implementaion based on raylib
+       ├── raylib       # reference implementaion based on raylib
+       ├── direct2d     # Direct2D Windows backend
        └── (other potential platforms)
 ├── README.md           # readme
 └── CMakeLists.txt      # cmake config
@@ -77,15 +78,16 @@ Contributions are welcome from all individuals.
 ---
 
 ## 🔜 ROADMAP
-1. refractor (2025)
-2. HarmonyOS Support (Vulkan API support / ArkTS-side XComponent wrap, interaction with native module) (maybe 2026)
+1. Phigros Official Format Version 1,2 / Re:Phigros Edit chart format, parse & support
+2. implement HarmonyOS backend (ArkTS-side XComponent wrap, interaction with native module) (maybe 2026)
 3. libuv / asynchronous fileio, chart load & parse, draw queue (maybe 2026)
 4. rpe storyboard / shader support (maybe 2026/2027)
+5. user playable (2027)
 
 ---
 
 ## 📄 LICENSE
-Copyright 2023-2025 Madokawaii
+Copyright 2023-2026 Madokawaii
 
 Licensed under [the Apache License, Version 2.0](LICENSE) (the "License");
 you may not use this file except in compliance with the License.
