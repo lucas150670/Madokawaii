@@ -42,9 +42,18 @@ set(SRC_IMP_RAYLIB
         src/platform/raylib/raylib_gui.cpp
 )
 
-# set(SRC_IMP_DIRECT2D
-#        # TODO: direct2d implement
-# )
+set(SRC_IMP_DIRECT2D
+        src/platform/direct2d/direct2d_platform.cpp
+        src/platform/direct2d/direct2d_graphics.cpp
+        src/platform/direct2d/direct2d_entry.cpp
+        src/platform/direct2d/direct2d_core.cpp
+        src/platform/direct2d/direct2d_log.cpp
+        src/platform/direct2d/direct2d_fonts.cpp
+        src/platform/direct2d/direct2d_texture.cpp
+        src/platform/direct2d/direct2d_gui.cpp
+        # Audio stays on raylib for now.
+        src/platform/raylib/raylib_audio.cpp
+)
 
 if(implementer STREQUAL "RAYLIB")
     find_package(raylib CONFIG REQUIRED)
@@ -55,11 +64,41 @@ if(implementer STREQUAL "RAYLIB")
         target_compile_options(Madokawaii PRIVATE /utf-8)
     endif()
     target_link_libraries(Madokawaii PRIVATE raylib RapidJSON rapidjson yaml libzip::zip libzippp::libzippp)
-# elseif(implementer STREQUAL "DIRECT2D")
-#     add_executable(Madokawaii
-#             ${SRC_APP}
-#             ${SRC_IMP_DIRECT2D})
-#     target_link_libraries(Madokawaii PRIVATE RapidJSON rapidjson yaml)
+elseif(implementer STREQUAL "DIRECT2D")
+    if(NOT WIN32)
+        message(FATAL_ERROR "DIRECT2D implementer is only available on Windows")
+    endif()
+    find_package(raylib CONFIG REQUIRED)
+    add_executable(Madokawaii
+            ${SRC_APP}
+            ${SRC_IMP_DIRECT2D})
+    if(MSVC)
+        target_compile_options(Madokawaii PRIVATE /utf-8)
+    endif()
+    target_compile_definitions(Madokawaii PRIVATE
+            WIN32_LEAN_AND_MEAN
+            NOMINMAX
+            _CRT_SECURE_NO_WARNINGS)
+    target_link_libraries(Madokawaii PRIVATE
+            raylib
+            d2d1
+            dwrite
+            windowscodecs
+            d3d11
+            dxgi
+            dxguid
+            ole32
+            uuid
+            version
+            comdlg32
+            shell32
+            user32
+            gdi32
+            RapidJSON
+            rapidjson
+            yaml
+            libzip::zip
+            libzippp::libzippp)
 else()
     message(FATAL_ERROR "unknown implementer: ${implementer}. check CMakeLists.txt")
 endif()
