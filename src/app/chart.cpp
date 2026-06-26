@@ -3,10 +3,10 @@
 //
 
 // rapidjson call only allowed in chart.cpp
-#include "Madokawaii/app/def.h"
-#include "Madokawaii/app/chart.h"
-#include "Madokawaii/platform/core.h"
-#include "Madokawaii/platform/log.h"
+#include "Madokawaii/app/def.hpp"
+#include "Madokawaii/app/chart.hpp"
+#include "Madokawaii/platform/core.hpp"
+#include "Madokawaii/platform/log.hpp"
 
 #include <rapidjson/schema.h>
 #include <rapidjson/document.h>

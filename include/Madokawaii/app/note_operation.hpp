@@ -4,8 +4,8 @@
 
 #ifndef MADOKAWAII_NOTE_OPERATION_H
 #define MADOKAWAII_NOTE_OPERATION_H
-#include "res_pack.h"
-#include "Madokawaii/app/chart.h"
+#include "res_pack.hpp"
+#include "Madokawaii/app/chart.hpp"
 
 void InitializeNoteRenderer(const Madokawaii::App::ResPack::ResPack&, float, float);
 void RenderNote(const Madokawaii::App::chart::judgeline::note& note);

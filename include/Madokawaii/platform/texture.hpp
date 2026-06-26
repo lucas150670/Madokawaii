@@ -4,8 +4,8 @@
 
 #ifndef MADOKAWAII_TEXTURE_H
 #define MADOKAWAII_TEXTURE_H
-#include "graphics.h"
-#include "shape.h"
+#include "graphics.hpp"
+#include "shape.hpp"
 
 namespace Madokawaii::Platform::Graphics::Texture {
 

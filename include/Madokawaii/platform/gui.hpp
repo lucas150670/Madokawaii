@@ -6,7 +6,7 @@
 #define MADOKAWAII_PLATFORM_GUI_H
 
 #include <string>
-#include "Madokawaii/platform/shape.h"
+#include "Madokawaii/platform/shape.hpp"
 
 namespace Madokawaii::Platform::Gui {
 

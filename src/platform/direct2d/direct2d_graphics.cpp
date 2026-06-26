@@ -2,9 +2,9 @@
 // Direct2D backend graphics implementation.
 //
 
-#include "direct2d_platform.h"
+#include "direct2d_platform.hpp"
 
-#include "Madokawaii/platform/graphics.h"
+#include "Madokawaii/platform/graphics.hpp"
 
 #include <algorithm>
 #include <format>

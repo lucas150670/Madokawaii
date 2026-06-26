@@ -1,10 +1,10 @@
 //
 // Created by madoka on 2026/1/6.
 //
-#include "Madokawaii/app/epilepsy_warning.h"
-#include "Madokawaii/app/common.h"
-#include "Madokawaii/platform/core.h"
-#include "Madokawaii/platform/log.h"
+#include "Madokawaii/app/epilepsy_warning.hpp"
+#include "Madokawaii/app/common.hpp"
+#include "Madokawaii/platform/core.hpp"
+#include "Madokawaii/platform/log.hpp"
 
 int AppIterate_Warning(void* appstate) {
     auto& ctx = *static_cast<AppContext*>(appstate);

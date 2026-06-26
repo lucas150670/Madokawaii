@@ -7,21 +7,21 @@
 #include <future>
 #include <unordered_map>
 
-#include "Madokawaii/app/app_config.h"
-#include "Madokawaii/app/def.h"
-#include "Madokawaii/app/chart.h"
-#include "Madokawaii/app/line_operation.h"
-#include "Madokawaii/app/note_hit.h"
-#include "Madokawaii/app/note_operation.h"
-#include "Madokawaii/app/res_pack.h"
-#include "Madokawaii/app/common.h"
-#include "Madokawaii/app/epilepsy_warning.h"
-#include "Madokawaii/platform/audio.h"
-#include "Madokawaii/platform/log.h"
-#include "Madokawaii/platform/core.h"
-#include "Madokawaii/platform/fonts.h"
-#include "Madokawaii/platform/graphics.h"
-#include "Madokawaii/platform/texture.h"
+#include "Madokawaii/app/app_config.hpp"
+#include "Madokawaii/app/def.hpp"
+#include "Madokawaii/app/chart.hpp"
+#include "Madokawaii/app/line_operation.hpp"
+#include "Madokawaii/app/note_hit.hpp"
+#include "Madokawaii/app/note_operation.hpp"
+#include "Madokawaii/app/res_pack.hpp"
+#include "Madokawaii/app/common.hpp"
+#include "Madokawaii/app/epilepsy_warning.hpp"
+#include "Madokawaii/platform/audio.hpp"
+#include "Madokawaii/platform/log.hpp"
+#include "Madokawaii/platform/core.hpp"
+#include "Madokawaii/platform/fonts.hpp"
+#include "Madokawaii/platform/graphics.hpp"
+#include "Madokawaii/platform/texture.hpp"
 
 extern "C" {
 

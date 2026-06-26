@@ -2,7 +2,7 @@
 // Created by madoka on 2025/9/19.
 //
 
-#include "Madokawaii/app/app_config.h"
+#include "Madokawaii/app/app_config.hpp"
 namespace Madokawaii::AppConfig {
 
     ConfigManager::ConfigManager() {

@@ -2,7 +2,7 @@
 // Direct2D backend shared state and helpers.
 //
 
-#include "direct2d_platform.h"
+#include "direct2d_platform.hpp"
 
 #include <algorithm>
 #include <cstdio>

@@ -2,11 +2,11 @@
 // Created by madoka on 2025/12/15.
 //
 
-#include "Madokawaii/app/note_hit.h"
-#include "Madokawaii/app/note_operation.h"
-#include "Madokawaii/platform/graphics.h"
-#include "Madokawaii/platform/log.h"
-#include "Madokawaii/platform/texture.h"
+#include "Madokawaii/app/note_hit.hpp"
+#include "Madokawaii/app/note_operation.hpp"
+#include "Madokawaii/platform/graphics.hpp"
+#include "Madokawaii/platform/log.hpp"
+#include "Madokawaii/platform/texture.hpp"
 
 using ResTexture2D =
     Madokawaii::Platform::Graphics::Texture::Texture2D;

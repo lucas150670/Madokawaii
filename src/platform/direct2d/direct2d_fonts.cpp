@@ -2,9 +2,9 @@
 // Direct2D backend font implementation.
 //
 
-#include "direct2d_platform.h"
+#include "direct2d_platform.hpp"
 
-#include "Madokawaii/platform/fonts.h"
+#include "Madokawaii/platform/fonts.hpp"
 
 #include <algorithm>
 #include <vector>

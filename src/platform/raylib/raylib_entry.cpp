@@ -7,7 +7,7 @@
 #include <cstring>
 #include <raylib.h>
 
-#include "Madokawaii/platform/core.h"
+#include "Madokawaii/platform/core.hpp"
 
 char gVendor[256] = {0};
 char gRenderer[256] = {0};

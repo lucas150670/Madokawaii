@@ -2,10 +2,10 @@
 // Direct2D backend immediate-mode GUI subset.
 //
 
-#include "direct2d_platform.h"
+#include "direct2d_platform.hpp"
 
-#include "Madokawaii/platform/gui.h"
-#include "Madokawaii/platform/graphics.h"
+#include "Madokawaii/platform/gui.hpp"
+#include "Madokawaii/platform/graphics.hpp"
 
 #include <algorithm>
 #include <cstring>

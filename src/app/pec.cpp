@@ -8,9 +8,9 @@
 #include <cmath>
 #include <functional>
 
-#include "Madokawaii/app/chart.h"
-#include "Madokawaii/platform/core.h"
-#include "Madokawaii/platform/log.h"
+#include "Madokawaii/app/chart.hpp"
+#include "Madokawaii/platform/core.hpp"
+#include "Madokawaii/platform/log.hpp"
 
 #include <sstream>
 #include <string>

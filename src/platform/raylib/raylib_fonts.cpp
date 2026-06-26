@@ -4,7 +4,7 @@
 
 #include <raylib.h>
 #include <vector>
-#include "Madokawaii/platform/fonts.h"
+#include "Madokawaii/platform/fonts.hpp"
 
 namespace Madokawaii::Platform::Graphics::Fonts {
 

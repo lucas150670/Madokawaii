@@ -2,9 +2,9 @@
 // Direct2D backend texture and image implementation.
 //
 
-#include "direct2d_platform.h"
+#include "direct2d_platform.hpp"
 
-#include "Madokawaii/platform/texture.h"
+#include "Madokawaii/platform/texture.hpp"
 
 #include <algorithm>
 #include <cmath>

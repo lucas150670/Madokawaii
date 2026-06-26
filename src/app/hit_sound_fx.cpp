@@ -4,10 +4,10 @@
 #include <complex>
 #include <map>
 
-#include "Madokawaii/app/def.h"
-#include "Madokawaii/app/note_hit.h"
-#include "Madokawaii/platform/audio.h"
-#include "Madokawaii/platform/log.h"
+#include "Madokawaii/app/def.hpp"
+#include "Madokawaii/app/note_hit.hpp"
+#include "Madokawaii/platform/audio.hpp"
+#include "Madokawaii/platform/log.hpp"
 
 struct ResPack_Audio_Decompressed
 {

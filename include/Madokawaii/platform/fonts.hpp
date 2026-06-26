@@ -5,7 +5,7 @@
 #ifndef MADOKAWAII_FONTS_H
 #define MADOKAWAII_FONTS_H
 
-#include "Madokawaii/platform/graphics.h"
+#include "Madokawaii/platform/graphics.hpp"
 
 namespace Madokawaii::Platform::Graphics::Fonts {
 

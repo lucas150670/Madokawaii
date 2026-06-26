@@ -4,7 +4,7 @@
 
 #include <raylib.h>
 #include <filesystem>
-#include "Madokawaii/platform/core.h"
+#include "Madokawaii/platform/core.hpp"
 
 namespace Madokawaii::Platform::Core {
     bool FileExists(const char *path) { return ::FileExists(path); }

@@ -4,7 +4,7 @@
 #include <raylib.h>
 #include <cstdarg>
 #include <cstdio>
-#include "Madokawaii/platform/log.h"
+#include "Madokawaii/platform/log.hpp"
 
 namespace Madokawaii::Platform::Log {
 

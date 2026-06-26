@@ -5,10 +5,10 @@
 #include <yaml.h>
 #include <libzippp/libzippp.h>
 #include <stdexcept>
-#include "Madokawaii/platform/core.h"
-#include "Madokawaii/app/res_pack.h"
+#include "Madokawaii/platform/core.hpp"
+#include "Madokawaii/app/res_pack.hpp"
 
-#include "Madokawaii/platform/log.h"
+#include "Madokawaii/platform/log.hpp"
 #include <cassert>
 
 

@@ -32,8 +32,8 @@
 #include <unordered_map>
 #include <vector>
 
-#include "Madokawaii/platform/graphics.h"
-#include "Madokawaii/platform/shape.h"
+#include "Madokawaii/platform/graphics.hpp"
+#include "Madokawaii/platform/shape.hpp"
 
 namespace Madokawaii::Platform::Direct2D {
 

@@ -6,7 +6,7 @@
 // Created by madoka on 2025/9/19.
 //
 #include <raylib.h>
-#include "Madokawaii/platform/texture.h"
+#include "Madokawaii/platform/texture.hpp"
 #include <cassert>
 
 

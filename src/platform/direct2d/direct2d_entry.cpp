@@ -4,7 +4,7 @@
 
 #include <objbase.h>
 
-#include "Madokawaii/platform/core.h"
+#include "Madokawaii/platform/core.hpp"
 
 int main(int, char**) {
     CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);

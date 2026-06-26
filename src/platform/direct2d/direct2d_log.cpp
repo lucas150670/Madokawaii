@@ -2,7 +2,7 @@
 // Direct2D backend logging.
 //
 
-#include "Madokawaii/platform/log.h"
+#include "Madokawaii/platform/log.hpp"
 
 #include <cstdarg>
 #include <cstdio>

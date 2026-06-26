@@ -2,13 +2,13 @@
 // Created by madoka on 2026/1/10.
 //
 
-#include "Madokawaii/app/common.h"
-#include "Madokawaii/platform/audio.h"
-#include "Madokawaii/platform/log.h"
-#include "Madokawaii/platform/graphics.h"
-#include "Madokawaii/platform/fonts.h"
-#include "Madokawaii/platform/texture.h"
-#include "Madokawaii/platform/core.h"
+#include "Madokawaii/app/common.hpp"
+#include "Madokawaii/platform/audio.hpp"
+#include "Madokawaii/platform/log.hpp"
+#include "Madokawaii/platform/graphics.hpp"
+#include "Madokawaii/platform/fonts.hpp"
+#include "Madokawaii/platform/texture.hpp"
+#include "Madokawaii/platform/core.hpp"
 #include <format>
 
 namespace {

@@ -2,12 +2,12 @@
 // Created by madoka on 2025/9/19.
 //
 
-#include "Madokawaii/app/chart.h"
-#include "Madokawaii/app/line_operation.h"
-#include <Madokawaii/platform/log.h>
+#include "Madokawaii/app/chart.hpp"
+#include "Madokawaii/app/line_operation.hpp"
+#include <Madokawaii/platform/log.hpp>
 
-#include "Madokawaii/app/note_hit.h"
-#include "Madokawaii/app/note_operation.h"
+#include "Madokawaii/app/note_hit.hpp"
+#include "Madokawaii/app/note_operation.hpp"
 
 void UpdateJudgeline(Madokawaii::App::chart::judgeline& judgeline, double thisFrameTime, int screenWidth, int screenHeight, std::vector<Madokawaii::App::chart::judgeline::note*>& noteRenderList, int* playedNoteCount) {
 	auto calcEventRealTime = [&judgeline](const double beatTime) {

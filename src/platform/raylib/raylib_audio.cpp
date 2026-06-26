@@ -6,9 +6,9 @@
 #include <fstream>
 #include <random>
 
-#include "Madokawaii/platform/audio.h"
-#include "Madokawaii/platform/log.h"
-#include "Madokawaii/platform/core.h"
+#include "Madokawaii/platform/audio.hpp"
+#include "Madokawaii/platform/log.hpp"
+#include "Madokawaii/platform/core.hpp"
 
 #ifdef PLATFORM_ANDROID
 #include <fcntl.h> // open

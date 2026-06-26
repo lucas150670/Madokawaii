@@ -4,8 +4,8 @@
 
 #ifndef MADOKAWAII_NOTE_HIT_H
 #define MADOKAWAII_NOTE_HIT_H
-#include "Madokawaii/platform/graphics.h"
-#include "Madokawaii/app/res_pack.h"
+#include "Madokawaii/platform/graphics.hpp"
+#include "Madokawaii/app/res_pack.hpp"
 
 int InitializeNoteHitSfxManager(Madokawaii::App::ResPack::ResPack&);
 void RegisterNoteHitSfx(int type);

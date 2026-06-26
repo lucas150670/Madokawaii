@@ -7,7 +7,7 @@
 #include <memory>
 #include <string>
 
-#include "Madokawaii/platform/graphics.h"
+#include "Madokawaii/platform/graphics.hpp"
 
 namespace Madokawaii::App::ResPack
 {

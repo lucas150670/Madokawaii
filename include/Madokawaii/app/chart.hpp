@@ -10,7 +10,7 @@
 #ifndef MADOKAWAII_CHART_H
 #define MADOKAWAII_CHART_H
 
-#include "Madokawaii/app/def.h"
+#include "Madokawaii/app/def.hpp"
 #include <functional>
 
 namespace Madokawaii::App::Chart {

@@ -7,13 +7,13 @@
 
 #include <future>
 #include <memory>
-#include "Madokawaii/app/chart.h"
-#include "Madokawaii/app/res_pack.h"
-#include "Madokawaii/platform/audio.h"
-#include "Madokawaii/platform/graphics.h"
-#include "Madokawaii/platform/texture.h"
-#include "Madokawaii/platform/fonts.h"
-#include "Madokawaii/app/main_menu.h"
+#include "Madokawaii/app/chart.hpp"
+#include "Madokawaii/app/res_pack.hpp"
+#include "Madokawaii/platform/audio.hpp"
+#include "Madokawaii/platform/graphics.hpp"
+#include "Madokawaii/platform/texture.hpp"
+#include "Madokawaii/platform/fonts.hpp"
+#include "Madokawaii/app/main_menu.hpp"
 
 struct WarningState {
     float elapsedTime{0.0f};

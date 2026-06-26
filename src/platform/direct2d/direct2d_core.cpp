@@ -2,9 +2,9 @@
 // Direct2D backend core and Win32 file/window helpers.
 //
 
-#include "direct2d_platform.h"
+#include "direct2d_platform.hpp"
 
-#include "Madokawaii/platform/core.h"
+#include "Madokawaii/platform/core.hpp"
 
 #include <algorithm>
 #include <cstdlib>

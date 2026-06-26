@@ -1,11 +1,11 @@
 ﻿//
 // Created by madoka on 2026/1/9.
 //
-#include "Madokawaii/app/main_menu.h"
-#include "Madokawaii/app/app_config.h"
-#include "Madokawaii/platform/graphics.h"
-#include "Madokawaii/platform/gui.h"
-#include "Madokawaii/platform/core.h"
+#include "Madokawaii/app/main_menu.hpp"
+#include "Madokawaii/app/app_config.hpp"
+#include "Madokawaii/platform/graphics.hpp"
+#include "Madokawaii/platform/gui.hpp"
+#include "Madokawaii/platform/core.hpp"
 
 #include <cstring>
 

@@ -2,7 +2,7 @@
 // Created by madoka on 2026/1/9.
 //
 
-#include "Madokawaii/platform/gui.h"
+#include "Madokawaii/platform/gui.hpp"
 
 #include <raylib.h>
 

@@ -5,11 +5,11 @@
 #include <random>
 #include <vector>
 
-#include "Madokawaii/app/def.h"
-#include "Madokawaii/app/note_hit.h"
-#include "Madokawaii/platform/graphics.h"
-#include "Madokawaii/platform/log.h"
-#include "Madokawaii/platform/texture.h"
+#include "Madokawaii/app/def.hpp"
+#include "Madokawaii/app/note_hit.hpp"
+#include "Madokawaii/platform/graphics.hpp"
+#include "Madokawaii/platform/log.hpp"
+#include "Madokawaii/platform/texture.hpp"
 
 struct Respack_HitFx_Decompressed
 {

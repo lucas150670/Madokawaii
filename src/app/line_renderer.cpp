@@ -5,9 +5,9 @@
 #include <cmath>
 #include <format>
 
-#include "Madokawaii/app/chart.h"
-#include "Madokawaii/app/line_operation.h"
-#include "Madokawaii/platform/graphics.h"
+#include "Madokawaii/app/chart.hpp"
+#include "Madokawaii/app/line_operation.hpp"
+#include "Madokawaii/platform/graphics.hpp"
 
 void RenderJudgeline(const Madokawaii::App::chart::judgeline& judgeline, int screenWidth, int screenHeight, Madokawaii::Platform::Graphics::Color perfectColor) {
     auto scaleX = screenWidth / 1920.f;
