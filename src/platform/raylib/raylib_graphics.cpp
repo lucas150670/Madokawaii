@@ -8,17 +8,14 @@
 #include "Madokawaii/platform/graphics.hpp"
 #include <rlgl.h>
 #include <format>
-
-extern char gVendor[256];
-extern char gRenderer[256];
-extern char gVersion[256];
+#include "raylib_runtime.hpp"
 
 namespace Madokawaii::Platform::Graphics {
 
     static ::Color RL(Color_ c) { return {c.r, c.g, c.b, c.a}; }
 
     std::string GetImplementer() {
-        return gRenderer;
+        return Raylib::GetRuntimeInfo().renderer.data();
     }
 
     std::string GetImplementationInfo(){

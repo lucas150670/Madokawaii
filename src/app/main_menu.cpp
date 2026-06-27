@@ -7,50 +7,48 @@
 #include "Madokawaii/platform/gui.hpp"
 #include "Madokawaii/platform/core.hpp"
 
+#include <algorithm>
 #include <cstring>
 
 namespace Madokawaii::App::MainMenu {
 
-    static Madokawaii::Platform::Gui::FileDialogState fileDialogs[4];
-    static int activeDialogIndex = -1;
-    static bool dialogsInitialized = false;
+    namespace {
+        void CopyPathToBuffer(std::array<char, PATH_BUFFER_SIZE>& buffer, const std::string& path) {
+            std::memset(buffer.data(), 0, buffer.size());
+            std::strncpy(buffer.data(), path.c_str(), buffer.size() - 1);
+        }
+    }
 
-    static char chartPathBuf[512];
-    static char musicPathBuf[512];
-    static char resPackPathBuf[512];
-    static char backgroundPathBuf[512];
-
-    void InitMainMenu(MainMenuState& state) {
+    void InitMainMenu(MainMenuState& state, const Madokawaii::AppConfig::ConfigManager& config) {
         if (state.initialized) return;
 
-        auto& config = Madokawaii::AppConfig::ConfigManager::Instance();
         state.chartPath = config.GetChartPath();
         state.musicPath = config.GetMusicPath();
         state.resPackPath = config.GetResPackPath();
         state.backgroundPath = config.GetBackgroundPath();
 
-        strncpy(chartPathBuf, state.chartPath.c_str(), sizeof(chartPathBuf) - 1);
-        strncpy(musicPathBuf, state.musicPath.c_str(), sizeof(musicPathBuf) - 1);
-        strncpy(resPackPathBuf, state.resPackPath.c_str(), sizeof(resPackPathBuf) - 1);
-        strncpy(backgroundPathBuf, state.backgroundPath.c_str(), sizeof(backgroundPathBuf) - 1);
+        CopyPathToBuffer(state.chartPathBuffer, state.chartPath);
+        CopyPathToBuffer(state.musicPathBuffer, state.musicPath);
+        CopyPathToBuffer(state.resPackPathBuffer, state.resPackPath);
+        CopyPathToBuffer(state.backgroundPathBuffer, state.backgroundPath);
 
-        if (!dialogsInitialized) {
+        if (!state.dialogsInitialized) {
             Madokawaii::Platform::Gui::InitGui();
 #if !defined(PLATFORM_ANDROID)
             const char* workDir = Madokawaii::Platform::Core::GetWorkingDirectory();
 #else
             const char* workDir = "/storage/emulated/0/";
 #endif
-            for (auto& fileDialog : fileDialogs) {
+            for (auto& fileDialog : state.fileDialogs) {
                 fileDialog = Madokawaii::Platform::Gui::InitFileDialog(workDir);
             }
-            dialogsInitialized = true;
+            state.dialogsInitialized = true;
         }
 
         state.initialized = true;
     }
 
-    static void DrawFileSelector(int x, int y, int width, int height,
+    static void DrawFileSelector(MainMenuState& state, int x, int y, int width, int height,
         const char* label, char* pathBuf, int bufSize,
         bool& editing, int dialogIndex, bool fileExists) {
         using namespace Madokawaii::Platform;
@@ -90,22 +88,24 @@ namespace Madokawaii::App::MainMenu {
         };
 
         if (Gui::Button(btnRect, "Browse...")) {
-            activeDialogIndex = dialogIndex;
-            Gui::OpenFileDialog(fileDialogs[dialogIndex]);
+            state.activeDialogIndex = dialogIndex;
+            Gui::OpenFileDialog(state.fileDialogs[dialogIndex]);
         }
 
-        if (fileDialogs[dialogIndex].selectFilePressed) {
-            std::string selectedPath = Gui::GetSelectedFilePath(fileDialogs[dialogIndex]);
+        auto& fileDialog = state.fileDialogs[dialogIndex];
+        if (fileDialog.selectFilePressed) {
+            std::string selectedPath = Gui::GetSelectedFilePath(fileDialog);
             strncpy(pathBuf, selectedPath.c_str(), bufSize - 1);
             pathBuf[bufSize - 1] = '\0';
-            fileDialogs[dialogIndex].selectFilePressed = false;
+            fileDialog.selectFilePressed = false;
         }
     }
 
-    bool RenderMainMenu(MainMenuState& state, int screenWidth, int screenHeight) {
+    bool RenderMainMenu(MainMenuState& state, Madokawaii::AppConfig::ConfigManager& config,
+                        int screenWidth, int screenHeight) {
         using namespace Madokawaii::Platform;
 
-        InitMainMenu(state);
+        InitMainMenu(state, config);
         const float scaleX = screenWidth / 1280.0f;
         const float scaleY = screenHeight / 720.0f;
         const float scale = std::min(scaleX, scaleY);
@@ -125,25 +125,25 @@ namespace Madokawaii::App::MainMenu {
         int rowSpacing = 70 * scale;
 
         // 检查各文件是否存在
-        bool chartExists = Core::FileExists(chartPathBuf);
-        bool musicExists = Core::FileExists(musicPathBuf);
-        bool resPackExists = Core::FileExists(resPackPathBuf);
-        bool backgroundExists = Core::FileExists(backgroundPathBuf);
+        bool chartExists = Core::FileExists(state.chartPathBuffer.data());
+        bool musicExists = Core::FileExists(state.musicPathBuffer.data());
+        bool resPackExists = Core::FileExists(state.resPackPathBuffer.data());
+        bool backgroundExists = Core::FileExists(state.backgroundPathBuffer.data());
 
-        DrawFileSelector(panelX, startY, panelWidth, rowHeight,
-            "Chart File (.json):", chartPathBuf, sizeof(chartPathBuf),
+        DrawFileSelector(state, panelX, startY, panelWidth, rowHeight,
+            "Chart File (.json):", state.chartPathBuffer.data(), static_cast<int>(state.chartPathBuffer.size()),
             state.chartPathEditing, 0, chartExists);
 
-        DrawFileSelector(panelX, startY + rowSpacing, panelWidth, rowHeight,
-            "Music File (.wav/.ogg):", musicPathBuf, sizeof(musicPathBuf),
+        DrawFileSelector(state, panelX, startY + rowSpacing, panelWidth, rowHeight,
+            "Music File (.wav/.ogg):", state.musicPathBuffer.data(), static_cast<int>(state.musicPathBuffer.size()),
             state.musicPathEditing, 1, musicExists);
 
-        DrawFileSelector(panelX, startY + rowSpacing * 2, panelWidth, rowHeight,
-            "Resource Pack (.zip):", resPackPathBuf, sizeof(resPackPathBuf),
+        DrawFileSelector(state, panelX, startY + rowSpacing * 2, panelWidth, rowHeight,
+            "Resource Pack (.zip):", state.resPackPathBuffer.data(), static_cast<int>(state.resPackPathBuffer.size()),
             state.resPackPathEditing, 2, resPackExists);
 
-        DrawFileSelector(panelX, startY + rowSpacing * 3, panelWidth, rowHeight,
-            "Background Image:", backgroundPathBuf, sizeof(backgroundPathBuf),
+        DrawFileSelector(state, panelX, startY + rowSpacing * 3, panelWidth, rowHeight,
+            "Background Image:", state.backgroundPathBuffer.data(), static_cast<int>(state.backgroundPathBuffer.size()),
             state.backgroundPathEditing, 3, backgroundExists);
 
         int btnWidth = 200 * scale;
@@ -158,7 +158,7 @@ namespace Madokawaii::App::MainMenu {
             static_cast<float>(btnHeight)
         };
 
-        bool canStart = (activeDialogIndex == -1 || !fileDialogs[activeDialogIndex].windowActive);
+        bool canStart = (state.activeDialogIndex == -1 || !state.fileDialogs[state.activeDialogIndex].windowActive);
 
         // 检查所有必需文件是否存在
         bool allFilesExist = chartExists && musicExists && resPackExists && backgroundExists;
@@ -171,12 +171,12 @@ namespace Madokawaii::App::MainMenu {
         }
 
         if (canStart && allFilesExist && Gui::Button(startBtn, "START GAME")) {
-            state.chartPath = chartPathBuf;
-            state.musicPath = musicPathBuf;
-            state.resPackPath = resPackPathBuf;
-            state.backgroundPath = backgroundPathBuf;
+            state.chartPath = state.chartPathBuffer.data();
+            state.musicPath = state.musicPathBuffer.data();
+            state.resPackPath = state.resPackPathBuffer.data();
+            state.backgroundPath = state.backgroundPathBuffer.data();
 
-            ApplyMenuConfig(state);
+            ApplyMenuConfig(state, config);
             state.startRequested = true;
         }
         else if (canStart && !allFilesExist) {
@@ -184,11 +184,11 @@ namespace Madokawaii::App::MainMenu {
             Gui::Button(startBtn, "START GAME");
         }
 
-        if (activeDialogIndex >= 0) {
-            Gui::UpdateFileDialog(fileDialogs[activeDialogIndex]);
+        if (state.activeDialogIndex >= 0) {
+            Gui::UpdateFileDialog(state.fileDialogs[state.activeDialogIndex]);
 
-            if (!fileDialogs[activeDialogIndex].windowActive) {
-                activeDialogIndex = -1;
+            if (!state.fileDialogs[state.activeDialogIndex].windowActive) {
+                state.activeDialogIndex = -1;
             }
         }
 
@@ -199,12 +199,27 @@ namespace Madokawaii::App::MainMenu {
         return state.startRequested;
     }
 
-    void ApplyMenuConfig(const MainMenuState& state) {
-        auto& config = Madokawaii::AppConfig::ConfigManager::Instance();
+    void ApplyMenuConfig(const MainMenuState& state, Madokawaii::AppConfig::ConfigManager& config) {
         config.SetChartPath(state.chartPath);
         config.SetMusicPath(state.musicPath);
         config.SetResPackPath(state.resPackPath);
         config.SetBackgroundPath(state.backgroundPath);
+    }
+
+    void ResetMainMenu(MainMenuState& state) {
+        if (state.dialogsInitialized) {
+            for (auto& fileDialog : state.fileDialogs) {
+                Madokawaii::Platform::Gui::UnloadFileDialog(fileDialog);
+            }
+            state.dialogsInitialized = false;
+        }
+
+        state.activeDialogIndex = -1;
+        std::memset(state.chartPathBuffer.data(), 0, state.chartPathBuffer.size());
+        std::memset(state.musicPathBuffer.data(), 0, state.musicPathBuffer.size());
+        std::memset(state.resPackPathBuffer.data(), 0, state.resPackPathBuffer.size());
+        std::memset(state.backgroundPathBuffer.data(), 0, state.backgroundPathBuffer.size());
+        state = {};
     }
 
 }

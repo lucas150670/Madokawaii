@@ -3,17 +3,15 @@
 //
 #include <raylib.h>
 #include <filesystem>
-#include <fstream>
 #include <random>
+#include <string>
+
+#include <fast_io.h>
+#include <fast_io_device.h>
 
 #include "Madokawaii/platform/audio.hpp"
 #include "Madokawaii/platform/log.hpp"
 #include "Madokawaii/platform/core.hpp"
-
-#ifdef PLATFORM_ANDROID
-#include <fcntl.h> // open
-#include <unistd.h> // write, close
-#endif
 
 namespace Madokawaii::Platform::Audio {
 
@@ -116,25 +114,20 @@ namespace Madokawaii::Platform::Audio {
         static std::random_device rd;
         static std::default_random_engine e(rd());
         static std::uniform_int_distribution<int> dist(0, 1000000);
-        std::filesystem::path path = Madokawaii::Platform::Core::GetInternalCachePath() +  std::format("/temp_sound_{}{}", dist(e), fileType);
-        {
-#if !defined(PLATFORM_ANDROID)
-            auto fd = fopen(path.string().c_str(), "wb");
-            auto written = fwrite(data, dataSize, 1, fd);
-            TraceLog(TraceLogLevel::LOG_INFO, "RSOUND: Write %zd bytes to local storage, excepted = %d", written * dataSize, dataSize);
-            fclose(fd);
-#else
-            {
-                int fd = ::open(path.string().c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666);
-                if (fd == -1) {
-                    TraceLog(TraceLogLevel::LOG_ERROR, "RSOUND: Failed to open file for writing: %s", path.string().c_str());
-                } else {
-                    ssize_t written = ::write(fd, data, dataSize);
-                    ::close(fd);
-                    TraceLog(TraceLogLevel::LOG_INFO, "RSOUND: Write %zd bytes to local storage, expected = %d", written, dataSize);
-                }
-            }
-#endif
+        const std::filesystem::path path = fast_io::concat(
+            Madokawaii::Platform::Core::GetInternalCachePath(),
+            std::string_view("/temp_sound_"),
+            dist(e),
+            std::string_view(fileType));
+        try {
+            const auto pathString = path.string();
+            fast_io::obuf_file file(pathString, fast_io::open_mode::trunc);
+            fast_io::write(file,
+                           reinterpret_cast<const char*>(data),
+                           reinterpret_cast<const char*>(data) + dataSize);
+            TraceLog(TraceLogLevel::LOG_INFO, "RSOUND: Write %d bytes to local storage, expected = %d", dataSize, dataSize);
+        } catch (...) {
+            TraceLog(TraceLogLevel::LOG_ERROR, "RSOUND: Failed to write file: %s", path.string().c_str());
         }
         ::Sound snd = ::LoadSound(path.string().c_str());
         Sound s{};

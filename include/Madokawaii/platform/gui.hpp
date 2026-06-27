@@ -29,6 +29,10 @@ namespace Madokawaii::Platform::Gui {
     // 返回 true 表示按钮被点击
     bool Button(Shape::Rectangle bounds, const char* text);
 
+    // 文字按钮控件
+    // 返回 true 表示文字被点击
+    bool LabelButton(Shape::Rectangle bounds, const char* text);
+
     // 文本框控件 (可编辑)
     // 返回 true 表示正在编辑
     bool TextBox(Shape::Rectangle bounds, char* text, int textSize, bool editMode);

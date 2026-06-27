@@ -4,12 +4,21 @@
 
 #ifndef MADOKAWAII_LINE_OPERATION_H
 #define MADOKAWAII_LINE_OPERATION_H
+#include <vector>
+
 #include "Madokawaii/app/chart.hpp"
 #include "Madokawaii/platform/graphics.hpp"
 
-void UpdateJudgeline(Madokawaii::App::chart::judgeline& judgeline, double thisFrameTime, int screenWidth, int screenHeight, std::vector<Madokawaii::App::chart::judgeline::note *>& noteRenderList, int* = nullptr);
-void RenderJudgeline(const Madokawaii::App::chart::judgeline& judgeline, int screenWidth, int screenHeight,
-    Madokawaii::Platform::Graphics::Color = Madokawaii::Platform::Graphics::M_WHITE);
-void RenderDebugInfo(int screenWidth, int screenHeight);
+namespace Madokawaii::App {
+struct AppContext;
+
+namespace Line {
+    void UpdateJudgeline(AppContext& context, chart::judgeline& judgeline, double thisFrameTime,
+                         std::vector<chart::judgeline::note *>& noteRenderList, int* playedNoteCount = nullptr);
+    void RenderJudgeline(const AppContext& context, const chart::judgeline& judgeline);
+    void RenderDebugInfo(const AppContext& context);
+}
+
+} // namespace Madokawaii::App
 
 #endif //MADOKAWAII_LINE_OPERATION_H

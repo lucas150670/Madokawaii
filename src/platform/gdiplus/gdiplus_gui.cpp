@@ -1,35 +1,38 @@
 //
-// Direct2D backend immediate-mode GUI subset.
+// 你，你不会真的要用这个东西吧？
 //
 
-#include "direct2d_platform.hpp"
+#include "gdiplus_platform.hpp"
 
-#include "Madokawaii/platform/gui.hpp"
 #include "Madokawaii/platform/graphics.hpp"
+#include "Madokawaii/platform/gui.hpp"
 
 #include <algorithm>
 #include <cstring>
 
 #include <commdlg.h>
-#include <d2d1helper.h>
 
 namespace Madokawaii::Platform::Gui {
     using Direct2D::FileDialogData;
 
     namespace {
+        void DrawBorder(Shape::Rectangle bounds, Graphics::Color border) {
+            Graphics::DrawLineEx({bounds.x, bounds.y}, {bounds.x + bounds.width, bounds.y}, 1.0f, border);
+            Graphics::DrawLineEx({bounds.x, bounds.y}, {bounds.x, bounds.y + bounds.height}, 1.0f, border);
+            Graphics::DrawLineEx({bounds.x + bounds.width, bounds.y}, {bounds.x + bounds.width, bounds.y + bounds.height}, 1.0f, border);
+            Graphics::DrawLineEx({bounds.x, bounds.y + bounds.height}, {bounds.x + bounds.width, bounds.y + bounds.height}, 1.0f, border);
+        }
+
         void DrawRect(Shape::Rectangle bounds, Graphics::Color fill, Graphics::Color border) {
-            auto* renderTarget = Direct2D::RenderTarget();
-            if (!renderTarget) return;
-
-            auto* fillBrush = Direct2D::CreateBrush(fill);
-            auto* borderBrush = Direct2D::CreateBrush(border);
-            const auto rect = D2D1::RectF(bounds.x, bounds.y, bounds.x + bounds.width, bounds.y + bounds.height);
-
-            if (fillBrush) renderTarget->FillRectangle(rect, fillBrush);
-            if (borderBrush) renderTarget->DrawRectangle(rect, borderBrush, 1.0f);
-
-            Direct2D::SafeRelease(fillBrush);
-            Direct2D::SafeRelease(borderBrush);
+            if (fill.a != 0) {
+                Graphics::DrawRectangle(
+                    static_cast<int>(bounds.x),
+                    static_cast<int>(bounds.y),
+                    static_cast<int>(bounds.width),
+                    static_cast<int>(bounds.height),
+                    fill);
+            }
+            if (border.a != 0) DrawBorder(bounds, border);
         }
 
         void DrawGuiText(const char* text, Shape::Rectangle bounds, Graphics::Color color, bool centered = false) {
@@ -127,16 +130,11 @@ namespace Madokawaii::Platform::Gui {
             AppendText(text, textSize, platformState.typedText);
 
             const auto caretX = bounds.x + 8.0f + static_cast<float>(Graphics::MeasureText(text, platformState.guiTextSize));
-            auto* renderTarget = Direct2D::RenderTarget();
-            auto* brush = Direct2D::CreateBrush(Graphics::M_RAYWHITE);
-            if (renderTarget && brush) {
-                renderTarget->DrawLine(
-                    D2D1::Point2F(caretX, bounds.y + 7.0f),
-                    D2D1::Point2F(caretX, bounds.y + bounds.height - 7.0f),
-                    brush,
-                    1.0f);
-            }
-            Direct2D::SafeRelease(brush);
+            Graphics::DrawLineEx(
+                {caretX, bounds.y + 7.0f},
+                {caretX, bounds.y + bounds.height - 7.0f},
+                1.0f,
+                Graphics::M_RAYWHITE);
         }
 
         if (locked) return false;

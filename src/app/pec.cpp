@@ -7,12 +7,12 @@
 #include <algorithm>
 #include <cmath>
 #include <functional>
+#include <memory>
 
 #include "Madokawaii/app/chart.hpp"
 #include "Madokawaii/platform/core.hpp"
 #include "Madokawaii/platform/log.hpp"
 
-#include <sstream>
 #include <string>
 #include <optional>
 #include <stdexcept>
@@ -169,8 +169,8 @@ namespace Madokawaii::App::Chart {
             double startVal2, double endVal2,
             int easingIdx,
             const std::function<void(double, double, double, double, double, double)>& pushFn,
-            double tolerance = 0.002,
-            int minSamples = 8
+            double tolerance = 0.00002,
+            int minSamples = 128
         ) {
             EasingFunc easing = getEasingFunc(easingIdx);
 

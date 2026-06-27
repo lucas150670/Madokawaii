@@ -1,11 +1,15 @@
-﻿
+
 #include <algorithm>
+#include <chrono>
 #include <ctime>
 #include <format>
 #include <string>
+#include <thread>
 #include <vector>
 #include <future>
 #include <unordered_map>
+
+#include <fast_io.h>
 
 #include "Madokawaii/app/app_config.hpp"
 #include "Madokawaii/app/def.hpp"
@@ -23,12 +27,61 @@
 #include "Madokawaii/platform/graphics.hpp"
 #include "Madokawaii/platform/texture.hpp"
 
-extern "C" {
+namespace Madokawaii::App::Lifecycle {
 
-int GameInit_Async(void* appstate) {
+namespace {
+void UnloadGameResources(AppContext& ctx) {
+    NoteHit::CleanupSfxManager(ctx);
+    NoteRenderer::Unload(ctx);
+    NoteHit::UnloadSfxManager(ctx);
+    NoteHit::UnloadFxManager(ctx);
+
+    if (ctx.gameplay.music.implementationDefined) {
+        if (Madokawaii::Platform::Audio::IsMusicStreamPlaying(ctx.gameplay.music)) {
+            Madokawaii::Platform::Audio::StopMusicStream(ctx.gameplay.music);
+        }
+        Madokawaii::Platform::Audio::UnloadMusicStream(ctx.gameplay.music);
+        ctx.gameplay.music = {};
+    }
+
+    if (ctx.assets.backgroundTexture.implementationDefinedData) {
+        Madokawaii::Platform::Graphics::Texture::UnloadTexture(ctx.assets.backgroundTexture);
+        ctx.assets.backgroundTexture = {};
+    }
+}
+
+std::string MakePaddedScoreText(int score) {
+    auto text = fast_io::concat(score);
+    if (text.size() < 7) {
+        text.insert(text.begin(), 7 - text.size(), '0');
+    }
+    return text;
+}
+}
+
+void ResetGameToMainMenu(AppContext& ctx) {
+    Ending::Reset(ctx);
+    UnloadGameResources(ctx);
+
+    ctx.gameplay.mainChart = {};
+    ctx.assets.resPack.reset();
+    ctx.lifecycle.gameInitFuture = {};
+    ctx.lifecycle.gameInitStarted = false;
+    ctx.lifecycle.asyncDataReady = false;
+    ctx.lifecycle.gameInitialized = false;
+    ctx.gameplay.completed = false;
+    ctx.ui.menuCompleted = false;
+
+    auto [r, g, b, a] = ctx.config.GetPerfectColor();
+    ctx.assets.perfectColor = { r, g, b, a };
+
+    Madokawaii::App::MainMenu::ResetMainMenu(ctx.ui.menu);
+}
+
+int LoadChartAsync(void* appstate) {
     auto& ctx = *static_cast<AppContext*>(appstate);
 
-    auto& danli = Madokawaii::AppConfig::ConfigManager::Instance();
+    auto& danli = ctx.config;
     const auto& musicPath = danli.GetMusicPath();
     const auto& chartPath = danli.GetChartPath();
 
@@ -38,35 +91,35 @@ int GameInit_Async(void* appstate) {
     }
 
     const clock_t begin = clock();
-    ctx.mainChart = Madokawaii::App::Chart::LoadChartFromFile(chartPath.c_str());
+    ctx.gameplay.mainChart = Madokawaii::App::Chart::LoadChartFromFile(chartPath.c_str());
     // 如果官谱格式加载失败，尝试 PEC 格式
-    if (!Madokawaii::App::Chart::IsValidChart(ctx.mainChart)) {
+    if (!Madokawaii::App::Chart::IsValidChart(ctx.gameplay.mainChart)) {
         Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_WARNING,
                                             "MAIN: Failed to load chart as official format, trying PEC format...");
-        ctx.mainChart = Madokawaii::App::Chart::LoadChartFromPEC(chartPath.c_str());
+        ctx.gameplay.mainChart = Madokawaii::App::Chart::LoadChartFromPEC(chartPath.c_str());
     }
 
-    if (!Madokawaii::App::Chart::IsValidChart(ctx.mainChart)) {
+    if (!Madokawaii::App::Chart::IsValidChart(ctx.gameplay.mainChart)) {
         Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_ERROR, "MAIN: Failed to load chart!");
         return -1;
     }
     const clock_t end = clock();
 
     Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "MAIN: Chart Initialization Successful!");
-    Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "    > Format Version:         %d", ctx.mainChart.formatVersion);
-    Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "    > Number of notes:        %d", ctx.mainChart.numOfNotes);
-    Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "    > Number of judgelines:   %d", ctx.mainChart.judgelineCount);
+    Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "    > Format Version:         %d", ctx.gameplay.mainChart.formatVersion);
+    Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "    > Number of notes:        %d", ctx.gameplay.mainChart.numOfNotes);
+    Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "    > Number of judgelines:   %d", ctx.gameplay.mainChart.judgelineCount);
     Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "MAIN: Elapsed time: %lf s", (end - begin) * 1.0 / CLOCKS_PER_SEC);
 
-    Madokawaii::App::Chart::InitializeJudgelines(ctx.mainChart);
+    Madokawaii::App::Chart::InitializeJudgelines(ctx.gameplay.mainChart);
 
     return 0;
 }
 
-int GameInit_Main_Thrd(void* appstate) {
+int InitializeGameResources(void* appstate) {
 
     auto& ctx = *static_cast<AppContext*>(appstate);
-    auto& danli = Madokawaii::AppConfig::ConfigManager::Instance();
+    auto& danli = ctx.config;
     const auto& musicPath = danli.GetMusicPath();
     const auto& resPackPath = danli.GetResPackPath();
     int dataSize;
@@ -76,28 +129,28 @@ int GameInit_Main_Thrd(void* appstate) {
         Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_ERROR, "MAIN: Failed to load respack file into memory!");
         return false;
     }
-    ctx.global_respack = Madokawaii::App::ResPack::LoadResPackFromMemoryStream(respack_mem_stream, dataSize);
+    ctx.assets.resPack = Madokawaii::App::ResPack::LoadResPackFromMemoryStream(respack_mem_stream, dataSize);
     Madokawaii::Platform::Core::UnloadFileData(respack_mem_stream);
-    if (ctx.global_respack->colorPerfect.r != 0
-        || ctx.global_respack->colorPerfect.g != 0
-        || ctx.global_respack->colorPerfect.b != 0) {
-        ctx.perfectColor = ctx.global_respack->colorPerfect;
-        ctx.perfectColor.a = 255;
+    if (ctx.assets.resPack->colorPerfect.r != 0
+        || ctx.assets.resPack->colorPerfect.g != 0
+        || ctx.assets.resPack->colorPerfect.b != 0) {
+        ctx.assets.perfectColor = ctx.assets.resPack->colorPerfect;
+        ctx.assets.perfectColor.a = 255;
     }
 
-    ctx.music = Madokawaii::Platform::Audio::LoadMusicStream(musicPath.c_str());
+    ctx.gameplay.music = Madokawaii::Platform::Audio::LoadMusicStream(musicPath.c_str());
     Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "MAIN: Music stream loaded");
 
-    InitializeNoteRenderer(*ctx.global_respack, ctx.screenWidth, ctx.screenHeight);
-    if (InitializeNoteHitSfxManager(*ctx.global_respack)) return -1;
-    if (InitializeNoteHitFxManager(*ctx.global_respack, ctx.perfectColor)) return -1;
+    NoteRenderer::Initialize(ctx, *ctx.assets.resPack);
+    if (NoteHit::InitializeSfxManager(ctx, *ctx.assets.resPack)) return -1;
+    if (NoteHit::InitializeFxManager(ctx, *ctx.assets.resPack, ctx.assets.perfectColor)) return -1;
 
-    ctx.music.looping = false;
-    auto musicLength = Madokawaii::Platform::Audio::GetMusicTimeLength(ctx.music);
-    Madokawaii::Platform::Audio::SetMusicPitch(ctx.music, 1.0f);
-    Madokawaii::Platform::Audio::SetMusicVolume(ctx.music, 0.5f);
+    ctx.gameplay.music.looping = false;
+    auto musicLength = Madokawaii::Platform::Audio::GetMusicTimeLength(ctx.gameplay.music);
+    Madokawaii::Platform::Audio::SetMusicPitch(ctx.gameplay.music, 1.0f);
+    Madokawaii::Platform::Audio::SetMusicVolume(ctx.gameplay.music, 0.5f);
     Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "MAIN: Music Length: %f", musicLength);
-    Madokawaii::Platform::Audio::PlayMusicStream(ctx.music);
+    Madokawaii::Platform::Audio::PlayMusicStream(ctx.gameplay.music);
 
     if (!Madokawaii::Platform::Core::FileExists(danli.GetBackgroundPath().c_str()))
     {
@@ -111,55 +164,51 @@ int GameInit_Main_Thrd(void* appstate) {
     Madokawaii::Platform::Graphics::Texture::MeasureImage(copiedImage, &bgImageDimension);
     auto ratio = bgImageDimension.x / bgImageDimension.y;
     if (ratio > 1)
-        Madokawaii::Platform::Graphics::Texture::ImageResizeNN(copiedImage, ctx.screenHeight * ratio, ctx.screenHeight); // NOLINT(*-narrowing-conversions)
+        Madokawaii::Platform::Graphics::Texture::ImageResizeNN(copiedImage, ctx.display.screenHeight * ratio, ctx.display.screenHeight); // NOLINT(*-narrowing-conversions)
     Madokawaii::Platform::Graphics::Texture::MeasureImage(copiedImage, &bgImageDimension);
-    float newStartX = (bgImageDimension.x - ctx.screenWidth) / 2.0f;
+    float newStartX = (bgImageDimension.x - ctx.display.screenWidth) / 2.0f;
     Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "MAIN: Background image dimension: (%f, %f)", bgImageDimension.x, bgImageDimension.y);
     Madokawaii::Platform::Shape::Rectangle srcRect = {newStartX, 0, bgImageDimension.x, bgImageDimension.y};
     Madokawaii::Platform::Graphics::Texture::ImageCrop(copiedImage, srcRect);
     Madokawaii::Platform::Graphics::Texture::ImageColorBrightness(copiedImage, -96.0f);
     Madokawaii::Platform::Graphics::Texture::ImageColorContrast(copiedImage, -16.0f);
     Madokawaii::Platform::Graphics::Texture::ImageBlurGaussian(copiedImage, 5.0f);
-    ctx.backgroundTexture = Madokawaii::Platform::Graphics::Texture::LoadTextureFromImage(copiedImage);
+    ctx.assets.backgroundTexture = Madokawaii::Platform::Graphics::Texture::LoadTextureFromImage(copiedImage);
     Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "MAIN: Game initialization completed!");
 
     return 0;
 }
 
-int AppInit(void*& appstate) {
+int Initialize(void*& appstate) {
     appstate = new AppContext;
     auto& ctx = *static_cast<AppContext*>(appstate);
     Madokawaii::Platform::Audio::InitAudioDevice();
 
-    auto& danli = Madokawaii::AppConfig::ConfigManager::Instance();
-    const auto& resPackPath = danli.GetResPackPath();
-
-    int dataSize = 0;
-    auto [r, g, b, a] = danli.GetPerfectColor();
-    ctx.perfectColor = {r, g, b, a};
+    auto [r, g, b, a] = ctx.config.GetPerfectColor();
+    ctx.assets.perfectColor = {r, g, b, a};
 
 
 #if defined(PLATFORM_ANDROID)
     int screenHeight = Madokawaii::Platform::Core::GetScreenHeight();
     if (screenHeight <= 360) {
-        ctx.screenWidth = 426; ctx.screenHeight = 240;
+        ctx.display.screenWidth = 426; ctx.display.screenHeight = 240;
     }
     else if (screenHeight <= 640) {
-        ctx.screenWidth = 854; ctx.screenHeight = 480;
+        ctx.display.screenWidth = 854; ctx.display.screenHeight = 480;
     }
     else if (screenHeight <= 960) {
-        ctx.screenWidth = 1280; ctx.screenHeight = 720;
+        ctx.display.screenWidth = 1280; ctx.display.screenHeight = 720;
     }
     else {
-        ctx.screenWidth = 1920; ctx.screenHeight = 1080;
+        ctx.display.screenWidth = 1920; ctx.display.screenHeight = 1080;
     }
     Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO,
                                         "MAIN: real resolution: %d, %d", Madokawaii::Platform::Core::GetScreenWidth(), Madokawaii::Platform::Core::GetScreenHeight());
     Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO,
-                                        "MAIN: selected resolution: %d, %d", ctx.screenWidth, ctx.screenHeight);
-    Madokawaii::Platform::Core::InitWindow(ctx.screenWidth, ctx.screenHeight, "Madokawaii");
+                                        "MAIN: selected resolution: %d, %d", ctx.display.screenWidth, ctx.display.screenHeight);
+    Madokawaii::Platform::Core::InitWindow(ctx.display.screenWidth, ctx.display.screenHeight, "Madokawaii");
 #else
-    Madokawaii::Platform::Core::InitWindow(ctx.screenWidth, ctx.screenHeight, "Madokawaii");
+    Madokawaii::Platform::Core::InitWindow(ctx.display.screenWidth, ctx.display.screenHeight, "Madokawaii");
 #endif
     /* Enable vertical sync by uncommenting this line
      */
@@ -173,9 +222,9 @@ int AppInit(void*& appstate) {
     Madokawaii::Platform::Graphics::SetTargetFPS(refresh_rate);
 #endif
 
-    if (!ctx.fontLoaded) {
+    if (!ctx.assets.fontLoaded) {
         if (Madokawaii::Platform::Graphics::GetImplementer().find("Mali") == std::string::npos)
-        ctx.chineseFont = Madokawaii::Platform::Graphics::Fonts::LoadFontWithChinese(
+        ctx.assets.chineseFont = Madokawaii::Platform::Graphics::Fonts::LoadFontWithChinese(
 #if !defined(PLATFORM_ANDROID)
             "assets/font.ttf", 48);
 #else
@@ -184,31 +233,31 @@ int AppInit(void*& appstate) {
         else {
             // fuck mali gpu
             // crash when codepoint is too large
-            ctx.chineseFont = Madokawaii::Platform::Graphics::Fonts::LoadFontWithChinese("font.ttf", 16);
+            ctx.assets.chineseFont = Madokawaii::Platform::Graphics::Fonts::LoadFontWithChinese("font.ttf", 16);
         }
 
         // Madokawaii::Platform::Graphics::SetTargetFPS(60);
-        if (!Madokawaii::Platform::Graphics::Fonts::IsFontValid(ctx.chineseFont)) {
+        if (!Madokawaii::Platform::Graphics::Fonts::IsFontValid(ctx.assets.chineseFont)) {
             Madokawaii::Platform::Log::TraceLog(
                 Madokawaii::Platform::Log::TraceLogLevel::LOG_WARNING,
                 "WARNING: Failed to load Chinese font!");
         }
-        ctx.fontLoaded = true;
+        ctx.assets.fontLoaded = true;
     }
 
-    ctx.sys_initialized = true;
-    return ctx.sys_initialized;
+    ctx.lifecycle.systemInitialized = true;
+    return ctx.lifecycle.systemInitialized;
 }
 
-int GameInit(void *appstate) {
+int InitializeGame(void *appstate) {
     auto &ctx = *static_cast<AppContext *>(appstate);
-    if (!ctx.gameInitStarted) {
-        ctx.gameInitStarted = true;
+    if (!ctx.lifecycle.gameInitStarted) {
+        ctx.lifecycle.gameInitStarted = true;
 
         std::promise<int> initPromise;
-        ctx.gameInitFuture = initPromise.get_future();
+        ctx.lifecycle.gameInitFuture = initPromise.get_future();
         std::thread([appstate, promise = std::move(initPromise)]() mutable {
-            int result = GameInit_Async(appstate);
+            int result = LoadChartAsync(appstate);
             promise.set_value(result);
         }).detach();
 
@@ -218,11 +267,11 @@ int GameInit(void *appstate) {
         );
     }
 
-    if (ctx.gameInitFuture.valid() &&
-        ctx.gameInitFuture.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
-        int initResult = ctx.gameInitFuture.get();
+    if (ctx.lifecycle.gameInitFuture.valid() &&
+        ctx.lifecycle.gameInitFuture.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
+        int initResult = ctx.lifecycle.gameInitFuture.get();
         if (initResult == 0) {
-            ctx.asyncDataReady = true;
+            ctx.lifecycle.asyncDataReady = true;
             Madokawaii::Platform::Log::TraceLog(
                 Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO,
                 "MAIN: Async initialization completed!"
@@ -237,20 +286,20 @@ int GameInit(void *appstate) {
     } else {
         Madokawaii::Platform::Graphics::BeginDrawing();
         Madokawaii::Platform::Graphics::ClearBackground(Madokawaii::Platform::Graphics::M_BLACK);
-        Madokawaii::Platform::Graphics::DrawText("Converting chart..", ctx.screenWidth / 2 - 100, ctx.screenHeight / 2 - 50, 20,
+        Madokawaii::Platform::Graphics::DrawText("Converting chart..", ctx.display.screenWidth / 2 - 100, ctx.display.screenHeight / 2 - 50, 20,
                                                  Madokawaii::Platform::Graphics::M_LIGHTGRAY);
         // add state description
         Madokawaii::Platform::Graphics::EndDrawing();
         return !Madokawaii::Platform::Core::WindowShouldClose();
     }
-    if (ctx.asyncDataReady && !ctx.game_initialized) {
+    if (ctx.lifecycle.asyncDataReady && !ctx.lifecycle.gameInitialized) {
         Madokawaii::Platform::Graphics::BeginDrawing();
         Madokawaii::Platform::Graphics::ClearBackground(Madokawaii::Platform::Graphics::M_BLACK);
-        Madokawaii::Platform::Graphics::DrawText("Setup scene..", ctx.screenWidth / 2 - 100, ctx.screenHeight / 2 - 50, 20,
+        Madokawaii::Platform::Graphics::DrawText("Setup scene..", ctx.display.screenWidth / 2 - 100, ctx.display.screenHeight / 2 - 50, 20,
                                                  Madokawaii::Platform::Graphics::M_LIGHTGRAY);
         Madokawaii::Platform::Graphics::EndDrawing();
-        if (GameInit_Main_Thrd(appstate) == 0) {
-            ctx.game_initialized = true;
+        if (InitializeGameResources(appstate) == 0) {
+            ctx.lifecycle.gameInitialized = true;
         } else {
             Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_ERROR,
                                                 "MAIN: Failed to initialize game!");
@@ -260,42 +309,45 @@ int GameInit(void *appstate) {
     return true;
 }
 
-int AppIterate_Game(void * appstate) {
+int IterateGame(void * appstate) {
     auto& ctx = *static_cast<AppContext*>(appstate);
-    if (!ctx.sys_initialized)
+    if (!ctx.lifecycle.systemInitialized)
         return -1;
 
-    CleanupNoteHitSfxManager();
-    Madokawaii::Platform::Audio::UpdateMusicStream(ctx.music);
+    NoteHit::CleanupSfxManager(ctx);
+    Madokawaii::Platform::Audio::UpdateMusicStream(ctx.gameplay.music);
     Madokawaii::Platform::Graphics::BeginDrawing();
     Madokawaii::Platform::Graphics::ClearBackground(Madokawaii::Platform::Graphics::M_BLACK);
     Madokawaii::Platform::Graphics::Vector2 texture_dimension{};
-    Madokawaii::Platform::Graphics::Texture::MeasureTexture2D(ctx.backgroundTexture, &texture_dimension);
+    Madokawaii::Platform::Graphics::Texture::MeasureTexture2D(ctx.assets.backgroundTexture, &texture_dimension);
 
-    DrawTexture(ctx.backgroundTexture, {(ctx.screenWidth - texture_dimension.x) / 2, 0}, {255, 255, 255, 255});
+    Madokawaii::Platform::Graphics::Texture::DrawTexture(
+        ctx.assets.backgroundTexture,
+        {(ctx.display.screenWidth - texture_dimension.x) / 2, 0},
+        {255, 255, 255, 255});
 
-    auto thisFrameTime = Madokawaii::Platform::Audio::GetMusicTimePlayed(ctx.music) - ctx.mainChart.offset;
-    if (!Madokawaii::Platform::Audio::IsMusicStreamPlaying(ctx.music)) {
+    auto thisFrameTime = Madokawaii::Platform::Audio::GetMusicTimePlayed(ctx.gameplay.music) - ctx.gameplay.mainChart.offset;
+    if (!Madokawaii::Platform::Audio::IsMusicStreamPlaying(ctx.gameplay.music)) {
         Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "MAIN: Music playback end");
         Madokawaii::Platform::Graphics::EndDrawing(); 
-        ctx.gameCompleted = true;
+        ctx.gameplay.completed = true;
         return !Madokawaii::Platform::Core::WindowShouldClose();
     }
 
     if (thisFrameTime < 0) {
-        RenderDebugInfo(ctx.screenWidth, ctx.screenHeight);
+        Line::RenderDebugInfo(ctx);
         Madokawaii::Platform::Graphics::EndDrawing();
         return !Madokawaii::Platform::Core::WindowShouldClose();
     }
 
-    RenderHoldCallback(thisFrameTime, ctx.mainChart);
+    NoteRenderer::RenderHoldCallback(ctx, thisFrameTime);
     auto noteRenderList = std::vector<Madokawaii::App::chart::judgeline::note *>();
 
     int played_note_count = 0;
-    for (auto &judgeline: ctx.mainChart.judgelines) {
+    for (auto &judgeline: ctx.gameplay.mainChart.judgelines) {
         int line_played_note = 0;
-        UpdateJudgeline(judgeline, thisFrameTime, ctx.screenWidth, ctx.screenHeight, noteRenderList, &line_played_note);
-        RenderJudgeline(judgeline, ctx.screenWidth, ctx.screenHeight, ctx.perfectColor);
+        Line::UpdateJudgeline(ctx, judgeline, thisFrameTime, noteRenderList, &line_played_note);
+        Line::RenderJudgeline(ctx, judgeline);
         played_note_count += line_played_note;
     }
 
@@ -319,74 +371,91 @@ int AppIterate_Game(void * appstate) {
 
     for (auto notePtr: noteRenderList) {
         // TODO: 实现note渲染
-        RenderNote(*notePtr);
+        NoteRenderer::RenderNote(ctx, *notePtr);
     }
 
-    RenderDebugInfo(ctx.screenWidth, ctx.screenHeight);
+    Line::RenderDebugInfo(ctx);
     // render point
-    char strPoint[8];
-    sprintf(strPoint, "%07d", static_cast<int>(played_note_count * 1.0 / ctx.mainChart.numOfNotes * 1000000));
-    auto scoreDimension = Madokawaii::Platform::Graphics::Fonts::MeasureTextEx(ctx.chineseFont, strPoint, 48.0f, 2.0f);
-    Madokawaii::Platform::Graphics::Fonts::DrawTextEx(ctx.chineseFont, strPoint, ctx.screenWidth - 45 - scoreDimension.x, 83.0f - scoreDimension.y, 48.0f, 2.0f, Madokawaii::Platform::Graphics::M_RAYWHITE);
+    const auto scoreText = MakePaddedScoreText(
+        static_cast<int>(played_note_count * 1.0 / ctx.gameplay.mainChart.numOfNotes * 1000000));
+    auto scoreDimension = Madokawaii::Platform::Graphics::Fonts::MeasureTextEx(ctx.assets.chineseFont, scoreText.c_str(), 48.0f, 2.0f);
+    Madokawaii::Platform::Graphics::Fonts::DrawTextEx(ctx.assets.chineseFont, scoreText.c_str(), ctx.display.screenWidth - 45 - scoreDimension.x, 83.0f - scoreDimension.y, 48.0f, 2.0f, Madokawaii::Platform::Graphics::M_RAYWHITE);
 
     if (played_note_count > 2) {
-        char hitNoteCountStr[128];
-        sprintf(hitNoteCountStr, "%d", played_note_count);
-        auto hitNoteCountDimension = Madokawaii::Platform::Graphics::Fonts::MeasureTextEx(ctx.chineseFont, hitNoteCountStr, 64.0f, 2.0f);
-        Madokawaii::Platform::Graphics::Fonts::DrawTextEx(ctx.chineseFont, hitNoteCountStr, ctx.screenWidth / 2 - hitNoteCountDimension.x / 2, 15.0f, 64.0f, 2.0f, Madokawaii::Platform::Graphics::M_RAYWHITE);
+        const auto hitNoteCountText = fast_io::concat(played_note_count);
+        auto hitNoteCountDimension = Madokawaii::Platform::Graphics::Fonts::MeasureTextEx(ctx.assets.chineseFont, hitNoteCountText.c_str(), 64.0f, 2.0f);
+        Madokawaii::Platform::Graphics::Fonts::DrawTextEx(ctx.assets.chineseFont, hitNoteCountText.c_str(), ctx.display.screenWidth / 2 - hitNoteCountDimension.x / 2, 15.0f, 64.0f, 2.0f, Madokawaii::Platform::Graphics::M_RAYWHITE);
 
         constexpr char autoPlayText[] = "Autoplay";
-        auto autoPlayDimension = Madokawaii::Platform::Graphics::Fonts::MeasureTextEx(ctx.chineseFont, autoPlayText, 24.0f, 2.0f);
-        Madokawaii::Platform::Graphics::Fonts::DrawTextEx(ctx.chineseFont, autoPlayText, ctx.screenWidth / 2 - autoPlayDimension.x / 2, 75.0f, 24.0f, 2.0f, Madokawaii::Platform::Graphics::M_RAYWHITE);
+        auto autoPlayDimension = Madokawaii::Platform::Graphics::Fonts::MeasureTextEx(ctx.assets.chineseFont, autoPlayText, 24.0f, 2.0f);
+        Madokawaii::Platform::Graphics::Fonts::DrawTextEx(ctx.assets.chineseFont, autoPlayText, ctx.display.screenWidth / 2 - autoPlayDimension.x / 2, 75.0f, 24.0f, 2.0f, Madokawaii::Platform::Graphics::M_RAYWHITE);
     }
 
-    UpdateNoteHitSfx();
-    UpdateNoteHitFx(thisFrameTime, ctx.screenWidth, ctx.screenHeight);
+    NoteHit::UpdateSfx(ctx);
+    NoteHit::UpdateFx(ctx, thisFrameTime);
     Madokawaii::Platform::Graphics::EndDrawing();
 
     return !Madokawaii::Platform::Core::WindowShouldClose();
 }
 
 
-int AppIterate(void * appstate) {
+int Iterate(void * appstate) {
     // 扩展 留下放结算画面和开始画面的接口
     auto& ctx = *static_cast<AppContext*>(appstate);
-    if (!ctx.sys_initialized) return -1;
+    if (!ctx.lifecycle.systemInitialized) return -1;
     // 先显示警告页面
-    if (!ctx.warningShown) return AppIterate_Warning(appstate);// 显示主菜单
-    if (!ctx.menuCompleted) {
+    if (!ctx.ui.warningShown) return Warning::Iterate(ctx);// 显示主菜单
+    if (!ctx.ui.menuCompleted) {
         Madokawaii::Platform::Graphics::BeginDrawing();
         Madokawaii::Platform::Graphics::ClearBackground(Madokawaii::Platform::Graphics::M_BLACK);
 
-        if (Madokawaii::App::MainMenu::RenderMainMenu(ctx.menuState, ctx.screenWidth, ctx.screenHeight)) {
-            ctx.menuCompleted = true;
+        if (Madokawaii::App::MainMenu::RenderMainMenu(ctx.ui.menu, ctx.config,
+                                                       ctx.display.screenWidth, ctx.display.screenHeight)) {
+            ctx.ui.menuCompleted = true;
         }
 
         Madokawaii::Platform::Graphics::EndDrawing();
         return !Madokawaii::Platform::Core::WindowShouldClose();
     }
-    if (!ctx.game_initialized) return GameInit(appstate);
-    if (ctx.gameCompleted) return AppIterate_Ending(&ctx);
-    return AppIterate_Game(appstate);
+    if (!ctx.lifecycle.gameInitialized) return InitializeGame(appstate);
+    if (ctx.gameplay.completed) return Ending::Iterate(ctx);
+    return IterateGame(appstate);
 }
 
-int AppExit(void * appstate) {
+int Shutdown(void * appstate) {
     auto& ctx = *static_cast<AppContext*>(appstate);
+    Ending::Reset(ctx);
     Madokawaii::Platform::Core::CloseWindow();
-    UnloadNoteRenderer();
-    UnloadNoteHitSfxManager();
-    UnloadNoteHitFxManager();
-    if (ctx.music.implementationDefined) {
-        if (Madokawaii::Platform::Audio::IsMusicStreamPlaying(ctx.music))
-            Madokawaii::Platform::Audio::StopMusicStream(ctx.music);
-        Madokawaii::Platform::Audio::UnloadMusicStream(ctx.music);
+    NoteRenderer::Unload(ctx);
+    NoteHit::UnloadSfxManager(ctx);
+    NoteHit::UnloadFxManager(ctx);
+    if (ctx.gameplay.music.implementationDefined) {
+        if (Madokawaii::Platform::Audio::IsMusicStreamPlaying(ctx.gameplay.music))
+            Madokawaii::Platform::Audio::StopMusicStream(ctx.gameplay.music);
+        Madokawaii::Platform::Audio::UnloadMusicStream(ctx.gameplay.music);
     }
-    if (ctx.backgroundTexture.implementationDefinedData) {
-        Madokawaii::Platform::Graphics::Texture::UnloadTexture(ctx.backgroundTexture);
+    if (ctx.assets.backgroundTexture.implementationDefinedData) {
+        Madokawaii::Platform::Graphics::Texture::UnloadTexture(ctx.assets.backgroundTexture);
     }
     Madokawaii::Platform::Audio::CloseAudioDevice();
     delete static_cast<AppContext*>(appstate);
     return 0;
 }
 
+} // namespace Madokawaii::App::Lifecycle
+
+extern "C" {
+int AppInit(void*& appstate) {
+    return Madokawaii::App::Lifecycle::Initialize(appstate);
 }
+
+int AppIterate(void* appstate) {
+    return Madokawaii::App::Lifecycle::Iterate(appstate);
+}
+
+int AppExit(void* appstate) {
+    return Madokawaii::App::Lifecycle::Shutdown(appstate);
+}
+
+}
+

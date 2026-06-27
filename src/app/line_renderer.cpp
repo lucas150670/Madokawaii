@@ -2,34 +2,50 @@
 // Created by madoka on 2025/9/19.
 //
 
+#include <algorithm>
 #include <cmath>
 #include <format>
 
 #include "Madokawaii/app/chart.hpp"
+#include "Madokawaii/app/common.hpp"
+#include "Madokawaii/app/coordinate.hpp"
 #include "Madokawaii/app/line_operation.hpp"
 #include "Madokawaii/platform/graphics.hpp"
 
-void RenderJudgeline(const Madokawaii::App::chart::judgeline& judgeline, int screenWidth, int screenHeight, Madokawaii::Platform::Graphics::Color perfectColor) {
+namespace Madokawaii::App::Line {
+
+void RenderJudgeline(const AppContext& context, const Madokawaii::App::chart::judgeline& judgeline) {
+    const auto screenWidth = context.display.screenWidth;
+    const auto screenHeight = context.display.screenHeight;
+    auto perfectColor = context.assets.perfectColor;
     auto scaleX = screenWidth / 1920.f;
-    auto scaleY = screenWidth / 1080.f;
+    auto scaleY = screenHeight / 1080.f;
     auto scale = std::min(scaleX, scaleY);
     auto width = 10.0f * scale;
+    const auto viewport = Madokawaii::App::Coordinate::MakeScreenViewport(screenWidth, screenHeight);
     perfectColor.a = static_cast<unsigned char>(judgeline.info.opacity * 255);
-    auto screenX = static_cast<float>(judgeline.info.posX * screenWidth),
-         screenY = static_cast<float>((1 - judgeline.info.posY) * screenHeight),
-         aspectRatio = screenWidth * 1.0f / screenHeight; // NOLINT(*-narrowing-conversions)
+    const auto screenPosition = Madokawaii::App::Coordinate::ToScreenPoint(
+        {judgeline.info.posX, judgeline.info.posY},
+        viewport);
+    auto screenX = screenPosition.x,
+         screenY = screenPosition.y,
+         aspectRatio = static_cast<float>(viewport.aspectRatio());
     if (fabs(judgeline.info.rotateAngle) < 1e-6 || fabs(judgeline.info.rotateAngle - 180.0f) < 1e-6) {
-        DrawLineEx(Madokawaii::Platform::Graphics::Vector2{screenX - 5000, screenY}, Madokawaii::Platform::Graphics::Vector2{screenX + 5000, screenY}, width, perfectColor);
+        auto p1 = Madokawaii::App::Coordinate::ToScreenPoint({-10.0, judgeline.info.posY}, viewport);
+        auto p2 = Madokawaii::App::Coordinate::ToScreenPoint({10.0, judgeline.info.posY}, viewport);
+        DrawLineEx(p1, p2, width, perfectColor);
     } else if (fabs(judgeline.info.rotateAngle - 90.0f) < 1e-6 || fabs(judgeline.info.rotateAngle - 270.0f) < 1e-6) {
-        DrawLineEx(Madokawaii::Platform::Graphics::Vector2{screenX, screenY - 5000}, Madokawaii::Platform::Graphics::Vector2{screenX, screenY + 5000}, width, perfectColor);
+        auto p1 = Madokawaii::App::Coordinate::ToScreenPoint({judgeline.info.posX, -10.0}, viewport);
+        auto p2 = Madokawaii::App::Coordinate::ToScreenPoint({judgeline.info.posX, 10.0}, viewport);
+        DrawLineEx(p1, p2, width, perfectColor);
     } else {
         float k, kx0, y0;
         k = static_cast<float>(tan(judgeline.info.rotateAngle / 180.0 * M_PI) * aspectRatio);
         kx0 = static_cast<float>(k * judgeline.info.posX),
         y0 = static_cast<float>(judgeline.info.posY);
         Madokawaii::Platform::Graphics::Vector2 p1{}, p2{};
-        p1 = {-10.0f * screenWidth, screenHeight - (-10 * k - kx0 + y0) * screenHeight}; // NOLINT(*-narrowing-conversions)
-        p2 = {10.0f * screenWidth, screenHeight - (10 * k - kx0 + y0) * screenHeight}; // NOLINT(*-narrowing-conversions)
+        p1 = Madokawaii::App::Coordinate::ToScreenPoint({-10.0, -10.0 * k - kx0 + y0}, viewport);
+        p2 = Madokawaii::App::Coordinate::ToScreenPoint({10.0, 10.0 * k - kx0 + y0}, viewport);
         DrawLineEx(p1, p2, width, perfectColor);
     }
 
@@ -38,13 +54,15 @@ void RenderJudgeline(const Madokawaii::App::chart::judgeline& judgeline, int scr
     Madokawaii::Platform::Graphics::DrawText(idStr.c_str(), static_cast<int>(screenX), static_cast<int>(screenY), 30, Madokawaii::Platform::Graphics::M_RED);
 }
 
-void RenderDebugInfo(int screenWidth, int screenHeight) {
+void RenderDebugInfo(const AppContext& context) {
+    const auto screenWidth = context.display.screenWidth;
+    const auto screenHeight = context.display.screenHeight;
     auto scaleX = screenWidth / 1920.f;
-    auto scaleY = screenWidth / 1080.f;
+    auto scaleY = screenHeight / 1080.f;
     auto scale = std::min(scaleX, scaleY);
 
-    static auto glVersion = Madokawaii::Platform::Graphics::GetImplementationInfo(),
-         glRenderer = Madokawaii::Platform::Graphics::GetImplementer();
+    const auto glVersion = Madokawaii::Platform::Graphics::GetImplementationInfo();
+    const auto glRenderer = Madokawaii::Platform::Graphics::GetImplementer();
 
     auto dbgStr = std::format("Implementer: {}", glRenderer);
     Madokawaii::Platform::Graphics::DrawText(dbgStr.c_str(), 190 * scale, 170 * scale, 20 * scale, Madokawaii::Platform::Graphics::M_LIGHTGRAY);
@@ -53,3 +71,5 @@ void RenderDebugInfo(int screenWidth, int screenHeight) {
     dbgStr = std::format("FPS: {}, FrameTime: {}s", Madokawaii::Platform::Graphics::GetFPS(), Madokawaii::Platform::Graphics::GetFrameTime());
     Madokawaii::Platform::Graphics::DrawText(dbgStr.c_str(), 190 * scale, 230 * scale, 20 * scale, Madokawaii::Platform::Graphics::M_LIGHTGRAY);
 }
+
+} // namespace Madokawaii::App::Line

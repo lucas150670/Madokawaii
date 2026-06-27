@@ -6,6 +6,7 @@ find_package(RapidJSON CONFIG REQUIRED)
 find_package(yaml CONFIG REQUIRED)
 find_package(libzip CONFIG REQUIRED)
 find_package(libzippp CONFIG REQUIRED)
+find_path(FAST_IO_INCLUDE_DIR fast_io.h REQUIRED)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_EXE_LINKER_FLAGS "-static")
@@ -55,6 +56,21 @@ set(SRC_IMP_DIRECT2D
         src/platform/raylib/raylib_audio.cpp
 )
 
+# 图一乐
+set(SRC_IMP_GDIPLUS
+        src/platform/direct2d/direct2d_platform.cpp
+        src/platform/direct2d/direct2d_core.cpp
+        src/platform/direct2d/direct2d_log.cpp
+        src/platform/gdiplus/gdiplus_platform.cpp
+        src/platform/gdiplus/gdiplus_graphics.cpp
+        src/platform/gdiplus/gdiplus_entry.cpp
+        src/platform/gdiplus/gdiplus_fonts.cpp
+        src/platform/gdiplus/gdiplus_texture.cpp
+        src/platform/gdiplus/gdiplus_gui.cpp
+        # Audio stays on raylib for now.
+        src/platform/raylib/raylib_audio.cpp
+)
+
 if(implementer STREQUAL "RAYLIB")
     find_package(raylib CONFIG REQUIRED)
     add_executable(Madokawaii
@@ -99,8 +115,42 @@ elseif(implementer STREQUAL "DIRECT2D")
             yaml
             libzip::zip
             libzippp::libzippp)
+elseif(implementer STREQUAL "GDIPLUS")
+    if(NOT WIN32)
+        message(FATAL_ERROR "GDIPLUS implementer is only available on Windows")
+    endif()
+    find_package(raylib CONFIG REQUIRED)
+    add_executable(Madokawaii
+            ${SRC_APP}
+            ${SRC_IMP_GDIPLUS})
+    if(MSVC)
+        target_compile_options(Madokawaii PRIVATE /utf-8)
+    endif()
+    target_compile_definitions(Madokawaii PRIVATE
+            WIN32_LEAN_AND_MEAN
+            NOMINMAX
+            _CRT_SECURE_NO_WARNINGS)
+    target_link_libraries(Madokawaii PRIVATE
+            raylib
+            gdiplus
+            d2d1
+            dwrite
+            windowscodecs
+            ole32
+            uuid
+            comdlg32
+            shell32
+            user32
+            gdi32
+            RapidJSON
+            rapidjson
+            yaml
+            libzip::zip
+            libzippp::libzippp)
 else()
     message(FATAL_ERROR "unknown implementer: ${implementer}. check CMakeLists.txt")
 endif()
 
-target_include_directories(Madokawaii PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(Madokawaii PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${FAST_IO_INCLUDE_DIR})

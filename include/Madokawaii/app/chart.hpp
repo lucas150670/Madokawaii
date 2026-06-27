@@ -38,7 +38,7 @@ namespace Madokawaii::App::Chart {
 
     void InitializeJudgelines(chart& mainChart);
 
-    bool IsNoteInScreen(double x, double y, int screenWidth, int screenHeight);
+    bool IsNoteInViewport(double normalizedX, double normalizedY, int screenWidth, int screenHeight);
 
     chart LoadChartFromPEC(const char* path);
     chart LoadChartFromPECMemory(const char* data, size_t size);

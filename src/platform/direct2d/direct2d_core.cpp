@@ -9,7 +9,9 @@
 #include <algorithm>
 #include <cstdlib>
 #include <filesystem>
-#include <fstream>
+#include <limits>
+
+#include <fast_io.h>
 
 namespace Madokawaii::Platform::Core {
     bool FileExists(const char* path) {
@@ -20,22 +22,21 @@ namespace Madokawaii::Platform::Core {
         if (fileSize) *fileSize = 0;
         if (!path) return nullptr;
 
-        std::ifstream file(std::filesystem::u8path(path), std::ios::binary | std::ios::ate);
-        if (!file) return nullptr;
+        fast_io::native_file_loader file;
+        try {
+            file = fast_io::native_file_loader(fast_io::manipulators::os_c_str(path),
+                                               fast_io::open_mode::in);
+        } catch (...) {
+            return nullptr;
+        }
 
-        const auto size = file.tellg();
-        if (size < 0) return nullptr;
-        file.seekg(0, std::ios::beg);
-
+        const auto size = file.size();
+        if (size > static_cast<std::size_t>(std::numeric_limits<int>::max())) return nullptr;
         auto* data = static_cast<unsigned char*>(std::malloc(static_cast<std::size_t>(size)));
         if (!data && size > 0) return nullptr;
 
         if (size > 0) {
-            file.read(reinterpret_cast<char*>(data), size);
-            if (!file) {
-                std::free(data);
-                return nullptr;
-            }
+            std::copy(file.begin(), file.end(), data);
         }
 
         if (fileSize) *fileSize = static_cast<int>(size);
@@ -124,10 +125,15 @@ namespace Madokawaii::Platform::Core {
 
     int GetFileLength(const char* fileName) {
         if (!fileName) return 0;
-        std::error_code error;
-        const auto size = std::filesystem::file_size(std::filesystem::u8path(fileName), error);
-        if (error) return 0;
-        return static_cast<int>(size);
+        try {
+            fast_io::native_file_loader file(fast_io::manipulators::os_c_str(fileName),
+                                             fast_io::open_mode::in);
+            const auto size = file.size();
+            if (size > static_cast<std::size_t>(std::numeric_limits<int>::max())) return 0;
+            return static_cast<int>(size);
+        } catch (...) {
+            return 0;
+        }
     }
 
     int GetScreenWidth() {

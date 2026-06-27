@@ -3,13 +3,17 @@
 //
 
 #include "Madokawaii/app/chart.hpp"
+#include "Madokawaii/app/common.hpp"
+#include "Madokawaii/app/coordinate.hpp"
 #include "Madokawaii/app/line_operation.hpp"
 #include <Madokawaii/platform/log.hpp>
 
 #include "Madokawaii/app/note_hit.hpp"
 #include "Madokawaii/app/note_operation.hpp"
 
-void UpdateJudgeline(Madokawaii::App::chart::judgeline& judgeline, double thisFrameTime, int screenWidth, int screenHeight, std::vector<Madokawaii::App::chart::judgeline::note*>& noteRenderList, int* playedNoteCount) {
+namespace Madokawaii::App::Line {
+
+void UpdateJudgeline(AppContext& context, Madokawaii::App::chart::judgeline& judgeline, double thisFrameTime, std::vector<Madokawaii::App::chart::judgeline::note*>& noteRenderList, int* playedNoteCount) {
 	auto calcEventRealTime = [&judgeline](const double beatTime) {
 		return Madokawaii::App::Chart::CalcRealTime(judgeline.bpm, beatTime);
 		};
@@ -62,8 +66,13 @@ void UpdateJudgeline(Madokawaii::App::chart::judgeline& judgeline, double thisFr
 	}
 
 	// note update
-	const double judgelineScreenX = judgeline.info.posX * screenWidth;
-	const double judgelineScreenY = judgeline.info.posY * screenHeight;
+	const auto screenWidth = context.display.screenWidth;
+	const auto screenHeight = context.display.screenHeight;
+	const auto viewport = Madokawaii::App::Coordinate::MakeScreenViewport(screenWidth, screenHeight);
+	const Madokawaii::App::Coordinate::NormalizedPoint judgelinePosition{
+		judgeline.info.posX,
+		judgeline.info.posY
+	};
 
 	auto processNote = [&, thisFrameTime](Madokawaii::App::chart::judgeline::note &note) {
 		note.rotateAngle = judgeline.info.rotateAngle;
@@ -78,31 +87,35 @@ void UpdateJudgeline(Madokawaii::App::chart::judgeline& judgeline, double thisFr
 
 		note.realHoldTime = Madokawaii::App::Chart::CalcRealTime(judgeline.bpm, note.holdTime);
 
-		// unify note position calculation
-		const double note_rotate_angle_rad = note.rotateAngle * M_PI / 180.0;
-		const double posX = note.positionX * screenWidth * 0.05625;
+		// Keep calculated note centers in normalized chart coordinates.
+		const double posX = note.positionX * 0.05625;
 		double distance = note.positionY;
 		if (note.isNoteBelow) {
 			distance = -distance;
 		}
+		distance *= 0.6;
 
-		const double diffX = cos(note_rotate_angle_rad) * posX
-		                     - sin(note_rotate_angle_rad) * distance * screenHeight * 0.6;
-		const double diffY = cos(note_rotate_angle_rad) * distance * screenHeight * 0.6
-		                     + sin(note_rotate_angle_rad) * posX;
+		const auto noteOffset = Madokawaii::App::Coordinate::RotateNormalizedVector(
+			{posX, distance},
+			note.rotateAngle,
+			viewport);
 
-		note.coordinateX = judgelineScreenX + diffX;
-		note.coordinateY = screenHeight - (judgelineScreenY + diffY);
+		note.coordinateX = judgelinePosition.x + noteOffset.x;
+		note.coordinateY = judgelinePosition.y + noteOffset.y;
 
 		if (note.realTime < thisFrameTime && note.state == Madokawaii::App::NoteState::invisible_or_appeared) {
-			note.coordinateX = judgelineScreenX + cos(note_rotate_angle_rad) * posX;
-			note.coordinateY = screenHeight - (judgelineScreenY + sin(note_rotate_angle_rad) * posX);
+			const auto hitOffset = Madokawaii::App::Coordinate::RotateNormalizedVector(
+				{posX, 0.0},
+				note.rotateAngle,
+				viewport);
+			note.coordinateX = judgelinePosition.x + hitOffset.x;
+			note.coordinateY = judgelinePosition.y + hitOffset.y;
 
-			RegisterNoteHitSfx(note.type);
-			RegisterNoteHitFx(thisFrameTime, note.coordinateX, note.coordinateY);
+			NoteHit::RegisterSfx(context, note.type);
+			NoteHit::RegisterFx(context, thisFrameTime, note.coordinateX, note.coordinateY);
 
 			if (note.type == Madokawaii::App::NoteType::hold) {
-				AddHoldNoteClickingRender(note);
+				NoteRenderer::AddHoldNoteClickingRender(context, note);
 				note.state = Madokawaii::App::NoteState::holding;
 			} else {
 				note.state = Madokawaii::App::NoteState::finished;
@@ -120,8 +133,8 @@ void UpdateJudgeline(Madokawaii::App::chart::judgeline& judgeline, double thisFr
 
 			case Madokawaii::App::NoteState::invisible_or_appeared:
 				if (note.type == Madokawaii::App::NoteType::hold ||
-				    Madokawaii::App::Chart::IsNoteInScreen(note.coordinateX, note.coordinateY, screenWidth,
-				                                           screenHeight)) {
+				    Madokawaii::App::Chart::IsNoteInViewport(note.coordinateX, note.coordinateY, screenWidth,
+				                                             screenHeight)) {
 					noteRenderList.push_back(&note);
 					return false;
 				}
@@ -141,3 +154,5 @@ void UpdateJudgeline(Madokawaii::App::chart::judgeline& judgeline, double thisFr
 	if (playedNoteCount)
 		*playedNoteCount = static_cast<int>(judgeline.info.notesAboveIndex + judgeline.info.notesBelowIndex);
 }
+
+} // namespace Madokawaii::App::Line

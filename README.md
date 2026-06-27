@@ -30,7 +30,7 @@ this project makes no guarantees regarding other backends' operational results.
 ### Prerequisite
 - cmake
 - vcpkg
-- raylib, rapidjson, libyaml, libzip, libzippp (managed by vcpkg)
+- raylib, rapidjson, libyaml, libzip, libzippp, fastio(2024-12-05, MIT) (managed by vcpkg)
 - Windows SDK & DirectX SDK (when Direct2D backend enabled)
 - for Android project, see [here](https://github.com/lucas150670/Madokawaii_Android) 
 
@@ -42,7 +42,8 @@ git clone https://github.com/microsoft/vcpkg.git
 ./vcpkg/vcpkg install raylib rapidjson libyaml libzip libzippp 
 # Build with cmake
 mkdir build && cd build
-cmake .. -DCMAKE_TOOLCHAIN_FILE=/path/to/vcpkg/scripts/buildsystems/vcpkg.cmake
+# switch from render backends by defining implementer variable
+cmake .. -Dimplementer=RAYLIB -DCMAKE_TOOLCHAIN_FILE=/path/to/vcpkg/scripts/buildsystems/vcpkg.cmake
 make
 # put assets/charts/chart.json,
 # assets/charts/music.wav,
@@ -65,10 +66,13 @@ Madokawaii/
     └── platform        # platfor-specific code
        ├── raylib       # reference implementaion based on raylib
        ├── direct2d     # Direct2D Windows backend
+       ├── gdiplus      # i can't think of any reason to enable this component unless you have CP.
        └── (other potential platforms)
 ├── README.md           # readme
 └── CMakeLists.txt      # cmake config
 ```
+
+Notice: the gdiplus backend is solely rendered on CPU and has a very bad performance, approximately 1/30 of Direct2D and 1/60 of raylib, and may have lots of bugs.
 
 ---
 

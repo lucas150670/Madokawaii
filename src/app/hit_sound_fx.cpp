@@ -1,69 +1,66 @@
 //
 // Created by madoka on 2025/12/28.
 //
-#include <complex>
-#include <map>
 
+#include "Madokawaii/app/common.hpp"
 #include "Madokawaii/app/def.hpp"
 #include "Madokawaii/app/note_hit.hpp"
 #include "Madokawaii/platform/audio.hpp"
 #include "Madokawaii/platform/log.hpp"
 
-struct ResPack_Audio_Decompressed
-{
-    Madokawaii::Platform::Audio::Sound clickSound[20], flickSound[20], dragSound[20];
-};
-ResPack_Audio_Decompressed audio_sfx_decompressed{};
-std::map<int, int> sfx_play_map;
+namespace Madokawaii::App::NoteHit {
 
-int InitializeNoteHitSfxManager(Madokawaii::App::ResPack::ResPack& respack)
+int InitializeSfxManager(AppContext& context, ResPack::ResPack& respack)
 {
     auto loadSoundFromResPackData = [](const Madokawaii::App::ResPack::ResPackData* resData) -> Madokawaii::Platform::Audio::Sound {
         auto s = Madokawaii::Platform::Audio::LoadSoundFromMemory(".ogg", static_cast<const unsigned char*>(resData->data), static_cast<int>(resData->size));
         return s;
     };
-    for (int i = 0; i < 20; i++) {
-        audio_sfx_decompressed.clickSound[i] = loadSoundFromResPackData(respack.soundClick);
-        audio_sfx_decompressed.flickSound[i] = loadSoundFromResPackData(respack.soundFlick);
-        audio_sfx_decompressed.dragSound[i] = loadSoundFromResPackData(respack.soundDrag);
+    auto& sfx = context.noteHitSfx;
+    for (int i = 0; i < NoteHitSfxState::SOUND_POOL_SIZE; i++) {
+        sfx.clickSounds[i] = loadSoundFromResPackData(respack.soundClick);
+        sfx.flickSounds[i] = loadSoundFromResPackData(respack.soundFlick);
+        sfx.dragSounds[i] = loadSoundFromResPackData(respack.soundDrag);
     }
     return 0;
 }
 
-void CleanupNoteHitSfxManager() {
-    sfx_play_map.clear();
+void CleanupSfxManager(AppContext& context) {
+    context.noteHitSfx.playMap.clear();
 }
 
-void UnloadNoteHitSfxManager() {
+void UnloadSfxManager(AppContext& context) {
     auto unloadSound = [](const Madokawaii::Platform::Audio::Sound& sound) { Madokawaii::Platform::Audio::UnloadSound(sound); };
-    for (int i = 0; i < 20; i++) {
-        unloadSound(audio_sfx_decompressed.clickSound[i]);
-        unloadSound(audio_sfx_decompressed.flickSound[i]);
-        unloadSound(audio_sfx_decompressed.dragSound[i]);
+    auto& sfx = context.noteHitSfx;
+    for (int i = 0; i < NoteHitSfxState::SOUND_POOL_SIZE; i++) {
+        unloadSound(sfx.clickSounds[i]);
+        unloadSound(sfx.flickSounds[i]);
+        unloadSound(sfx.dragSounds[i]);
     }
-    memset(&audio_sfx_decompressed, 0, sizeof(ResPack_Audio_Decompressed));
-    sfx_play_map.clear();
+    sfx = {};
 }
 
-void RegisterNoteHitSfx(int type) {
-    if (!sfx_play_map.contains(type)) sfx_play_map[type] = 1;
-    else sfx_play_map[type]++;
+void RegisterSfx(AppContext& context, int type) {
+    auto& playMap = context.noteHitSfx.playMap;
+    if (!playMap.contains(type)) playMap[type] = 1;
+    else playMap[type]++;
 }
 
-void UpdateNoteHitSfx() {
+void UpdateSfx(AppContext& context) {
     int sel_count = 0;
     Madokawaii::Platform::Audio::Sound* sel_sound = nullptr;
-    for (auto& [type, count] : sfx_play_map) {
+    auto& sfx = context.noteHitSfx;
+    for (auto& [type, count] : sfx.playMap) {
         switch (type) {
             case Madokawaii::App::NoteType::tap:
             case Madokawaii::App::NoteType::hold:
-                sel_sound = audio_sfx_decompressed.clickSound;
+                sel_sound = sfx.clickSounds.data();
                 break;
             case Madokawaii::App::NoteType::drag:
-                sel_sound = audio_sfx_decompressed.dragSound;
+                sel_sound = sfx.dragSounds.data();
                 break;
             case Madokawaii::App::NoteType::flick:
-                sel_sound = audio_sfx_decompressed.flickSound;
+                sel_sound = sfx.flickSounds.data();
                 break;
             default:
                 return;
@@ -74,8 +71,8 @@ void UpdateNoteHitSfx() {
             while (played_sfx < sel_count) {
                 if (Madokawaii::Platform::Audio::IsSoundPlaying(sel_sound[i])) {
                     i++; wait_times++;
-                    if (i == 20) i = 0;
-                    if (wait_times == 20) break;
+                    if (i == NoteHitSfxState::SOUND_POOL_SIZE) i = 0;
+                    if (wait_times == NoteHitSfxState::SOUND_POOL_SIZE) break;
                 }
                 else {
                     Madokawaii::Platform::Audio::PlaySound(sel_sound[i]);
@@ -88,3 +85,5 @@ void UpdateNoteHitSfx() {
     }
 
 }
+
+} // namespace Madokawaii::App::NoteHit

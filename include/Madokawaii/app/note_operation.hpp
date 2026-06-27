@@ -7,11 +7,17 @@
 #include "res_pack.hpp"
 #include "Madokawaii/app/chart.hpp"
 
-void InitializeNoteRenderer(const Madokawaii::App::ResPack::ResPack&, float, float);
-void RenderNote(const Madokawaii::App::chart::judgeline::note& note);
-void AddHoldNoteClickingRender(const Madokawaii::App::chart::judgeline::note& note);
-void RenderHoldCallback(float thisFrameTime, const Madokawaii::App::chart& thisChart);
+namespace Madokawaii::App {
+struct AppContext;
 
-void UnloadNoteRenderer();
+namespace NoteRenderer {
+    void Initialize(AppContext& context, const ResPack::ResPack& resPack);
+    void RenderNote(const AppContext& context, const chart::judgeline::note& note);
+    void AddHoldNoteClickingRender(AppContext& context, const chart::judgeline::note& note);
+    void RenderHoldCallback(AppContext& context, float thisFrameTime);
+    void Unload(AppContext& context);
+}
+
+} // namespace Madokawaii::App
 
 #endif //MADOKAWAII_NOTE_OPERATION_H

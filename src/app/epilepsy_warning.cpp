@@ -6,30 +6,36 @@
 #include "Madokawaii/platform/core.hpp"
 #include "Madokawaii/platform/log.hpp"
 
-int AppIterate_Warning(void* appstate) {
-    auto& ctx = *static_cast<AppContext*>(appstate);
+#include <algorithm>
+#include <iterator>
+#include <string>
 
+#include <fast_io.h>
+
+namespace Madokawaii::App::Warning {
+
+int Iterate(AppContext& ctx) {
     float deltaTime = Madokawaii::Platform::Graphics::GetFrameTime();
-    ctx.warningState.elapsedTime += deltaTime;
+    ctx.ui.warning.elapsedTime += deltaTime;
 
-    bool canSkip = ctx.warningState.elapsedTime >= WarningState::MIN_DISPLAY_TIME;
-    bool autoSkip = ctx.warningState.elapsedTime >= WarningState::AUTO_SKIP_TIME;
+    bool canSkip = ctx.ui.warning.elapsedTime >= WarningState::MIN_DISPLAY_TIME;
+    bool autoSkip = ctx.ui.warning.elapsedTime >= WarningState::AUTO_SKIP_TIME;
 
     if (autoSkip || (canSkip && Madokawaii::Platform::Core::IsAnyKeyPressed())) {
-        ctx.warningShown = true;
+        ctx.ui.warningShown = true;
         return !Madokawaii::Platform::Core::WindowShouldClose();
     }
 
     Madokawaii::Platform::Graphics::BeginDrawing();
     Madokawaii::Platform::Graphics::ClearBackground(Madokawaii::Platform::Graphics::M_BLACK);
 
-    const float scaleX = ctx.screenWidth / 1920.0f;
-    const float scaleY = ctx.screenHeight / 1080.0f;
+    const float scaleX = ctx.display.screenWidth / 1920.0f;
+    const float scaleY = ctx.display.screenHeight / 1080.0f;
     const float scale = std::min(scaleX, scaleY);
 
     constexpr auto title = "光敏性癫痫警告";
-    const auto& font = ctx.chineseFont;
-    const float centerX = ctx.screenWidth / 2.0f;
+    const auto& font = ctx.assets.chineseFont;
+    const float centerX = ctx.display.screenWidth / 2.0f;
 
     float titleFontSize = 48.0f * scale;
     auto titleSize = Madokawaii::Platform::Graphics::Fonts::MeasureTextEx(font, title, titleFontSize, 1.0f);
@@ -76,18 +82,18 @@ int AppIterate_Warning(void* appstate) {
     const char* skipHint = canSkip ? "按任意键继续..." : "请等待...";
     float hintFontSize = 28.0f * scale;
     const auto [x, y] = Madokawaii::Platform::Graphics::Fonts::MeasureTextEx(font, skipHint, hintFontSize, 1.0f);
-    const float hintY = ctx.screenHeight - 120.0f * scaleY;
+    const float hintY = ctx.display.screenHeight - 120.0f * scaleY;
     Madokawaii::Platform::Graphics::Fonts::DrawTextEx(font, skipHint,
         centerX - x / 2, hintY, hintFontSize, 1.0f,
         Madokawaii::Platform::Graphics::M_GRAY);
 
     if (!canSkip) {
-        const float remaining = WarningState::MIN_DISPLAY_TIME - ctx.warningState.elapsedTime;
-        char timeText[32];
-        snprintf(timeText, sizeof(timeText), "%.1f", remaining);
+        const float remaining = WarningState::MIN_DISPLAY_TIME - ctx.ui.warning.elapsedTime;
+        const auto remainingTenths = static_cast<int>(remaining * 10.0f + 0.5f);
+        const auto timeText = fast_io::concat(remainingTenths / 10, ".", remainingTenths % 10);
         float timeFontSize = 24.0f * scale;
-        auto timeSize = Madokawaii::Platform::Graphics::Fonts::MeasureTextEx(font, timeText, timeFontSize, 1.0f);
-        Madokawaii::Platform::Graphics::Fonts::DrawTextEx(font, timeText,
+        auto timeSize = Madokawaii::Platform::Graphics::Fonts::MeasureTextEx(font, timeText.c_str(), timeFontSize, 1.0f);
+        Madokawaii::Platform::Graphics::Fonts::DrawTextEx(font, timeText.c_str(),
             centerX - timeSize.x / 2, hintY + 40 * scale, timeFontSize, 1.0f,
             Madokawaii::Platform::Graphics::M_DARKGRAY);
     }
@@ -95,3 +101,5 @@ int AppIterate_Warning(void* appstate) {
     Madokawaii::Platform::Graphics::EndDrawing();
     return !Madokawaii::Platform::Core::WindowShouldClose();
 }
+
+} // namespace Madokawaii::App::Warning

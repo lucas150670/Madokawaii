@@ -5,7 +5,6 @@
 #include "direct2d_platform.hpp"
 
 #include <algorithm>
-#include <cstdio>
 #include <thread>
 
 #include <d2d1helper.h>

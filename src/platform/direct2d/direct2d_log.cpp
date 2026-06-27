@@ -6,11 +6,10 @@
 
 #include <cstdarg>
 #include <cstdio>
+#include <string>
 
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-#include <windows.h>
+#include <fast_io.h>
+#include <format>
 
 namespace Madokawaii::Platform::Log {
     namespace {
@@ -36,9 +35,6 @@ namespace Madokawaii::Platform::Log {
         vsnprintf(message, sizeof(message), format, args);
         va_end(args);
 
-        char line[2304]{};
-        snprintf(line, sizeof(line), "%s: %s\n", Prefix(loglevel), message);
-        fputs(line, stdout);
-        OutputDebugStringA(line);
+        fast_io::io::print(fast_io::out(), std::format("{}: {}\n", Prefix(loglevel), message));
     }
 }

@@ -20,7 +20,7 @@ namespace Madokawaii::AppConfig {
     {
 #if !defined(PLATFORM_ANDROID)
         std::string chartPath{"assets/charts/chart.json"};
-        std::string musicPath{"assets/charts/music.wav"};
+        std::string musicPath{"assets/charts/music.mp3"};
         std::string backgroundPath{"assets/charts/illustration.png"};
         std::string resPackPath{"assets/respacks/default.zip"};
 #else
@@ -34,10 +34,10 @@ namespace Madokawaii::AppConfig {
 
     class ConfigManager {
     public:
+        ConfigManager();
         ConfigManager(const ConfigManager&) = delete;
         ConfigManager& operator=(const ConfigManager&) = delete;
 
-        static ConfigManager& Instance();
         [[nodiscard]] const GlobalConfig& Get() const;
         void Set(const GlobalConfig& cfg);
 
@@ -57,8 +57,6 @@ namespace Madokawaii::AppConfig {
         static bool LoadFromFile(const std::string& filePath);
         [[nodiscard]] static bool SaveToFile(const std::string& filePath) ;
 
-    private:
-        ConfigManager();
         GlobalConfig config_;
     };
 

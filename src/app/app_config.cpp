@@ -9,11 +9,6 @@ namespace Madokawaii::AppConfig {
         LoadDefaults();
     }
 
-    ConfigManager& ConfigManager::Instance() {
-        static ConfigManager instance;
-        return instance;
-    }
-
     const GlobalConfig& ConfigManager::Get() const {
         return config_;
     }

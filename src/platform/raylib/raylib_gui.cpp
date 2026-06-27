@@ -35,6 +35,10 @@ namespace Madokawaii::Platform::Gui {
         return GuiButton(ToRayRect(bounds), text) != 0;
     }
 
+    bool LabelButton(Shape::Rectangle bounds, const char* text) {
+        return GuiLabelButton(ToRayRect(bounds), text) != 0;
+    }
+
     bool TextBox(Shape::Rectangle bounds, char* text, int textSize, bool editMode) {
         return GuiTextBox(ToRayRect(bounds), text, textSize, editMode) != 0;
     }

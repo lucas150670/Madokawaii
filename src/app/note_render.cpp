@@ -2,40 +2,40 @@
 // Created by madoka on 2025/12/15.
 //
 
+#include "Madokawaii/app/common.hpp"
+#include "Madokawaii/app/coordinate.hpp"
 #include "Madokawaii/app/note_hit.hpp"
 #include "Madokawaii/app/note_operation.hpp"
 #include "Madokawaii/platform/graphics.hpp"
 #include "Madokawaii/platform/log.hpp"
 #include "Madokawaii/platform/texture.hpp"
 
-using ResTexture2D =
-    Madokawaii::Platform::Graphics::Texture::Texture2D;
-struct ResPackDecompressed
-{
-    ResTexture2D imageClick{};
-    ResTexture2D imageHold{};
-    ResTexture2D imageFlick{};
-    ResTexture2D imageDrag{};
+namespace Madokawaii::App::NoteRenderer {
 
-    ResTexture2D imageClickMH{};
-    ResTexture2D imageHoldMH{};
-    ResTexture2D imageFlickMH{};
-    ResTexture2D imageDragMH{};
-    float holdAtlasHead{}, holdAtlasTail{}, holdAtlasMHHead{}, holdAtlasMHTail{};
-};
+using ResTexture2D = Madokawaii::Platform::Graphics::Texture::Texture2D;
 
-std::vector<Madokawaii::App::chart::judgeline::note> holds_to_render{};
-float screenWidth{}, screenHeight{};
+namespace {
 constexpr float NOTE_WIDTH_RATIO = 1.0f / 8.0f;
 
-ResPackDecompressed respack_decompressed{};
+Madokawaii::App::Coordinate::ScreenViewport NoteViewport(const AppContext& context) {
+    return Madokawaii::App::Coordinate::MakeScreenViewport(
+        context.display.screenWidth,
+        context.display.screenHeight);
+}
 
-void InitializeNoteRenderer(const Madokawaii::App::ResPack::ResPack& respack_raw, float screenWidthIn, float screenHeightIn)
+Madokawaii::Platform::Graphics::Vector2 NoteToScreenPoint(const AppContext& context,
+                                                          const Madokawaii::App::chart::judgeline::note& note) {
+    return Madokawaii::App::Coordinate::ToScreenPoint({note.coordinateX, note.coordinateY}, NoteViewport(context));
+}
+
+void RenderHoldNote(const AppContext& context, const Madokawaii::App::chart::judgeline::note& note);
+}
+
+void Initialize(AppContext& context, const Madokawaii::App::ResPack::ResPack& respack_raw)
 {
-    screenWidth = screenWidthIn;
-    screenHeight = screenHeightIn;
     // decompress respack images into textures
     using namespace Madokawaii::Platform::Graphics::Texture;
+    auto& respack_decompressed = context.noteRenderer.resources;
 
     auto loadTextureFromResData = [](const Madokawaii::App::ResPack::ResPackData* resData) -> Texture2D
     {
@@ -65,8 +65,12 @@ void InitializeNoteRenderer(const Madokawaii::App::ResPack::ResPack& respack_raw
     respack_decompressed.holdAtlasMHTail = respack_raw.holdAtlasMHTail;
 }
 
-void RenderHoldNote(const Madokawaii::App::chart::judgeline::note& note)
+namespace {
+void RenderHoldNote(const AppContext& context, const Madokawaii::App::chart::judgeline::note& note)
 {
+    const auto screenWidth = static_cast<float>(context.display.screenWidth);
+    const auto screenHeight = static_cast<float>(context.display.screenHeight);
+    const auto& respack_decompressed = context.noteRenderer.resources;
     auto noteHoldLength = note.speed * note.realHoldTime * screenHeight * 0.6;
     auto texture = note.isMultipleNote ? respack_decompressed.imageHoldMH : respack_decompressed.imageHold;
     // 在这里的逻辑里，head在尾部绘制，tail在头部绘制
@@ -83,13 +87,14 @@ void RenderHoldNote(const Madokawaii::App::chart::judgeline::note& note)
 
     float holdBodyTextureHeight = texture_dimension.y - holdAtlasHead - holdAtlasTail;
     auto bodyHeight = static_cast<float>(noteHoldLength);
+    const auto screenPosition = NoteToScreenPoint(context, note);
 
     if (note.isNoteBelow)
     Madokawaii::Platform::Graphics::SetTransform(
-        note.coordinateX, note.coordinateY, rotateAngle + 180.0f, scale, scale);
+        screenPosition.x, screenPosition.y, rotateAngle + 180.0f, scale, scale);
     else
         Madokawaii::Platform::Graphics::SetTransform(
-            note.coordinateX, note.coordinateY,  rotateAngle, scale, scale);
+            screenPosition.x, screenPosition.y,  rotateAngle, scale, scale);
 
     Madokawaii::Platform::Shape::Rectangle srcHead{};
     srcHead.x = 0;
@@ -146,12 +151,15 @@ void RenderHoldNote(const Madokawaii::App::chart::judgeline::note& note)
     // 恢复变换矩阵
     Madokawaii::Platform::Graphics::PopTransform();
 }
+}
 
-void RenderNote(const Madokawaii::App::chart::judgeline::note& note)
+void RenderNote(const AppContext& context, const Madokawaii::App::chart::judgeline::note& note)
 {
+    const auto screenWidth = static_cast<float>(context.display.screenWidth);
+    const auto& respack_decompressed = context.noteRenderer.resources;
     ResTexture2D texture;
     if (note.type == Madokawaii::App::NoteType::hold) {
-        RenderHoldNote(note);
+        RenderHoldNote(context, note);
         return;
     }
     switch (note.type)
@@ -175,22 +183,24 @@ void RenderNote(const Madokawaii::App::chart::judgeline::note& note)
     Madokawaii::Platform::Graphics::Color_ tint{255, 255, 255, 255};
     const auto rotateAngle = static_cast<float>(360 - note.rotateAngle), rotateAngleRad = rotateAngle * static_cast<float>(M_PI) / 180.f;
     float xOffset = texture_dimension.x / 2.f * scale, yOffset = texture_dimension.y / 2.f * scale;
-    pos.x = static_cast<float>(note.coordinateX - cos(rotateAngleRad) * xOffset + sin(rotateAngleRad) * yOffset);
-    pos.y = static_cast<float>(note.coordinateY - cos(rotateAngleRad) * yOffset - sin(rotateAngleRad) * xOffset);
+    const auto screenPosition = NoteToScreenPoint(context, note);
+    pos.x = static_cast<float>(screenPosition.x - cos(rotateAngleRad) * xOffset + sin(rotateAngleRad) * yOffset);
+    pos.y = static_cast<float>(screenPosition.y - cos(rotateAngleRad) * yOffset - sin(rotateAngleRad) * xOffset);
     Madokawaii::Platform::Graphics::Texture::DrawTextureEx(texture, pos, rotateAngle, scale, tint);
 }
 
-void AddHoldNoteClickingRender(const Madokawaii::App::chart::judgeline::note &note) {
-    holds_to_render.push_back(note);
-    RenderHoldNote(note);
+void AddHoldNoteClickingRender(AppContext& context, const Madokawaii::App::chart::judgeline::note &note) {
+    context.noteRenderer.holdsToRender.push_back(note);
+    RenderHoldNote(context, note);
 }
 
-void RenderHoldCallback(float thisFrameTime, const Madokawaii::App::chart& thisChart) {
-    static std::unordered_map<const Madokawaii::App::chart::judgeline::note*, float> hitFx_Hold_Counter;
-    for (auto &hold : holds_to_render) {
+void RenderHoldCallback(AppContext& context, float thisFrameTime) {
+    auto& renderer = context.noteRenderer;
+    const auto& thisChart = context.gameplay.mainChart;
+    for (auto &hold : renderer.holdsToRender) {
 		if (hold.realHoldTime + hold.realTime < thisFrameTime) {
 		    hold.state = Madokawaii::App::NoteState::finished;
-		    hitFx_Hold_Counter.erase(&hold);
+		    renderer.holdHitFxCounters.erase(&hold);
             continue;
 		}
         auto diff = thisFrameTime - hold.realTime;
@@ -203,41 +213,39 @@ void RenderHoldCallback(float thisFrameTime, const Madokawaii::App::chart& thisC
         // realholdtime = speed * (holdTime -> real)
         if (fabs(hold.rotateAngle - 360.0) < 1e-6)
             hold.rotateAngle = 0.0f;
-        auto note_rotate_angle_rad =  hold.rotateAngle * M_PI / 180.0;
-        const double judgelineScreenX = judgeline.info.posX * screenWidth;
-        const double judgelineScreenY = judgeline.info.posY * screenHeight;
-        const double posX = hold.positionX * screenWidth * 0.05625;
+        const double posX = hold.positionX * 0.05625;
+        const auto hitOffset = Madokawaii::App::Coordinate::RotateNormalizedVector(
+            {posX, 0.0},
+            hold.rotateAngle,
+            NoteViewport(context));
 
-        const double diffX = cos(note_rotate_angle_rad) * posX;
-        const double diffY = sin(note_rotate_angle_rad) * posX;
-
-        hold.coordinateX = judgelineScreenX + diffX;
-        const double centralY = judgelineScreenY + diffY;
-        hold.coordinateY = screenHeight - centralY;
+        hold.coordinateX = judgeline.info.posX + hitOffset.x;
+        hold.coordinateY = judgeline.info.posY + hitOffset.y;
         // Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "NOTE: Rendering Holding Note, this frame time = %f, hold time = %f, real hold time = %f", thisFrameTime, hold.realTime, hold.realHoldTime);
-        RenderHoldNote(hold);
+        RenderHoldNote(context, hold);
 
 
-        if (hitFx_Hold_Counter.find(&hold) == hitFx_Hold_Counter.end())
+        if (renderer.holdHitFxCounters.find(&hold) == renderer.holdHitFxCounters.end())
         {
-            hitFx_Hold_Counter.insert({&hold, 0.0f});
+            renderer.holdHitFxCounters.insert({&hold, 0.0f});
         } else
         {
-            hitFx_Hold_Counter[&hold] += diff;
-            auto hold_counter = hitFx_Hold_Counter[&hold];
+            renderer.holdHitFxCounters[&hold] += diff;
+            auto hold_counter = renderer.holdHitFxCounters[&hold];
             if (hold_counter > 0.2f)
             {
-                RegisterNoteHitFx(thisFrameTime, hold.coordinateX, hold.coordinateY);
-                hitFx_Hold_Counter[&hold] = 0.0f;
+                NoteHit::RegisterFx(context, thisFrameTime, hold.coordinateX, hold.coordinateY);
+                renderer.holdHitFxCounters[&hold] = 0.0f;
             }
         }
     }
-    std::erase_if(holds_to_render, [](const auto& note) { return note.state == Madokawaii::App::NoteState::finished; });
+    std::erase_if(renderer.holdsToRender, [](const auto& note) { return note.state == Madokawaii::App::NoteState::finished; });
 }
 
-void UnloadNoteRenderer()
+void Unload(AppContext& context)
 {
     auto unloadTexture = [](ResTexture2D& texture) { Madokawaii::Platform::Graphics::Texture::UnloadTexture(texture); };
+    auto& respack_decompressed = context.noteRenderer.resources;
     unloadTexture(respack_decompressed.imageClick);
     unloadTexture(respack_decompressed.imageHold);
     unloadTexture(respack_decompressed.imageFlick);
@@ -246,5 +254,7 @@ void UnloadNoteRenderer()
     unloadTexture(respack_decompressed.imageHoldMH);
     unloadTexture(respack_decompressed.imageFlickMH);
     unloadTexture(respack_decompressed.imageDragMH);
-    respack_decompressed = {};
+    context.noteRenderer = {};
 }
+
+} // namespace Madokawaii::App::NoteRenderer

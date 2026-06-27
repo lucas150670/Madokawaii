@@ -4,21 +4,18 @@
 
 #include "Madokawaii/app/common.hpp"
 #include "Madokawaii/platform/audio.hpp"
+#include "Madokawaii/platform/gui.hpp"
 #include "Madokawaii/platform/log.hpp"
 #include "Madokawaii/platform/graphics.hpp"
 #include "Madokawaii/platform/fonts.hpp"
 #include "Madokawaii/platform/texture.hpp"
 #include "Madokawaii/platform/core.hpp"
+#include <algorithm>
 #include <format>
 
-namespace {
-    // Ending页面状态
-    struct EndingState {
-        bool initialized{ false };
-        Madokawaii::Platform::Audio::Music endingMusic{};
-    };
+namespace Madokawaii::App::Ending {
 
-    EndingState endingState{};
+namespace {
 
     void DrawTrapezoid(float x, float y, float width, float height,
         float topOffset, float bottomOffset,
@@ -69,15 +66,27 @@ namespace {
 
 }
 
-int AppIterate_Ending(AppContext* context) {
-    if (!context) return -1;
+void Reset(AppContext& context) {
+    auto& endingState = context.ending;
+    if (endingState.endingMusic.implementationDefined) {
+        if (Madokawaii::Platform::Audio::IsMusicStreamPlaying(endingState.endingMusic)) {
+            Madokawaii::Platform::Audio::StopMusicStream(endingState.endingMusic);
+        }
+        Madokawaii::Platform::Audio::UnloadMusicStream(endingState.endingMusic);
+    }
+
+    endingState = {};
+}
+
+int Iterate(AppContext& context) {
+    auto& endingState = context.ending;
 
     if (!endingState.initialized) {
-        if (context->global_respack && context->global_respack->musicEnding) {
+        if (context.assets.resPack && context.assets.resPack->musicEnding) {
             endingState.endingMusic = Madokawaii::Platform::Audio::LoadMusicStreamFromMemory(
                 ".mp3",
-                static_cast<const unsigned char*>(context->global_respack->musicEnding->data),
-                static_cast<int>(context->global_respack->musicEnding->size)
+                static_cast<const unsigned char*>(context.assets.resPack->musicEnding->data),
+                static_cast<int>(context.assets.resPack->musicEnding->size)
             );
             endingState.endingMusic.looping = true;
             Madokawaii::Platform::Audio::SetMusicVolume(endingState.endingMusic, 0.7f);
@@ -92,24 +101,24 @@ int AppIterate_Ending(AppContext* context) {
     Madokawaii::Platform::Graphics::BeginDrawing();
     Madokawaii::Platform::Graphics::ClearBackground(Madokawaii::Platform::Graphics::M_BLACK);
 
-    if (context->backgroundTexture.implementationDefinedData) {
+    if (context.assets.backgroundTexture.implementationDefinedData) {
         Madokawaii::Platform::Graphics::Vector2 texture_dimension{};
-        Madokawaii::Platform::Graphics::Texture::MeasureTexture2D(context->backgroundTexture, &texture_dimension);
+        Madokawaii::Platform::Graphics::Texture::MeasureTexture2D(context.assets.backgroundTexture, &texture_dimension);
 
         Madokawaii::Platform::Graphics::Texture::DrawTexture(
-            context->backgroundTexture,
-            {(context->screenWidth - texture_dimension.x) / 2, 0},
+            context.assets.backgroundTexture,
+            {(context.display.screenWidth - texture_dimension.x) / 2, 0},
             { 255, 255, 255, 255 }
         );
     }
 
-    float screenWidth = static_cast<float>(context->screenWidth);
-    float screenHeight = static_cast<float>(context->screenHeight);
+    float screenWidth = static_cast<float>(context.display.screenWidth);
+    float screenHeight = static_cast<float>(context.display.screenHeight);
     auto scaleX = screenWidth / 1920.f;
     auto scaleY = screenWidth / 1080.f;
     auto scale = std::min(scaleX, scaleY);
 
-    const float trapezoidHeight = context->screenHeight;
+    const float trapezoidHeight = context.display.screenHeight;
     const float topOffset = 120.0f * scale;
     constexpr float bottomOffset = 0.0f;
 
@@ -129,7 +138,7 @@ int AppIterate_Ending(AppContext* context) {
     const float topPadding = 40.0f * scale;
     const float fontSpacing = 2.0f * scale;
 
-    auto& font = context->chineseFont;
+    auto& font = context.assets.chineseFont;
 
     // TODO: replace "untitled" with actual song title
     const char* songTitle = "untitled";
@@ -160,6 +169,19 @@ int AppIterate_Ending(AppContext* context) {
         fontSpacing,
         Madokawaii::Platform::Graphics::M_PURPLE
     );
+
+    const char* mainMenuText = "Main Menu";
+    const int mainMenuFontSize = std::max(18, static_cast<int>(28.0f * scale));
+    const int mainMenuTextWidth = Madokawaii::Platform::Graphics::MeasureText(mainMenuText, mainMenuFontSize);
+    const float mainMenuPadding = 8.0f * scale;
+    Madokawaii::Platform::Shape::Rectangle mainMenuBounds = {
+        screenWidth - rightPadding - mainMenuTextWidth - mainMenuPadding * 2.0f,
+        difficultyY + difficultyFontSize + 26.0f * scale,
+        mainMenuTextWidth + mainMenuPadding * 2.0f,
+        mainMenuFontSize + mainMenuPadding * 2.0f
+    };
+    Madokawaii::Platform::Gui::SetStyleTextSize(mainMenuFontSize);
+    const bool returnToMainMenu = Madokawaii::Platform::Gui::LabelButton(mainMenuBounds, mainMenuText);
 
     auto scoreText = std::format("{}", 1000000);
     const float scoreFontSize = 72.0f * scale;
@@ -199,7 +221,7 @@ int AppIterate_Ending(AppContext* context) {
     float totalWidth = itemSpacing * 3;
     float startX = textCenterX - totalWidth / 2.0f;
 
-    DrawJudgementItem(font, "Perfect", context->mainChart.numOfNotes, startX, judgementY,
+    DrawJudgementItem(font, "Perfect", context.gameplay.mainChart.numOfNotes, startX, judgementY,
         labelFontSize, valueFontSize, fontSpacing,
         Madokawaii::Platform::Graphics::M_GOLD,
         Madokawaii::Platform::Graphics::M_RAYWHITE);
@@ -222,5 +244,11 @@ int AppIterate_Ending(AppContext* context) {
 
     Madokawaii::Platform::Graphics::EndDrawing();
 
+    if (returnToMainMenu) {
+        Lifecycle::ResetGameToMainMenu(context);
+    }
+
     return !Madokawaii::Platform::Core::WindowShouldClose();
 }
+
+} // namespace Madokawaii::App::Ending

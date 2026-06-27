@@ -62,7 +62,10 @@ namespace Madokawaii::App {
                 double time;
                 double positionX, holdTime, speed, floorPosition;
                 // real-time calculated values
-                double realTime, positionY, coordinateX, coordinateY, realHoldTime;
+                double realTime, positionY;
+                // Runtime normalized center position. Origin is bottom-left, top-right is (1, 1).
+                double coordinateX, coordinateY;
+                double realHoldTime;
                 double rotateAngle;
                 bool isNoteBelow, isMultipleNote;
                 int state;
@@ -71,7 +74,7 @@ namespace Madokawaii::App {
 
             struct {
                 double opacity{}; // 透明度
-                double posX{}, posY{}; // 横坐标，纵坐标
+                double posX{}, posY{}; // normalized position, origin bottom-left
                 double rotateAngle{}; // 旋转角(DEG)
                 double speed{}; // note下落速度
                 double positionY{}; // speedEvents计算得到 ，note.floorPosition-positionY为对线距离

@@ -7,15 +7,24 @@
 #include "Madokawaii/platform/graphics.hpp"
 #include "Madokawaii/app/res_pack.hpp"
 
-int InitializeNoteHitSfxManager(Madokawaii::App::ResPack::ResPack&);
-void RegisterNoteHitSfx(int type);
-void CleanupNoteHitSfxManager();
-void UpdateNoteHitSfx();
-void UnloadNoteHitSfxManager();
-int InitializeNoteHitFxManager(Madokawaii::App::ResPack::ResPack&, Madokawaii::Platform::Graphics::Color color = Madokawaii::Platform::Graphics::M_WHITE);
-void RegisterNoteHitFx(float, float position_X, float position_Y);
-void UpdateNoteHitFx(float, float, float);
+namespace Madokawaii::App {
+struct AppContext;
 
-void UnloadNoteHitFxManager();
+namespace NoteHit {
+    int InitializeSfxManager(AppContext& context, ResPack::ResPack& resPack);
+    void RegisterSfx(AppContext& context, int type);
+    void CleanupSfxManager(AppContext& context);
+    void UpdateSfx(AppContext& context);
+    void UnloadSfxManager(AppContext& context);
+
+    int InitializeFxManager(AppContext& context, ResPack::ResPack& resPack,
+                            Platform::Graphics::Color color = Platform::Graphics::M_WHITE);
+    // position_X/Y are normalized coordinates. Origin is bottom-left, top-right is (1, 1).
+    void RegisterFx(AppContext& context, float thisFrameTime, float positionX, float positionY);
+    void UpdateFx(AppContext& context, float thisFrameTime);
+    void UnloadFxManager(AppContext& context);
+}
+
+} // namespace Madokawaii::App
 
 #endif //MADOKAWAII_NOTE_HIT_H

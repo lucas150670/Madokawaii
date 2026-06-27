@@ -5,6 +5,7 @@
 // rapidjson call only allowed in chart.cpp
 #include "Madokawaii/app/def.hpp"
 #include "Madokawaii/app/chart.hpp"
+#include "Madokawaii/app/coordinate.hpp"
 #include "Madokawaii/platform/core.hpp"
 #include "Madokawaii/platform/log.hpp"
 
@@ -250,8 +251,8 @@ namespace Madokawaii::App::Chart {
         }
     }
 
-    bool IsNoteInScreen(const double x, const double y, const int screenWidth, const int screenHeight) {
-        // 补偿
-        return !(x < -200 || x >= screenWidth + 200 || y < -200 || y >= screenHeight + 200);
+    bool IsNoteInViewport(const double normalizedX, const double normalizedY, const int screenWidth, const int screenHeight) {
+        const auto viewport = Coordinate::MakeScreenViewport(screenWidth, screenHeight);
+        return Coordinate::IsPointVisible({normalizedX, normalizedY}, viewport);
     }
 }
