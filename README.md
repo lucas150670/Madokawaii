@@ -32,6 +32,7 @@ this project makes no guarantees regarding other backends' operational results.
 - vcpkg
 - raylib, rapidjson, libyaml, libzip, libzippp, fastio(2024-12-05, MIT) (managed by vcpkg)
 - Windows SDK & DirectX SDK (when Direct2D backend enabled)
+- FMOD Core SDK (when FMOD audio backend enabled)
 - for Android project, see [here](https://github.com/lucas150670/Madokawaii_Android) 
 
 ## 📌 EXAMPLE
@@ -67,12 +68,15 @@ Madokawaii/
        ├── raylib       # reference implementaion based on raylib
        ├── direct2d     # Direct2D Windows backend
        ├── gdiplus      # i can't think of any reason to enable this component unless you have CP.
+       ├── fmod         # experimental FMOD audio backend
        └── (other potential platforms)
 ├── README.md           # readme
 └── CMakeLists.txt      # cmake config
 ```
 
-Notice: the gdiplus backend is solely rendered on CPU and has a very bad performance, approximately 1/30 of Direct2D and 1/60 of raylib, and may have lots of bugs.
+Notice: 
+- the gdiplus backend is solely rendered on CPU and has a very bad performance, approximately 1/30 of Direct2D and 1/60 of raylib, and may have lots of bugs.
+- to access FMOD audio backend, you need to have a valid FMOD license, and access to FMOD Core SDK. put the fmod dependencies in src/platform/fmod/inc, src/platform/fmod/lib/$ARCH, see [CMakeLists.txt](CMakeLists.txt).
 
 ---
 

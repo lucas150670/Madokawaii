@@ -180,3 +180,7 @@ subproject/
 
 /.vs
 /CMakeSettings.json
+
+# fmod library (proprietary sdk)
+src/platform/fmod/inc/
+src/platform/fmod/lib/

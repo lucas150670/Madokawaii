@@ -150,7 +150,6 @@ int InitializeGameResources(void* appstate) {
     Madokawaii::Platform::Audio::SetMusicPitch(ctx.gameplay.music, 1.0f);
     Madokawaii::Platform::Audio::SetMusicVolume(ctx.gameplay.music, 0.5f);
     Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "MAIN: Music Length: %f", musicLength);
-    Madokawaii::Platform::Audio::PlayMusicStream(ctx.gameplay.music);
 
     if (!Madokawaii::Platform::Core::FileExists(danli.GetBackgroundPath().c_str()))
     {
@@ -300,6 +299,7 @@ int InitializeGame(void *appstate) {
         Madokawaii::Platform::Graphics::EndDrawing();
         if (InitializeGameResources(appstate) == 0) {
             ctx.lifecycle.gameInitialized = true;
+            ctx.lifecycle.isFirstRenderFrame = true;
         } else {
             Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_ERROR,
                                                 "MAIN: Failed to initialize game!");
@@ -327,7 +327,11 @@ int IterateGame(void * appstate) {
         {255, 255, 255, 255});
 
     auto thisFrameTime = Madokawaii::Platform::Audio::GetMusicTimePlayed(ctx.gameplay.music) - ctx.gameplay.mainChart.offset;
-    if (!Madokawaii::Platform::Audio::IsMusicStreamPlaying(ctx.gameplay.music)) {
+    if (ctx.lifecycle.isFirstRenderFrame) {
+        Madokawaii::Platform::Audio::PlayMusicStream(ctx.gameplay.music);
+        ctx.lifecycle.isFirstRenderFrame = false;
+    }
+    else if (!Madokawaii::Platform::Audio::IsMusicStreamPlaying(ctx.gameplay.music)) {
         Madokawaii::Platform::Log::TraceLog(Madokawaii::Platform::Log::TraceLogLevel::LOG_INFO, "MAIN: Music playback end");
         Madokawaii::Platform::Graphics::EndDrawing(); 
         ctx.gameplay.completed = true;

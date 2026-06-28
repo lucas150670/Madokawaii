@@ -30,7 +30,7 @@ namespace Madokawaii::Platform::Audio {
     Music LoadMusicStream(const char* path) {
         Music m{};
         auto rl = ::LoadMusicStream(path);
-        m.looping = true;
+        m.looping = false;
         m.pitch = 1.0f;
         m.implementationDefined = new ::Music(rl);
         return m;
@@ -40,7 +40,7 @@ namespace Madokawaii::Platform::Audio {
     {
         Music m{};
         auto rl = ::LoadMusicStreamFromMemory(fileType, data, dataSize);
-        m.looping = true;
+        m.looping = false;
         m.pitch = 1.0f;
         m.implementationDefined = new ::Music(rl);
         return m;

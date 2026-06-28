@@ -35,6 +35,9 @@ namespace Madokawaii::Platform::Log {
         vsnprintf(message, sizeof(message), format, args);
         va_end(args);
 
+        auto len = strlen(message);
+        if (message[len - 1] == '\n') message[len - 1] = '\0';
+
         fast_io::io::print(fast_io::out(), std::format("{}: {}\n", Prefix(loglevel), message));
     }
 }

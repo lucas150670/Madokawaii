@@ -42,6 +42,7 @@ struct LifecycleState {
     std::future<int> gameInitFuture;
     bool gameInitStarted{false};
     bool asyncDataReady{false};
+    bool isFirstRenderFrame{false};
 };
 
 struct AssetState {
