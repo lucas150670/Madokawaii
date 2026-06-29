@@ -20,7 +20,7 @@ namespace Madokawaii::AppConfig {
     {
 #if !defined(PLATFORM_ANDROID)
         std::string chartPath{"assets/charts/chart.json"};
-        std::string musicPath{"assets/charts/music.mp3"};
+        std::string musicPath{"assets/charts/music.ogg"};
         std::string backgroundPath{"assets/charts/illustration.png"};
         std::string resPackPath{"assets/respacks/default.zip"};
 #else

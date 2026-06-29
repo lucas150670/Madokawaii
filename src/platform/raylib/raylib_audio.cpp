@@ -23,6 +23,18 @@ namespace Madokawaii::Platform::Audio {
     static ::Sound& AsRL(Sound& s) { return *static_cast<::Sound*>(s.implementationDefined); }
     static const ::Sound& AsRL(const Sound& s) { return *static_cast<const ::Sound*>(s.implementationDefined); }
 
+    bool AudioEngineNeedAttribution() {
+        return false;
+    }
+
+    std::string GetAudioEngineAttributionInfo() {
+        return "";
+    }
+
+    std::string GetAudioEngineLogoPath() {
+        return "";
+    }
+
     void InitAudioDevice() { ::InitAudioDevice(); }
 
     void CloseAudioDevice() { ::CloseAudioDevice(); }

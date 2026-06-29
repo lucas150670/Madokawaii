@@ -131,11 +131,11 @@ namespace Madokawaii::App::MainMenu {
         bool backgroundExists = Core::FileExists(state.backgroundPathBuffer.data());
 
         DrawFileSelector(state, panelX, startY, panelWidth, rowHeight,
-            "Chart File (.json):", state.chartPathBuffer.data(), static_cast<int>(state.chartPathBuffer.size()),
+            "Chart File (.json, .pec):", state.chartPathBuffer.data(), static_cast<int>(state.chartPathBuffer.size()),
             state.chartPathEditing, 0, chartExists);
 
         DrawFileSelector(state, panelX, startY + rowSpacing, panelWidth, rowHeight,
-            "Music File (.wav/.ogg):", state.musicPathBuffer.data(), static_cast<int>(state.musicPathBuffer.size()),
+            "Music File (compatible format):", state.musicPathBuffer.data(), static_cast<int>(state.musicPathBuffer.size()),
             state.musicPathEditing, 1, musicExists);
 
         DrawFileSelector(state, panelX, startY + rowSpacing * 2, panelWidth, rowHeight,

@@ -5,7 +5,14 @@
 #ifndef MADOKAWAII_AUDIO_H
 #define MADOKAWAII_AUDIO_H
 
+#include <string>
+
 namespace Madokawaii::Platform::Audio {
+
+    bool AudioEngineNeedAttribution();
+    std::string GetAudioEngineAttributionInfo();
+    std::string GetAudioEngineLogoPath();
+
     void InitAudioDevice();
     void CloseAudioDevice();
 

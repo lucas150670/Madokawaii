@@ -20,6 +20,7 @@
 #include "Madokawaii/app/res_pack.hpp"
 #include "Madokawaii/app/common.hpp"
 #include "Madokawaii/app/epilepsy_warning.hpp"
+#include "Madokawaii/app/audio_engine_credit.hpp"
 #include "Madokawaii/platform/audio.hpp"
 #include "Madokawaii/platform/log.hpp"
 #include "Madokawaii/platform/core.hpp"
@@ -182,6 +183,7 @@ int Initialize(void*& appstate) {
     appstate = new AppContext;
     auto& ctx = *static_cast<AppContext*>(appstate);
     Madokawaii::Platform::Audio::InitAudioDevice();
+    ctx.ui.fmodCreditCompleted = !Madokawaii::Platform::Audio::AudioEngineNeedAttribution();
 
     auto [r, g, b, a] = ctx.config.GetPerfectColor();
     ctx.assets.perfectColor = {r, g, b, a};
@@ -407,6 +409,7 @@ int Iterate(void * appstate) {
     // 扩展 留下放结算画面和开始画面的接口
     auto& ctx = *static_cast<AppContext*>(appstate);
     if (!ctx.lifecycle.systemInitialized) return -1;
+    if (!ctx.ui.fmodCreditCompleted) return AudioEngineCredit::Iterate(ctx);
     // 先显示警告页面
     if (!ctx.ui.warningShown) return Warning::Iterate(ctx);// 显示主菜单
     if (!ctx.ui.menuCompleted) {
@@ -429,6 +432,7 @@ int Iterate(void * appstate) {
 int Shutdown(void * appstate) {
     auto& ctx = *static_cast<AppContext*>(appstate);
     Ending::Reset(ctx);
+    AudioEngineCredit::Unload(ctx);
     Madokawaii::Platform::Core::CloseWindow();
     NoteRenderer::Unload(ctx);
     NoteHit::UnloadSfxManager(ctx);

@@ -72,6 +72,19 @@ namespace Madokawaii::Platform::Audio {
 
     std::unordered_map<std::string, FModSoundRefCountWrapper> named_loaded_sounds;
 
+    // see https://www.fmod.com/attribution for detailed info.
+    bool AudioEngineNeedAttribution() {
+        return true;
+    }
+
+    std::string GetAudioEngineAttributionInfo() {
+        return "Audio Engine: FMOD Studio by Firelight Technologies Pty Ltd.";
+    }
+
+    std::string GetAudioEngineLogoPath() {
+        return "assets/fmod.png";
+    }
+
     void InitAudioDevice()
     {
         FMOD::Debug_Initialize(FMOD_DEBUG_LEVEL_LOG,

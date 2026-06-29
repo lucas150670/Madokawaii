@@ -29,6 +29,7 @@ set(SRC_APP
         src/app/note_render.cpp
         src/app/hit_sound_fx.cpp
         src/app/hit_visual_fx.cpp
+        src/app/audio_engine_credit.cpp
         src/app/epilepsy_warning.cpp
         src/app/pec.cpp)
 
@@ -101,8 +102,11 @@ else()
             ${CMAKE_CURRENT_SOURCE_DIR}/src/platform/fmod/lib/${fmod_lib_arch}/fmod_vc.lib)
     set(fmod_dll_path
             ${CMAKE_CURRENT_SOURCE_DIR}/src/platform/fmod/lib/${fmod_lib_arch}/fmod.dll)
+    set(fmod_logo_path
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/platform/fmod/fmod.png)
     message(STATUS "Fmod lib path: ${fmod_lib_path}")
     message(STATUS "Fmod dll path: ${fmod_dll_path}")
+    message(STATUS "Fmod logo path: ${fmod_logo_path}")
     if(implementer STREQUAL "DIRECT2D")
         if(NOT WIN32)
             message(FATAL_ERROR "DIRECT2D implementer is only available on Windows")
@@ -184,6 +188,10 @@ else()
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
             ${fmod_dll_path}
             $<TARGET_FILE_DIR:Madokawaii>)
+    add_custom_command(TARGET Madokawaii POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            ${fmod_logo_path}
+            $<TARGET_FILE_DIR:Madokawaii>/assets)
 endif()
 
 target_include_directories(Madokawaii PRIVATE
