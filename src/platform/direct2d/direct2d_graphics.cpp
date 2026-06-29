@@ -18,153 +18,23 @@
 
 namespace Madokawaii::Platform::Graphics {
     namespace {
-        constexpr UINT D3DDeviceFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
-
-        std::string WideToUtf8(const wchar_t* text) {
-            return Direct2D::WideToUtf8(text ? text : L"");
-        }
-
-        ID3D11Device* CreateD3DDevice(D3D_FEATURE_LEVEL* outFeatureLevel) {
-            const D3D_FEATURE_LEVEL featureLevels[] = {
-                D3D_FEATURE_LEVEL_11_1,
-                D3D_FEATURE_LEVEL_11_0,
-                D3D_FEATURE_LEVEL_10_1,
-                D3D_FEATURE_LEVEL_10_0,
-                D3D_FEATURE_LEVEL_9_3,
-                D3D_FEATURE_LEVEL_9_2,
-                D3D_FEATURE_LEVEL_9_1,
-            };
-
-            ID3D11Device* device{};
-            HRESULT hr = D3D11CreateDevice(
-                nullptr,
-                D3D_DRIVER_TYPE_HARDWARE,
-                nullptr,
-                D3DDeviceFlags,
-                featureLevels,
-                ARRAYSIZE(featureLevels),
-                D3D11_SDK_VERSION,
-                &device,
-                outFeatureLevel,
-                nullptr);
-
-            if (hr == E_INVALIDARG) {
-                hr = D3D11CreateDevice(
-                    nullptr,
-                    D3D_DRIVER_TYPE_HARDWARE,
-                    nullptr,
-                    D3DDeviceFlags,
-                    featureLevels + 1,
-                    ARRAYSIZE(featureLevels) - 1,
-                    D3D11_SDK_VERSION,
-                    &device,
-                    outFeatureLevel,
-                    nullptr);
-            }
-
-            if (FAILED(hr)) {
-                hr = D3D11CreateDevice(
-                    nullptr,
-                    D3D_DRIVER_TYPE_WARP,
-                    nullptr,
-                    D3DDeviceFlags,
-                    featureLevels + 1,
-                    ARRAYSIZE(featureLevels) - 1,
-                    D3D11_SDK_VERSION,
-                    &device,
-                    outFeatureLevel,
-                    nullptr);
-            }
-
-            return SUCCEEDED(hr) ? device : nullptr;
-        }
-
-        IDXGIDevice* GetDxgiDevice() {
-            D3D_FEATURE_LEVEL featureLevel{};
-            auto* d3dDevice = CreateD3DDevice(&featureLevel);
-            if (!d3dDevice) return nullptr;
-
-            IDXGIDevice* inputDxgiDevice{};
-            if (FAILED(d3dDevice->QueryInterface(IID_PPV_ARGS(&inputDxgiDevice)))) {
-                Direct2D::SafeRelease(d3dDevice);
-                return nullptr;
-            }
-
-            ID2D1Factory3* factory{};
-            if (FAILED(D2D1CreateFactory(
-                    D2D1_FACTORY_TYPE_SINGLE_THREADED,
-                    IID_PPV_ARGS(&factory)))) {
-                Direct2D::SafeRelease(inputDxgiDevice);
-                Direct2D::SafeRelease(d3dDevice);
-                return nullptr;
-            }
-
-            ID2D1Device2* d2dDevice{};
-            if (FAILED(factory->CreateDevice(inputDxgiDevice, &d2dDevice))) {
-                Direct2D::SafeRelease(factory);
-                Direct2D::SafeRelease(inputDxgiDevice);
-                Direct2D::SafeRelease(d3dDevice);
-                return nullptr;
-            }
-
-            IDXGIDevice* outputDxgiDevice{};
-            const auto hr = d2dDevice->GetDxgiDevice(&outputDxgiDevice);
-
-            Direct2D::SafeRelease(d2dDevice);
-            Direct2D::SafeRelease(factory);
-            Direct2D::SafeRelease(inputDxgiDevice);
-            Direct2D::SafeRelease(d3dDevice);
-            if (FAILED(hr)) {
-                Direct2D::SafeRelease(outputDxgiDevice);
-                return nullptr;
-            }
-            return outputDxgiDevice;
-        }
-
-        std::string QueryDxgiDeviceInfo() {
-            auto* dxgiDevice = GetDxgiDevice();
-            if (!dxgiDevice) return "Direct2D (DXGI device unavailable)";
-
-            IDXGIAdapter* adapter{};
-            if (FAILED(dxgiDevice->GetAdapter(&adapter))) {
-                Direct2D::SafeRelease(dxgiDevice);
-                return "Direct2D (DXGI adapter unavailable)";
-            }
-
-            DXGI_ADAPTER_DESC desc{};
-            const auto hr = adapter->GetDesc(&desc);
-            Direct2D::SafeRelease(adapter);
-            Direct2D::SafeRelease(dxgiDevice);
-
-            if (FAILED(hr)) return "Direct2D (DXGI adapter info unavailable)";
-
-            const auto description = WideToUtf8(desc.Description);
-            if (description.empty()) return "Direct2D (unnamed DXGI adapter)";
-
-            return std::format(
-                "{} (vendor 0x{:04X}, device 0x{:04X})",
-                description,
-                desc.VendorId,
-                desc.DeviceId);
-        }
-
-        std::string QueryDirect2DDllVersion() {
+        std::string QuerySystemDllVersion(const wchar_t* dllName, const char* label) {
             wchar_t systemDirectory[MAX_PATH]{};
             const auto length = GetSystemDirectoryW(systemDirectory, ARRAYSIZE(systemDirectory));
             if (length == 0 || length >= ARRAYSIZE(systemDirectory)) {
-                return "Direct2D d2d1.dll version unavailable";
+                return std::format("{} version unavailable", label);
             }
 
-            const std::wstring dllPath = std::wstring(systemDirectory) + L"\\d2d1.dll";
+            const std::wstring dllPath = std::wstring(systemDirectory) + L"\\" + dllName;
             DWORD handle{};
             const auto infoSize = GetFileVersionInfoSizeW(dllPath.c_str(), &handle);
             if (infoSize == 0) {
-                return "Direct2D d2d1.dll version unavailable";
+                return std::format("{} version unavailable", label);
             }
 
             std::vector<std::uint8_t> versionInfo(infoSize);
             if (!GetFileVersionInfoW(dllPath.c_str(), handle, infoSize, versionInfo.data())) {
-                return "Direct2D d2d1.dll version unavailable";
+                return std::format("{} version unavailable", label);
             }
 
             VS_FIXEDFILEINFO* fixedFileInfo{};
@@ -176,15 +46,22 @@ namespace Madokawaii::Platform::Graphics {
                     &fixedFileInfoSize)
                 || fixedFileInfoSize < sizeof(VS_FIXEDFILEINFO)
                 || fixedFileInfo->dwSignature != 0xfeef04bd) {
-                return "Direct2D d2d1.dll version unavailable";
+                return std::format("{} version unavailable", label);
             }
 
             return std::format(
-                "Direct2D d2d1.dll {}.{}.{}.{}",
+                "{} {}.{}.{}.{}",
+                label,
                 HIWORD(fixedFileInfo->dwFileVersionMS),
                 LOWORD(fixedFileInfo->dwFileVersionMS),
                 HIWORD(fixedFileInfo->dwFileVersionLS),
                 LOWORD(fixedFileInfo->dwFileVersionLS));
+        }
+
+        std::string QueryBackendDllVersion() {
+            return QuerySystemDllVersion(
+                Direct2D::ImplementationDllName(),
+                Direct2D::ImplementationLabel());
         }
 
         IDWriteTextFormat* CreateDefaultTextFormat(float fontSize) {
@@ -208,12 +85,12 @@ namespace Madokawaii::Platform::Graphics {
     }
 
     std::string GetImplementer() {
-        static const auto implementer = QueryDxgiDeviceInfo();
-        return implementer;
+        Direct2D::PlatformState& state = Direct2D::GetState();
+        return state.implementerInfo;
     }
 
     std::string GetImplementationInfo() {
-        static const auto implementationInfo = QueryDirect2DDllVersion();
+        static const auto implementationInfo = QueryBackendDllVersion();
         return implementationInfo;
     }
 

@@ -5,10 +5,43 @@
 #include "direct2d_platform.hpp"
 
 #include <algorithm>
+#include <format>
 #include <thread>
 
+#include <d2d1_1helper.h>
 #include <d2d1helper.h>
 #include <windowsx.h>
+#include <WRL/client.h>
+
+// The required symbols are in dxgi1_5.h. Developers can define those symbols if they are missing in their SDK.
+
+#if defined(__has_include)
+#if __has_include(<dxgi1_5.h>)
+#include <dxgi1_5.h>
+#endif
+#endif
+
+#ifndef DXGI_PRESENT_ALLOW_TEARING
+#define DXGI_PRESENT_ALLOW_TEARING          0x00000200UL
+#define DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING  2048
+
+typedef
+enum DXGI_FEATURE
+{
+    DXGI_FEATURE_PRESENT_ALLOW_TEARING = 0
+} DXGI_FEATURE;
+
+MIDL_INTERFACE("7632e1f5-ee65-4dca-87fd-84cd75f8838d")
+IDXGIFactory5 : public IDXGIFactory4
+{
+    public:
+    virtual HRESULT STDMETHODCALLTYPE CheckFeatureSupport(
+                       DXGI_FEATURE Feature,
+                      _Inout_updates_bytes_(FeatureSupportDataSize) void *pFeatureSupportData,
+                       UINT FeatureSupportDataSize) = 0;
+};
+#endif
+
 
 namespace Madokawaii::Platform::Direct2D {
     namespace {
@@ -113,6 +146,339 @@ namespace Madokawaii::Platform::Direct2D {
         std::uint8_t EffectiveAlpha(Graphics::Color color) {
             return color.a;
         }
+
+        void CheckTearingSupport() {
+            PlatformState& state = GetState();
+
+            Microsoft::WRL::ComPtr<IDXGIFactory4> factory4;
+            HRESULT hr = CreateDXGIFactory1(IID_PPV_ARGS(&factory4));
+            BOOL allowTearing = FALSE;
+            if (SUCCEEDED(hr))
+            {
+                Microsoft::WRL::ComPtr<IDXGIFactory5> factory5;
+                hr = factory4.As(&factory5);
+                if (SUCCEEDED(hr))
+                {
+                    hr = factory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing));
+                }
+            }
+            state.isTearingSupport = SUCCEEDED(hr) && allowTearing;
+        }
+
+        UINT CurrentSwapChainFlags() {
+            return GetState().isTearingSupport ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
+        }
+
+        UINT CurrentPresentFlags() {
+            const auto& state = GetState();
+            return (state.isTearingSupport && !state.fullscreen) ? DXGI_PRESENT_ALLOW_TEARING : 0;
+        }
+
+        bool IsDeviceLostResult(HRESULT hr) {
+            return hr == DXGI_ERROR_DEVICE_REMOVED
+                || hr == DXGI_ERROR_DEVICE_RESET
+                || hr == DXGI_ERROR_DRIVER_INTERNAL_ERROR;
+        }
+
+        std::string DescribeAdapter(IDXGIAdapter* adapter, const char* backendName) {
+            if (!adapter) {
+                return std::format("{} (DXGI adapter unavailable)", backendName);
+            }
+
+            DXGI_ADAPTER_DESC desc{};
+            const auto hr = adapter->GetDesc(&desc);
+            if (FAILED(hr)) {
+                return std::format("{} (DXGI adapter info unavailable)", backendName);
+            }
+
+            const auto description = WideToUtf8(desc.Description);
+            if (description.empty()) {
+                return std::format("{} (unnamed DXGI adapter)", backendName);
+            }
+
+            return std::format(
+                "{} on {} (vendor 0x{:04X}, device 0x{:04X})",
+                backendName,
+                description,
+                desc.VendorId,
+                desc.DeviceId);
+        }
+
+        HRESULT CreateD3DDevice(
+            ID3D11Device** outDevice,
+            D3D_FEATURE_LEVEL* outFeatureLevel,
+            ID3D11DeviceContext** outContext) {
+            const D3D_FEATURE_LEVEL featureLevels[] = {
+                D3D_FEATURE_LEVEL_11_1,
+                D3D_FEATURE_LEVEL_11_0,
+                D3D_FEATURE_LEVEL_10_1,
+                D3D_FEATURE_LEVEL_10_0,
+                D3D_FEATURE_LEVEL_9_3,
+                D3D_FEATURE_LEVEL_9_2,
+                D3D_FEATURE_LEVEL_9_1,
+            };
+
+            constexpr UINT deviceFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
+
+            HRESULT hr = D3D11CreateDevice(
+                nullptr,
+                D3D_DRIVER_TYPE_HARDWARE,
+                nullptr,
+                deviceFlags,
+                featureLevels,
+                ARRAYSIZE(featureLevels),
+                D3D11_SDK_VERSION,
+                outDevice,
+                outFeatureLevel,
+                outContext);
+
+            if (hr == E_INVALIDARG) {
+                hr = D3D11CreateDevice(
+                    nullptr,
+                    D3D_DRIVER_TYPE_HARDWARE,
+                    nullptr,
+                    deviceFlags,
+                    featureLevels + 1,
+                    ARRAYSIZE(featureLevels) - 1,
+                    D3D11_SDK_VERSION,
+                    outDevice,
+                    outFeatureLevel,
+                    outContext);
+            }
+
+            if (FAILED(hr)) {
+                SafeRelease(*outContext);
+                SafeRelease(*outDevice);
+
+                hr = D3D11CreateDevice(
+                    nullptr,
+                    D3D_DRIVER_TYPE_WARP,
+                    nullptr,
+                    deviceFlags,
+                    featureLevels + 1,
+                    ARRAYSIZE(featureLevels) - 1,
+                    D3D11_SDK_VERSION,
+                    outDevice,
+                    outFeatureLevel,
+                    outContext);
+            }
+
+            CheckTearingSupport();
+            return hr;
+        }
+
+        void ReleaseSwapChainTarget(PlatformState& state) {
+            if (state.renderTarget) {
+                state.renderTarget->SetTarget(nullptr);
+            }
+            SafeRelease(state.targetBitmap);
+        }
+
+        void ReleaseDeviceResources(PlatformState& state) {
+            ReleaseSwapChainTarget(state);
+            SafeRelease(state.swapChain);
+            SafeRelease(state.renderTarget);
+            SafeRelease(state.d2dDevice);
+            SafeRelease(state.dxgiFactory);
+            SafeRelease(state.d3dContext);
+            SafeRelease(state.d3dDevice);
+            state.featureLevel = {};
+            state.implementerInfo.clear();
+        }
+
+        bool EnsureDeviceResources() {
+            auto& state = GetState();
+            if (state.d3dDevice
+                && state.d3dContext
+                && state.dxgiFactory
+                && state.d2dDevice
+                && state.renderTarget) {
+                return true;
+            }
+
+            ReleaseDeviceResources(state);
+            if (!EnsureFactories()) return false;
+
+            if (FAILED(CreateD3DDevice(&state.d3dDevice, &state.featureLevel, &state.d3dContext))) {
+                ReleaseDeviceResources(state);
+                return false;
+            }
+
+            IDXGIDevice* dxgiDevice{};
+            IDXGIAdapter* adapter{};
+            if (FAILED(state.d3dDevice->QueryInterface(IID_PPV_ARGS(&dxgiDevice)))
+                || FAILED(dxgiDevice->GetAdapter(&adapter))
+                || FAILED(adapter->GetParent(IID_PPV_ARGS(&state.dxgiFactory)))
+                || FAILED(state.d2dFactory->CreateDevice(dxgiDevice, &state.d2dDevice))
+                || FAILED(state.d2dDevice->CreateDeviceContext(
+                    D2D1_DEVICE_CONTEXT_OPTIONS_NONE,
+                    &state.renderTarget))) {
+                SafeRelease(adapter);
+                SafeRelease(dxgiDevice);
+                ReleaseDeviceResources(state);
+                return false;
+            }
+
+            std::string implementer;
+            if (!dxgiDevice) implementer = "Direct2D (DXGI device unavailable)";
+            else {
+                implementer = DescribeAdapter(adapter, "Direct2D");
+            }
+
+            state.implementerInfo = implementer;
+            SafeRelease(adapter);
+            SafeRelease(dxgiDevice);
+            state.renderTarget->SetUnitMode(D2D1_UNIT_MODE_PIXELS);
+            return true;
+        }
+
+        bool EnsureSwapChain() {
+            auto& state = GetState();
+            if (state.swapChain) return true;
+            if (!state.window || !EnsureDeviceResources()) return false;
+
+            DXGI_SWAP_CHAIN_DESC1 swapChainDesc{};
+            swapChainDesc.Width = static_cast<UINT>(std::max(1, state.screenWidth));
+            swapChainDesc.Height = static_cast<UINT>(std::max(1, state.screenHeight));
+            swapChainDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+            swapChainDesc.Stereo = FALSE;
+            swapChainDesc.SampleDesc.Count = 1;
+            swapChainDesc.SampleDesc.Quality = 0;
+            swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+            swapChainDesc.BufferCount = SwapChainBufferCount;
+            swapChainDesc.Scaling = DXGI_SCALING_STRETCH;
+            swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+            swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
+            swapChainDesc.Flags = CurrentSwapChainFlags();
+
+            HRESULT hr = state.dxgiFactory->CreateSwapChainForHwnd(
+                state.d3dDevice,
+                state.window,
+                &swapChainDesc,
+                nullptr,
+                nullptr,
+                &state.swapChain);
+
+            if (FAILED(hr)) {
+                SafeRelease(state.swapChain);
+                swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
+                hr = state.dxgiFactory->CreateSwapChainForHwnd(
+                    state.d3dDevice,
+                    state.window,
+                    &swapChainDesc,
+                    nullptr,
+                    nullptr,
+                    &state.swapChain);
+            }
+
+            if (FAILED(hr)) {
+                SafeRelease(state.swapChain);
+                return false;
+            }
+
+            state.dxgiFactory->MakeWindowAssociation(state.window, DXGI_MWA_NO_ALT_ENTER);
+            return true;
+        }
+
+        bool EnsureSwapChainTarget() {
+            auto& state = GetState();
+            if (state.targetBitmap) return true;
+            if (!EnsureSwapChain()) return false;
+
+            IDXGISurface* backBuffer{};
+            if (FAILED(state.swapChain->GetBuffer(0, IID_PPV_ARGS(&backBuffer)))) {
+                return false;
+            }
+
+            const auto bitmapProperties = D2D1::BitmapProperties1(
+                D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
+                D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE),
+                96.0f,
+                96.0f);
+
+            const HRESULT hr = state.renderTarget->CreateBitmapFromDxgiSurface(
+                backBuffer,
+                &bitmapProperties,
+                &state.targetBitmap);
+            SafeRelease(backBuffer);
+            if (FAILED(hr)) return false;
+
+            state.renderTarget->SetTarget(state.targetBitmap);
+            state.renderTarget->SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
+            state.renderTarget->SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_CLEARTYPE);
+            state.currentTransform = D2D1::Matrix3x2F::Identity();
+            state.renderTarget->SetTransform(state.currentTransform);
+            return true;
+        }
+
+        bool BeginNativeFrame(PlatformState&) {
+            return true;
+        }
+
+        bool EnsureNativeRenderTarget(PlatformState&) {
+            return EnsureSwapChainTarget();
+        }
+
+        void EndNativeFrameBeforePresent(PlatformState&) {
+        }
+
+        void AfterNativePresent(PlatformState&, HRESULT) {
+        }
+
+        void ResizeNativeRenderTarget(PlatformState& state, int width, int height) {
+            state.screenWidth = std::max(1, width);
+            state.screenHeight = std::max(1, height);
+
+            if (!state.swapChain) {
+                return;
+            }
+
+            ReleaseSwapChainTarget(state);
+            const HRESULT hr = state.swapChain->ResizeBuffers(
+                0,
+                static_cast<UINT>(state.screenWidth),
+                static_cast<UINT>(state.screenHeight),
+                DXGI_FORMAT_UNKNOWN,
+                CurrentSwapChainFlags());
+
+            if (IsDeviceLostResult(hr)) {
+                ReleaseDeviceResources(state);
+            } else if (SUCCEEDED(hr)) {
+                EnsureSwapChainTarget();
+            }
+        }
+
+        const wchar_t* NativeImplementationDllName() {
+            return L"d2d1.dll";
+        }
+
+        const char* NativeImplementationLabel() {
+            return "Direct2D (DirectX 11)";
+        }
+
+        const RenderBackend& NativeRenderBackend() {
+            static const RenderBackend backend{
+                EnsureNativeRenderTarget,
+                ReleaseSwapChainTarget,
+                ReleaseDeviceResources,
+                BeginNativeFrame,
+                EndNativeFrameBeforePresent,
+                AfterNativePresent,
+                ResizeNativeRenderTarget,
+                NativeImplementationDllName,
+                NativeImplementationLabel
+            };
+            return backend;
+        }
+
+        const RenderBackend*& ActiveRenderBackendSlot() {
+            static const RenderBackend* backend = &NativeRenderBackend();
+            return backend;
+        }
+
+        const RenderBackend& ActiveRenderBackend() {
+            return *ActiveRenderBackendSlot();
+        }
     }
 
     TextureData::~TextureData() {
@@ -131,11 +497,39 @@ namespace Madokawaii::Platform::Direct2D {
         return gState;
     }
 
+    void SetRenderBackend(const RenderBackend* backend) {
+        ActiveRenderBackendSlot() = backend ? backend : &NativeRenderBackend();
+    }
+
+    std::string FormatAdapterInfo(IDXGIAdapter* adapter, const char* backendName) {
+        return DescribeAdapter(adapter, backendName);
+    }
+
+    bool IsDeviceLost(HRESULT hr) {
+        return IsDeviceLostResult(hr);
+    }
+
+    UINT SwapChainFlags() {
+        return CurrentSwapChainFlags();
+    }
+
+    const wchar_t* ImplementationDllName() {
+        return ActiveRenderBackend().implementationDllName();
+    }
+
+    const char* ImplementationLabel() {
+        return ActiveRenderBackend().implementationLabel();
+    }
+
     bool EnsureFactories() {
         auto& state = GetState();
 
         if (!state.d2dFactory) {
-            if (FAILED(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &state.d2dFactory))) {
+            if (FAILED(D2D1CreateFactory(
+                    D2D1_FACTORY_TYPE_SINGLE_THREADED,
+                    __uuidof(ID2D1Factory1),
+                    nullptr,
+                    reinterpret_cast<void**>(&state.d2dFactory)))) {
                 return false;
             }
         }
@@ -164,42 +558,17 @@ namespace Madokawaii::Platform::Direct2D {
 
     bool EnsureRenderTarget() {
         auto& state = GetState();
-        if (state.renderTarget) return true;
-        if (!state.window || !EnsureFactories()) return false;
+        if (!state.window) return false;
 
         RECT rc{};
         GetClientRect(state.window, &rc);
-        const auto size = D2D1::SizeU(
-            static_cast<UINT32>(std::max<LONG>(1, rc.right - rc.left)),
-            static_cast<UINT32>(std::max<LONG>(1, rc.bottom - rc.top)));
+        state.screenWidth = static_cast<int>(std::max<LONG>(1, rc.right - rc.left));
+        state.screenHeight = static_cast<int>(std::max<LONG>(1, rc.bottom - rc.top));
 
-        const auto renderTargetProperties = D2D1::RenderTargetProperties(
-            D2D1_RENDER_TARGET_TYPE_DEFAULT,
-            D2D1::PixelFormat(DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED),
-            0.0f,
-            0.0f,
-            D2D1_RENDER_TARGET_USAGE_NONE,
-            D2D1_FEATURE_LEVEL_DEFAULT);
-
-        const auto hwndProperties = D2D1::HwndRenderTargetProperties(
-            state.window,
-            size,
-            D2D1_PRESENT_OPTIONS_IMMEDIATELY);
-
-        if (FAILED(state.d2dFactory->CreateHwndRenderTarget(
-                renderTargetProperties,
-                hwndProperties,
-                &state.renderTarget))) {
-            return false;
-        }
-
-        state.renderTarget->SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
-        state.renderTarget->SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_CLEARTYPE);
-        state.currentTransform = D2D1::Matrix3x2F::Identity();
-        return true;
+        return ActiveRenderBackend().ensureRenderTarget(state);
     }
 
-    ID2D1HwndRenderTarget* RenderTarget() {
+    ID2D1DeviceContext* RenderTarget() {
         return EnsureRenderTarget() ? GetState().renderTarget : nullptr;
     }
 
@@ -248,13 +617,13 @@ namespace Madokawaii::Platform::Direct2D {
         ShowWindow(state.window, SW_SHOW);
         UpdateWindow(state.window);
 
-        return EnsureRenderTarget();
+        return true;
     }
 
     void ShutdownWindow() {
         auto& state = GetState();
 
-        SafeRelease(state.renderTarget);
+        ActiveRenderBackend().releaseDeviceResources(state);
         SafeRelease(state.wicFactory);
         SafeRelease(state.writeFactory);
         SafeRelease(state.d2dFactory);
@@ -284,6 +653,7 @@ namespace Madokawaii::Platform::Direct2D {
         UpdateFrameStats();
 
         if (!EnsureRenderTarget()) return;
+        if (!ActiveRenderBackend().beginFrame(state)) return;
 
         state.drawing = true;
         state.transformStack.clear();
@@ -294,17 +664,28 @@ namespace Madokawaii::Platform::Direct2D {
 
     void EndFrame() {
         auto& state = GetState();
-        if (!state.renderTarget || !state.drawing) {
+        if (!state.renderTarget || !state.swapChain || !state.drawing) {
             ResetTransientInput();
             return;
         }
 
         const auto beforePresent = std::chrono::steady_clock::now();
-        const HRESULT hr = state.renderTarget->EndDraw();
+        const HRESULT drawResult = state.renderTarget->EndDraw();
         state.drawing = false;
 
-        if (hr == D2DERR_RECREATE_TARGET) {
-            SafeRelease(state.renderTarget);
+        ActiveRenderBackend().endFrameBeforePresent(state);
+
+        HRESULT presentResult = S_OK;
+        if (SUCCEEDED(drawResult)) {
+            presentResult = state.swapChain->Present(0, CurrentPresentFlags());
+        }
+
+        if (drawResult == D2DERR_RECREATE_TARGET) {
+            ActiveRenderBackend().releaseSwapChainTarget(state);
+        } else if (IsDeviceLostResult(drawResult) || IsDeviceLostResult(presentResult)) {
+            ActiveRenderBackend().releaseDeviceResources(state);
+        } else {
+            ActiveRenderBackend().afterPresent(state, presentResult);
         }
 
         ResetTransientInput();
@@ -321,13 +702,7 @@ namespace Madokawaii::Platform::Direct2D {
 
     void ResizeRenderTarget(int width, int height) {
         auto& state = GetState();
-        state.screenWidth = std::max(1, width);
-        state.screenHeight = std::max(1, height);
-        if (state.renderTarget) {
-            state.renderTarget->Resize(D2D1::SizeU(
-                static_cast<UINT32>(state.screenWidth),
-                static_cast<UINT32>(state.screenHeight)));
-        }
+        ActiveRenderBackend().resizeRenderTarget(state, width, height);
     }
 
     void ToggleFullscreenWindow() {

@@ -16,6 +16,7 @@ if(NOT DEFINED implementer)
 endif()
 
 message(STATUS "implementer: ${implementer}")
+string(TOUPPER "${implementer}" implementer_upper)
 
 set(SRC_APP
         src/app/main.cpp
@@ -54,6 +55,11 @@ set(SRC_IMP_DIRECT2D
         src/platform/direct2d/direct2d_gui.cpp
 )
 
+set(SRC_IMP_D3D11ON12
+        src/platform/d3d11on12/d3d11on12_platform.cpp
+        ${SRC_IMP_DIRECT2D}
+)
+
 # 图一乐
 set(SRC_IMP_GDIPLUS
         src/platform/direct2d/direct2d_platform.cpp
@@ -75,7 +81,7 @@ set(SRC_AUDIO_IMP_FMOD
         src/platform/fmod/fmod_audio.cpp
 )
 
-if(implementer STREQUAL "RAYLIB")
+if(implementer_upper STREQUAL "RAYLIB")
     find_package(raylib CONFIG REQUIRED)
     add_executable(Madokawaii
             ${SRC_APP}
@@ -107,7 +113,7 @@ else()
     message(STATUS "Fmod lib path: ${fmod_lib_path}")
     message(STATUS "Fmod dll path: ${fmod_dll_path}")
     message(STATUS "Fmod logo path: ${fmod_logo_path}")
-    if(implementer STREQUAL "DIRECT2D")
+    if(implementer_upper STREQUAL "DIRECT2D")
         if(NOT WIN32)
             message(FATAL_ERROR "DIRECT2D implementer is only available on Windows")
         endif()
@@ -146,7 +152,47 @@ else()
                 yaml
                 libzip::zip
                 libzippp::libzippp)
-    elseif(implementer STREQUAL "GDIPLUS")
+    elseif(implementer_upper STREQUAL "D3D11ON12")
+        if(NOT WIN32)
+            message(FATAL_ERROR "D3D11ON12 implementer is only available on Windows")
+        endif()
+        add_executable(Madokawaii
+                ${SRC_APP}
+                ${SRC_IMP_D3D11ON12}
+                ${SRC_AUDIO_IMP_FMOD})
+        if(MSVC)
+            target_compile_options(Madokawaii PRIVATE /utf-8)
+        else()
+            message(FATAL_ERROR "D3D11ON12 backend can only be compiled via MSVC.")
+        endif()
+        target_compile_definitions(Madokawaii PRIVATE
+                WIN32_LEAN_AND_MEAN
+                NOMINMAX
+                _CRT_SECURE_NO_WARNINGS)
+        target_include_directories(Madokawaii PRIVATE
+                ${CMAKE_CURRENT_SOURCE_DIR}/src/platform/fmod/inc)
+        target_link_libraries(Madokawaii PRIVATE
+                ${fmod_lib_path}
+                d2d1
+                dwrite
+                windowscodecs
+                d3d12
+                d3d11
+                dxgi
+                dxguid
+                ole32
+                uuid
+                version
+                comdlg32
+                shell32
+                user32
+                gdi32
+                RapidJSON
+                rapidjson
+                yaml
+                libzip::zip
+                libzippp::libzippp)
+    elseif(implementer_upper STREQUAL "GDIPLUS")
         if(NOT WIN32)
             message(FATAL_ERROR "GDIPLUS implementer is only available on Windows")
         endif()
@@ -170,6 +216,9 @@ else()
                 d2d1
                 dwrite
                 windowscodecs
+                d3d11
+                dxgi
+                dxguid
                 ole32
                 uuid
                 comdlg32

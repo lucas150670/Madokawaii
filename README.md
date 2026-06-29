@@ -67,6 +67,7 @@ Madokawaii/
     └── platform        # platfor-specific code
        ├── raylib       # reference implementaion based on raylib
        ├── direct2d     # Direct2D Windows backend
+       ├── d3d11on12    # experimental DirectX 12 support, based on D3D11on12 and Direct2D backend.
        ├── gdiplus      # i can't think of any reason to enable this component unless you have CP.
        ├── fmod         # experimental FMOD audio backend
        └── (other potential platforms)

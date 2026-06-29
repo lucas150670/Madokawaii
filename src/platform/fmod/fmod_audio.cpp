@@ -20,7 +20,7 @@ namespace Madokawaii::Platform::Audio {
     static double lastAudioTime = 0.0;
     static std::chrono::steady_clock::time_point lastSystemTime;
 
-    FMOD_RESULT F_CALLBACK FModDebugCallback(
+    FMOD_RESULT F_CALL FModDebugCallback(
         FMOD_DEBUG_FLAGS flags,
         const char *file,
         int line,
@@ -52,7 +52,7 @@ namespace Madokawaii::Platform::Audio {
         bool is_playing = false;
     };
 
-    FMOD_RESULT F_CALLBACK FModSfxPlaybackEndCallback(
+    FMOD_RESULT F_CALL FModSfxPlaybackEndCallback(
         FMOD_CHANNELCONTROL *channelcontrol,
         FMOD_CHANNELCONTROL_TYPE controltype,
         FMOD_CHANNELCONTROL_CALLBACK_TYPE callbacktype,
@@ -78,7 +78,7 @@ namespace Madokawaii::Platform::Audio {
     }
 
     std::string GetAudioEngineAttributionInfo() {
-        return "Audio Engine: FMOD Studio by Firelight Technologies Pty Ltd.";
+        return "Made using FMOD Studio by Firelight Technologies Pty Ltd.";
     }
 
     std::string GetAudioEngineLogoPath() {
