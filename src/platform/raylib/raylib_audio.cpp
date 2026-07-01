@@ -35,6 +35,10 @@ namespace Madokawaii::Platform::Audio {
         return "";
     }
 
+    std::string GetAudioEngineImplementer() {
+        return "raudio";
+    }
+
     void InitAudioDevice() { ::InitAudioDevice(); }
 
     void CloseAudioDevice() { ::CloseAudioDevice(); }

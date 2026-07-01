@@ -406,7 +406,6 @@ void GuiWindowFileDialog(GuiWindowFileDialogState* state)
 
             // Reset state variables
             state->dirFiles.count = 0;
-            state->dirFiles.capacity = 0;
             state->dirFiles.paths = NULL;
         }
     }

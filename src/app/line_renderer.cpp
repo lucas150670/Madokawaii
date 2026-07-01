@@ -63,13 +63,16 @@ void RenderDebugInfo(const AppContext& context) {
 
     const auto glVersion = Madokawaii::Platform::Graphics::GetImplementationInfo();
     const auto glRenderer = Madokawaii::Platform::Graphics::GetImplementer();
+    const auto audioRenderer = Madokawaii::Platform::Audio::GetAudioEngineImplementer();
 
     auto dbgStr = std::format("Implementer: {}", glRenderer);
     Madokawaii::Platform::Graphics::DrawText(dbgStr.c_str(), 190 * scale, 170 * scale, 20 * scale, Madokawaii::Platform::Graphics::M_LIGHTGRAY);
     dbgStr = std::format("Implementation Version: {}", glVersion);
     Madokawaii::Platform::Graphics::DrawText(dbgStr.c_str(), 190 * scale, 200 * scale, 20 * scale, Madokawaii::Platform::Graphics::M_LIGHTGRAY);
-    dbgStr = std::format("FPS: {}, FrameTime: {}s", Madokawaii::Platform::Graphics::GetFPS(), Madokawaii::Platform::Graphics::GetFrameTime());
+    dbgStr = std::format("Audio: {}", audioRenderer);
     Madokawaii::Platform::Graphics::DrawText(dbgStr.c_str(), 190 * scale, 230 * scale, 20 * scale, Madokawaii::Platform::Graphics::M_LIGHTGRAY);
+    dbgStr = std::format("FPS: {}, FrameTime: {}s", Madokawaii::Platform::Graphics::GetFPS(), Madokawaii::Platform::Graphics::GetFrameTime());
+    Madokawaii::Platform::Graphics::DrawText(dbgStr.c_str(), 190 * scale, 260 * scale, 20 * scale, Madokawaii::Platform::Graphics::M_LIGHTGRAY);
 }
 
 } // namespace Madokawaii::App::Line

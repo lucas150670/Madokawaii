@@ -12,6 +12,7 @@ namespace Madokawaii::Platform::Audio {
     bool AudioEngineNeedAttribution();
     std::string GetAudioEngineAttributionInfo();
     std::string GetAudioEngineLogoPath();
+    std::string GetAudioEngineImplementer();
 
     void InitAudioDevice();
     void CloseAudioDevice();

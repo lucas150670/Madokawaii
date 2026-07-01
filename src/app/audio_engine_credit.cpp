@@ -21,7 +21,7 @@ namespace {
     }
 
     void Initialize(AppContext& ctx) {
-        auto& state = ctx.ui.fmodCredit;
+        auto& state = ctx.ui.audioEngineCredit;
         if (state.initialized) return;
 
         state.initialized = true;
@@ -57,12 +57,12 @@ namespace {
 
     void Complete(AppContext& ctx) {
         Unload(ctx);
-        ctx.ui.fmodCreditCompleted = true;
+        ctx.ui.audioEngineCreditCompleted = true;
     }
 }
 
 void Unload(AppContext& ctx) {
-    auto& state = ctx.ui.fmodCredit;
+    auto& state = ctx.ui.audioEngineCredit;
     if (state.logoTexture.implementationDefinedData) {
         Platform::Graphics::Texture::UnloadTexture(state.logoTexture);
         state.logoTexture = {};
@@ -70,16 +70,16 @@ void Unload(AppContext& ctx) {
 }
 
 int Iterate(AppContext& ctx) {
-    if (ctx.ui.fmodCreditCompleted) {
+    if (ctx.ui.audioEngineCreditCompleted) {
         return !Platform::Core::WindowShouldClose();
     }
 
     if (!Platform::Audio::AudioEngineNeedAttribution()) {
-        ctx.ui.fmodCreditCompleted = true;
+        ctx.ui.audioEngineCreditCompleted = true;
         return !Platform::Core::WindowShouldClose();
     }
 
-    auto& state = ctx.ui.fmodCredit;
+    auto& state = ctx.ui.audioEngineCredit;
     Initialize(ctx);
 
     state.elapsedTime += Platform::Graphics::GetFrameTime();

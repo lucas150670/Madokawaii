@@ -85,6 +85,10 @@ namespace Madokawaii::Platform::Audio {
         return "assets/fmod.png";
     }
 
+    std::string GetAudioEngineImplementer() {
+        return "FMOD Core";
+    }
+
     void InitAudioDevice()
     {
         FMOD::Debug_Initialize(FMOD_DEBUG_LEVEL_LOG,

@@ -70,6 +70,7 @@ Madokawaii/
        ├── d3d11on12    # experimental DirectX 12 support, based on D3D11on12 and Direct2D backend.
        ├── gdiplus      # i can't think of any reason to enable this component unless you have CP.
        ├── fmod         # experimental FMOD audio backend
+       ├── cri          # experimental CRI ADX LE audio backend
        └── (other potential platforms)
 ├── README.md           # readme
 └── CMakeLists.txt      # cmake config
@@ -77,7 +78,10 @@ Madokawaii/
 
 Notice: 
 - the gdiplus backend is solely rendered on CPU and has a very bad performance, approximately 1/30 of Direct2D and 1/60 of raylib, and may have lots of bugs.
+- both FMOD and CRI ADX LE are proprietary sdks. their corresponding files are excluded from version control via `.gitigore`.
 - to access FMOD audio backend, you need to have a valid FMOD license, and access to FMOD Core SDK. put the fmod dependencies in src/platform/fmod/inc, src/platform/fmod/lib/$ARCH, see [CMakeLists.txt](CMakeLists.txt).
+- to access CRI ADX LE backend, you need to comply with [LICENSE AGREEMENT FOR CRI ADX LE](https://game.criware.jp/products/adx-le/terms/), then download the ADX LE Native SDK on [CRI ADX LE](https://game.criware.jp/products/adx-le/). put the whole SDK under src/platform/cri.
+- both FMOD and CRI ADX LE requires attribution screen before startup. to comply with their license agreement, download their logo on their official website, then put it in the corresponding directory in [CMakeLists.txt](CMakeLists.txt). the build system will copy them to the designated asset folder.
 
 ---
 

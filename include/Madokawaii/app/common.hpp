@@ -72,8 +72,8 @@ struct GameplayState {
 };
 
 struct UiState {
-    AudioEngineCreditState fmodCredit{};
-    bool fmodCreditCompleted{false};
+    AudioEngineCreditState audioEngineCredit{};
+    bool audioEngineCreditCompleted{false};
     WarningState warning{};
     bool warningShown{false};
     MainMenu::MainMenuState menu{};

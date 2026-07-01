@@ -185,3 +185,10 @@ subproject/
 src/platform/fmod/inc/
 src/platform/fmod/lib/
 src/platform/fmod/fmod.png
+
+# CRI ADX LE (proprietary sdk)
+src/platform/cri/common
+src/platform/cri/documentation
+src/platform/cri/pc
+src/platform/cri/readme_criadx2le_sdk_native_ja.html
+src/platform/cri/criware_logo01.png

@@ -183,7 +183,7 @@ int Initialize(void*& appstate) {
     appstate = new AppContext;
     auto& ctx = *static_cast<AppContext*>(appstate);
     Madokawaii::Platform::Audio::InitAudioDevice();
-    ctx.ui.fmodCreditCompleted = !Madokawaii::Platform::Audio::AudioEngineNeedAttribution();
+    ctx.ui.audioEngineCreditCompleted = !Madokawaii::Platform::Audio::AudioEngineNeedAttribution();
 
     auto [r, g, b, a] = ctx.config.GetPerfectColor();
     ctx.assets.perfectColor = {r, g, b, a};
@@ -409,7 +409,7 @@ int Iterate(void * appstate) {
     // 扩展 留下放结算画面和开始画面的接口
     auto& ctx = *static_cast<AppContext*>(appstate);
     if (!ctx.lifecycle.systemInitialized) return -1;
-    if (!ctx.ui.fmodCreditCompleted) return AudioEngineCredit::Iterate(ctx);
+    if (!ctx.ui.audioEngineCreditCompleted) return AudioEngineCredit::Iterate(ctx);
     // 先显示警告页面
     if (!ctx.ui.warningShown) return Warning::Iterate(ctx);// 显示主菜单
     if (!ctx.ui.menuCompleted) {

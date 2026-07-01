@@ -6,6 +6,7 @@
 // pec.cpp
 #include <algorithm>
 #include <cmath>
+#include <cstring>
 #include <functional>
 #include <memory>
 
