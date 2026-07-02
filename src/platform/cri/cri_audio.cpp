@@ -714,6 +714,7 @@ namespace Madokawaii::Platform::Audio {
         }
     }
 
+    // see https://game.criware.jp/products/adx-le/ for detailed info.
     bool AudioEngineNeedAttribution() {
         return true;
     }

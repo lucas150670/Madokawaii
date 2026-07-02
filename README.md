@@ -30,9 +30,10 @@ this project makes no guarantees regarding other backends' operational results.
 ### Prerequisite
 - cmake
 - vcpkg
-- raylib, rapidjson, libyaml, libzip, libzippp, fastio(2024-12-05, MIT) (managed by vcpkg)
+- raylib, rapidjson, libyaml, libzip, libzippp, fastio(2024-12-05, MIT) (managed by vcpkg manifest mode)
 - Windows SDK & DirectX SDK (when Direct2D backend enabled)
 - FMOD Core SDK (when FMOD audio backend enabled)
+- CRI ADX LE Native SDK, stb-vorbis, drlibs (when CRI audio backend enabled)
 - for Android project, see [here](https://github.com/lucas150670/Madokawaii_Android) 
 
 ## 📌 EXAMPLE
@@ -40,14 +41,14 @@ this project makes no guarantees regarding other backends' operational results.
 # Install vcpkg and dependencies
 git clone https://github.com/microsoft/vcpkg.git
 ./vcpkg/bootstrap-vcpkg.sh
-./vcpkg/vcpkg install raylib rapidjson libyaml libzip libzippp 
+./vcpkg/vcpkg integrate install
 # Build with cmake
 mkdir build && cd build
-# switch from render backends by defining implementer variable
-cmake .. -Dimplementer=RAYLIB -DCMAKE_TOOLCHAIN_FILE=/path/to/vcpkg/scripts/buildsystems/vcpkg.cmake
+# switch from render backends, audio backends by defining implementer variable
+cmake .. -Dimplementer=RAYLIB -Daudio_implementer=RAYLIB -DCMAKE_TOOLCHAIN_FILE=/path/to/vcpkg/scripts/buildsystems/vcpkg.cmake
 make
 # put assets/charts/chart.json,
-# assets/charts/music.wav,
+# assets/charts/music.ogg,
 # assets/charts/illustration.png,
 # assets/respack/default.zip 
 # in correct position.

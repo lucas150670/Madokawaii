@@ -1,0 +1,17 @@
+{
+  "name": "madokawaii",
+  "version": "0.1.0",
+  "dependencies": [
+    "raylib",
+    "rapidjson",
+    "libyaml",
+    "libzip",
+    "libzippp",
+    "fastio"
+  ],
+  "builtin-baseline": "1f5e0348089e8a9b187f57d42866ebc871e815da",
+  "overrides": [
+    { "name": "raylib", "version": "5.5", "port-version": 1 },
+    { "name": "fastio", "version": "2024-12-05", "port-version": 0 }
+  ]
+}
