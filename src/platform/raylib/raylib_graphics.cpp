@@ -8,6 +8,7 @@
 #include "Madokawaii/platform/graphics.hpp"
 #include <rlgl.h>
 #include <format>
+#include "../common/frame_stats.hpp"
 #include "raylib_runtime.hpp"
 
 namespace Madokawaii::Platform::Graphics {
@@ -27,11 +28,22 @@ namespace Madokawaii::Platform::Graphics {
 
     float GetFrameTime() { return ::GetFrameTime(); }
 
+    float GetOnePercentLowFPS()
+    {
+        const auto& runtime = Raylib::GetRuntimeInfo();
+        return Common::FrameStats::GetOnePercentLowFPS(runtime.frameTimes, runtime.frameCount);
+    }
+
     void SetTargetFPS(int target) { ::SetTargetFPS(target); }
 
     void BeginDrawing() { ::BeginDrawing(); }
 
-    void EndDrawing() { ::EndDrawing(); }
+    void EndDrawing() {
+        ::EndDrawing();
+
+        auto& runtime = Raylib::GetRuntimeInfo();
+        Common::FrameStats::RecordFrameTime(runtime.frameTimes, runtime.frameIndex, runtime.frameCount, ::GetFrameTime());
+    }
 
     void ClearBackground(Color_ c) { ::ClearBackground(RL(c)); }
 

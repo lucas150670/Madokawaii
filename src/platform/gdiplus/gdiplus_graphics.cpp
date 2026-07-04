@@ -43,6 +43,12 @@ namespace Madokawaii::Platform::Graphics {
         return GdiPlusBackend::GetState().frameTime;
     }
 
+    float GetOnePercentLowFPS()
+    {
+        const auto& state = GdiPlusBackend::GetState();
+        return Common::FrameStats::GetOnePercentLowFPS(state.frameTimeSamples, state.frameTimeSampleCount);
+    }
+
     void SetTargetFPS(int target) {
         GdiPlusBackend::SetTargetFrameRate(target);
     }

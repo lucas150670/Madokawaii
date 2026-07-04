@@ -133,6 +133,11 @@ namespace Madokawaii::Platform::Direct2D {
 
             state.frameTime = std::chrono::duration<float>(now - state.lastFrameTime).count();
             state.lastFrameTime = now;
+            Common::FrameStats::RecordFrameTime(
+                state.frameTimeSamples,
+                state.frameTimeSampleIndex,
+                state.frameTimeSampleCount,
+                state.frameTime);
 
             state.fpsFrameCounter++;
             const auto fpsWindowSeconds = std::chrono::duration<float>(now - state.fpsWindowStart).count();

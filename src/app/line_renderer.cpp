@@ -66,12 +66,13 @@ void RenderDebugInfo(const AppContext& context) {
     const auto audioRenderer = Madokawaii::Platform::Audio::GetAudioEngineImplementer();
 
     auto dbgStr = std::format("Implementer: {}", glRenderer);
+
     Madokawaii::Platform::Graphics::DrawText(dbgStr.c_str(), 190 * scale, 170 * scale, 20 * scale, Madokawaii::Platform::Graphics::M_LIGHTGRAY);
     dbgStr = std::format("Implementation Version: {}", glVersion);
     Madokawaii::Platform::Graphics::DrawText(dbgStr.c_str(), 190 * scale, 200 * scale, 20 * scale, Madokawaii::Platform::Graphics::M_LIGHTGRAY);
     dbgStr = std::format("Audio: {}", audioRenderer);
     Madokawaii::Platform::Graphics::DrawText(dbgStr.c_str(), 190 * scale, 230 * scale, 20 * scale, Madokawaii::Platform::Graphics::M_LIGHTGRAY);
-    dbgStr = std::format("FPS: {}, FrameTime: {}s", Madokawaii::Platform::Graphics::GetFPS(), Madokawaii::Platform::Graphics::GetFrameTime());
+    dbgStr = std::format("FPS: {:8.2f}, FrameTime: {:10.6f}s, 1% Low: {:8.2f}", Madokawaii::Platform::Graphics::GetFPS(), Madokawaii::Platform::Graphics::GetFrameTime(), Madokawaii::Platform::Graphics::GetOnePercentLowFPS());
     Madokawaii::Platform::Graphics::DrawText(dbgStr.c_str(), 190 * scale, 260 * scale, 20 * scale, Madokawaii::Platform::Graphics::M_LIGHTGRAY);
 }
 

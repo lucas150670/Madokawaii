@@ -14,9 +14,9 @@
 ![GitHub License](https://img.shields.io/github/license/lucas150670/Madokawaii?style=for-the-badge)
 [![State-of-the-art Shitcode](https://img.shields.io/static/v1?label=State-of-the-art&message=Shitcode&color=7B5804&style=for-the-badge)](https://github.com/trekhleb/state-of-the-art-shitcode)
 
-Madokawaii is an early-stage rhythm game simulator inspired by *Phigros*. 
+Madokawaii is an early-stage rhythm game simulator inspired by *Phigros*, aiming to it's clean-room reimplementation.
 
-The project currently focuses on implementing autoplay functionality for official Phigros chart formats, version 3 and PhiEdit format.
+The project currently focuses on implementing autoplay functionality for official Phigros chart format (version 3) and PhiEdit format.
 
 Future development will expand toward interactive gameplay, cross-platform support, and advanced rendering features.
 
@@ -34,7 +34,7 @@ this project makes no guarantees regarding other backends' operational results.
 - Windows SDK & DirectX SDK (when Direct2D backend enabled)
 - FMOD Core SDK (when FMOD audio backend enabled)
 - CRI ADX LE Native SDK, stb-vorbis, drlibs (when CRI audio backend enabled)
-- for Android project, see [here](https://github.com/lucas150670/Madokawaii_Android) 
+- for Android project, see [Madokawaii_Android](https://github.com/lucas150670/Madokawaii_Android) 
 
 ## 📌 EXAMPLE
 ```bash
@@ -45,6 +45,8 @@ git clone https://github.com/microsoft/vcpkg.git
 # Build with cmake
 mkdir build && cd build
 # switch from render backends, audio backends by defining implementer variable
+# notice: Platform projects, like Android, are built using their own project manager.
+# currently, CMake bootstrap compilation is only available on Windows and Linux platforms.
 cmake .. -Dimplementer=RAYLIB -Daudio_implementer=RAYLIB -DCMAKE_TOOLCHAIN_FILE=/path/to/vcpkg/scripts/buildsystems/vcpkg.cmake
 make
 # put assets/charts/chart.json,

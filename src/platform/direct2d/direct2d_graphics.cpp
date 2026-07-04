@@ -102,6 +102,12 @@ namespace Madokawaii::Platform::Graphics {
         return Direct2D::GetState().frameTime;
     }
 
+    float GetOnePercentLowFPS()
+    {
+        const auto& state = Direct2D::GetState();
+        return Common::FrameStats::GetOnePercentLowFPS(state.frameTimeSamples, state.frameTimeSampleCount);
+    }
+
     void SetTargetFPS(int target) {
         Direct2D::SetTargetFrameRate(target);
     }

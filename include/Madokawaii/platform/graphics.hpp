@@ -19,6 +19,10 @@ namespace Madokawaii::Platform::Graphics {
     std::string GetImplementationInfo();
     float GetFPS();
     float GetFrameTime();
+    // new interface: get 1% low fps
+    // raylib doesn't provide this.
+    // added because CRI audio backend causes frame lag. (reported by user)
+    float GetOnePercentLowFPS();
     void SetTargetFPS(int);
 
     void BeginDrawing();

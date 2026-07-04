@@ -28,7 +28,9 @@
 #include <dxgi1_4.h>
 #include <wincodec.h>
 
+#include <array>
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <unordered_map>
@@ -36,6 +38,7 @@
 
 #include "Madokawaii/platform/graphics.hpp"
 #include "Madokawaii/platform/shape.hpp"
+#include "../common/frame_stats.hpp"
 
 namespace Madokawaii::Platform::Direct2D {
 
@@ -105,6 +108,9 @@ namespace Madokawaii::Platform::Direct2D {
         float targetFrameSeconds{};
         float frameTime{};
         float fps{};
+        std::array<float, Common::FrameStats::SampleCount> frameTimeSamples{};
+        std::size_t frameTimeSampleIndex{};
+        std::size_t frameTimeSampleCount{};
         std::chrono::steady_clock::time_point lastFrameTime{};
         std::chrono::steady_clock::time_point fpsWindowStart{};
         int fpsFrameCounter{};
