@@ -10,7 +10,7 @@ find_path(FAST_IO_INCLUDE_DIR fast_io.h REQUIRED)
 
 set(CMAKE_CXX_STANDARD 20)
 
-if(NOT MSVC)
+if(NOT MSVC AND NOT APPLE)
     set(CMAKE_EXE_LINKER_FLAGS "-static")
 endif()
 
@@ -227,6 +227,12 @@ endif()
 if(implementer_upper STREQUAL "RAYLIB" OR audio_implementer_upper STREQUAL "RAYLIB")
     find_package(raylib CONFIG REQUIRED)
     list(APPEND MADOKAWAII_PLATFORM_LIBS raylib)
+    if(APPLE)
+        # raylib-config.cmake 不传播 raylib 对外部 glfw3 的依赖（vcpkg 桌面平台使用 USE_EXTERNAL_GLFW=ON），
+        # macOS 链接 dylib 要求所有符号可解析，需显式补上
+        find_package(glfw3 CONFIG REQUIRED)
+        list(APPEND MADOKAWAII_PLATFORM_LIBS glfw)
+    endif()
 endif()
 
 if(audio_implementer_upper STREQUAL "RAYLIB")
